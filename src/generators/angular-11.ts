@@ -12,7 +12,7 @@
  */
 
 import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken } from "../core/types.js";
-import { headerComment } from "../utils/format.js";
+import { headerComment, themePath } from "../utils/format.js";
 import {
   deriveAngularNames,
   renderScssVariables,
@@ -43,19 +43,20 @@ export const angular11Generator: Generator = {
     options: GeneratorOptions,
   ): readonly OutputArtifact[] => {
     const names = deriveAngularNames(tokens);
+    const t = (p: string) => options.theme ? themePath(p, options.theme) : p;
     return [
       {
-        relativePath: "angular-11/_tokens.scss",
+        relativePath: t("angular-11/_tokens.scss"),
         format: "angular-11",
         content: renderScssVariables(names, options),
       },
       {
-        relativePath: "angular-11/tokens.scss",
+        relativePath: t("angular-11/tokens.scss"),
         format: "angular-11",
         content: renderScssEntryLegacy(names, options),
       },
       {
-        relativePath: "angular-11/tokens.ts",
+        relativePath: t("angular-11/tokens.ts"),
         format: "angular-11",
         content: renderTokensTs(names, options),
       },

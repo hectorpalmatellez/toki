@@ -16,13 +16,14 @@
 import type {
   Generator,
   GeneratorOptions,
+  NamingConvention,
   OutputArtifact,
   ResolvedToken,
   TokenValue,
 } from "../core/types.js";
 import { GeneratorError } from "../utils/errors.js";
-import { toCamelCase } from "../utils/naming.js";
-import { headerComment } from "../utils/format.js";
+import { getNamingFunction } from "../utils/naming.js";
+import { headerComment, themePath } from "../utils/format.js";
 import { platformReadme } from "./readme.js";
 
 /** JS reserved words that cannot be used as binding identifiers. */
@@ -76,12 +77,16 @@ const RESERVED_WORDS: ReadonlySet<string> = new Set([
   "static",
 ]);
 
-/** Derive a safe camelCase JS identifier from a token path. */
-export const makeIdentifier = (path: readonly string[]): string => {
-  let id = toCamelCase(path);
+/** Derive a safe JS identifier from a token path using the given naming convention. */
+export const makeIdentifier = (
+  path: readonly string[],
+  naming: NamingConvention = "camelCase",
+): string => {
+  const namingFn = getNamingFunction(naming);
+  let id = namingFn(path);
   if (id.length === 0) id = "token";
   if (/^[0-9]/.test(id)) id = `_${id}`;
-  if (RESERVED_WORDS.has(id)) id = `${id}_`;
+  if (naming === "camelCase" && RESERVED_WORDS.has(id)) id = `${id}_`;
   return id;
 };
 
@@ -139,9 +144,10 @@ const generateJs = (
   const seen = new Map<string, string>();
   const exports: string[] = [];
   const decls: string[] = [];
+  const naming = options.naming ?? "camelCase";
 
   for (const token of tokens) {
-    const identifier = makeIdentifier(token.path);
+    const identifier = makeIdentifier(token.path, naming);
     const collision = seen.get(identifier);
     if (collision !== undefined) {
       throw new GeneratorError(
@@ -160,9 +166,12 @@ const generateJs = (
   const jsContent = [header, "", ...exports, ""].join("\n");
   const dtsContent = [header, "", ...decls, ""].join("\n");
 
+  const jsPath = options.theme ? themePath("js/tokens.js", options.theme) : "js/tokens.js";
+  const dtsPath = options.theme ? themePath("js/tokens.d.ts", options.theme) : "js/tokens.d.ts";
+
   return [
-    { relativePath: "js/tokens.js", format: "js", content: jsContent },
-    { relativePath: "js/tokens.d.ts", format: "js", content: dtsContent },
+    { relativePath: jsPath, format: "js", content: jsContent },
+    { relativePath: dtsPath, format: "js", content: dtsContent },
     { relativePath: "js/README.md", format: "js", content: platformReadme("js", options.version) },
   ];
 };

@@ -14,22 +14,23 @@
  */
 
 import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken } from "../core/types.js";
-import { headerComment } from "../utils/format.js";
+import { headerComment, themePath } from "../utils/format.js";
 import { categoryName, groupTokens, inlineLiteral, serializeTokenTree } from "../utils/grouping.js";
-import { toCamelCase } from "../utils/naming.js";
+import { getNamingFunction } from "../utils/naming.js";
 import { makeIdentifier } from "./js.js";
 import { platformReadme } from "./readme.js";
 
 const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
 /** Reference expression into tokens.js for a grouped token: `colors.brand.primary`. */
-const categoryReference = (token: ResolvedToken): string | undefined => {
+const categoryReference = (token: ResolvedToken, naming?: "camelCase"): string | undefined => {
   const [first, ...rest] = token.path;
   if (first === undefined || rest.length === 0) return undefined;
   const category = categoryName(first);
+  const namingFn = getNamingFunction(naming ?? "camelCase");
   // Must mirror the key derivation in grouping.ts (leafKey).
   const keys = rest.map((segment) => {
-    const camel = toCamelCase([segment]);
+    const camel = namingFn([segment]);
     const key = camel.length > 0 ? camel : segment;
     // Reserved words are valid property names; digit-leading keys are not.
     return IDENTIFIER.test(key) ? `.${key}` : `[${JSON.stringify(key)}]`;
@@ -47,6 +48,7 @@ interface StyleEntry {
 
 const buildStyleGroups = (
   tokens: readonly ResolvedToken[],
+  naming?: "camelCase",
 ): {
   readonly groups: ReadonlyMap<string, readonly StyleEntry[]>;
   readonly imports: readonly string[];
@@ -69,7 +71,7 @@ const buildStyleGroups = (
   };
 
   for (const token of tokens) {
-    const ref = categoryReference(token);
+    const ref = categoryReference(token, naming);
     if (ref === undefined) continue; // scalar token — no category to reference
     if (token.type === "color") {
       if (!useImport(token)) continue;
@@ -95,6 +97,7 @@ const renderStyleSheet = (name: string, entries: readonly StyleEntry[]): string 
 
 const generateTokensJs = (tokens: readonly ResolvedToken[], options: GeneratorOptions): string => {
   const { scalars, categories } = groupTokens(tokens);
+  const naming = options.naming ?? "camelCase";
   const lines: string[] = [
     headerComment(options.version),
     "",
@@ -105,7 +108,7 @@ const generateTokensJs = (tokens: readonly ResolvedToken[], options: GeneratorOp
   ];
 
   for (const token of scalars) {
-    lines.push("", `export const ${makeIdentifier(token.path)} = ${inlineLiteral(token.value)};`);
+    lines.push("", `export const ${makeIdentifier(token.path, naming)} = ${inlineLiteral(token.value)};`);
   }
 
   for (const [category, node] of categories) {
@@ -117,7 +120,8 @@ const generateTokensJs = (tokens: readonly ResolvedToken[], options: GeneratorOp
 };
 
 const generateStylesJs = (tokens: readonly ResolvedToken[], options: GeneratorOptions): string => {
-  const { groups, imports } = buildStyleGroups(tokens);
+  const naming = options.naming ?? "camelCase";
+  const { groups, imports } = buildStyleGroups(tokens, naming as "camelCase");
   const lines: string[] = [
     headerComment(options.version),
     "",
@@ -145,21 +149,29 @@ export const reactNativeGenerator: Generator = {
   generate: (
     tokens: readonly ResolvedToken[],
     options: GeneratorOptions,
-  ): readonly OutputArtifact[] => [
-    {
-      relativePath: "react-native/tokens.js",
-      format: "react-native",
-      content: generateTokensJs(tokens, options),
-    },
-    {
-      relativePath: "react-native/styles.js",
-      format: "react-native",
-      content: generateStylesJs(tokens, options),
-    },
-    {
-      relativePath: "react-native/README.md",
-      format: "react-native",
-      content: platformReadme("react-native", options.version),
-    },
-  ],
+  ): readonly OutputArtifact[] => {
+    const jsPath = options.theme
+      ? themePath("react-native/tokens.js", options.theme)
+      : "react-native/tokens.js";
+    const stylesPath = options.theme
+      ? themePath("react-native/styles.js", options.theme)
+      : "react-native/styles.js";
+    return [
+      {
+        relativePath: jsPath,
+        format: "react-native",
+        content: generateTokensJs(tokens, options),
+      },
+      {
+        relativePath: stylesPath,
+        format: "react-native",
+        content: generateStylesJs(tokens, options),
+      },
+      {
+        relativePath: "react-native/README.md",
+        format: "react-native",
+        content: platformReadme("react-native", options.version),
+      },
+    ];
+  },
 };

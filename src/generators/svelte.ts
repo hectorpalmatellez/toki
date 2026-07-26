@@ -9,20 +9,21 @@
 
 import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken } from "../core/types.js";
 import { GeneratorError } from "../utils/errors.js";
-import { headerComment } from "../utils/format.js";
+import { headerComment, themePath } from "../utils/format.js";
 import { renderCssCustomProperties } from "./css.js";
 import { formatJsLiteral, makeIdentifier } from "./js.js";
 import { platformReadme } from "./readme.js";
 
-/** `tokens.ts`: camelCase ES-module exports for every token. */
+/** `tokens.ts`: ES-module exports for every token using the configured naming convention. */
 export const renderTokensModule = (
   tokens: readonly ResolvedToken[],
   options: GeneratorOptions,
 ): string => {
   const seen = new Map<string, string>();
+  const naming = options.naming ?? "camelCase";
   const lines: string[] = [headerComment(options.version), ""];
   for (const token of tokens) {
-    const identifier = makeIdentifier(token.path);
+    const identifier = makeIdentifier(token.path, naming);
     const collision = seen.get(identifier);
     if (collision !== undefined) {
       throw new GeneratorError(
@@ -42,21 +43,24 @@ export const svelteGenerator: Generator = {
   generate: (
     tokens: readonly ResolvedToken[],
     options: GeneratorOptions,
-  ): readonly OutputArtifact[] => [
-    {
-      relativePath: "svelte/tokens.css",
-      format: "svelte",
-      content: renderCssCustomProperties(tokens, options),
-    },
-    {
-      relativePath: "svelte/tokens.ts",
-      format: "svelte",
-      content: renderTokensModule(tokens, options),
-    },
-    {
-      relativePath: "svelte/README.md",
-      format: "svelte",
-      content: platformReadme("svelte", options.version),
-    },
-  ],
+  ): readonly OutputArtifact[] => {
+    const t = (p: string) => options.theme ? themePath(p, options.theme) : p;
+    return [
+      {
+        relativePath: t("svelte/tokens.css"),
+        format: "svelte",
+        content: renderCssCustomProperties(tokens, options),
+      },
+      {
+        relativePath: t("svelte/tokens.ts"),
+        format: "svelte",
+        content: renderTokensModule(tokens, options),
+      },
+      {
+        relativePath: "svelte/README.md",
+        format: "svelte",
+        content: platformReadme("svelte", options.version),
+      },
+    ];
+  },
 };

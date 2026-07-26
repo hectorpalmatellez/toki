@@ -14,8 +14,8 @@
 
 import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken } from "../core/types.js";
 import { GeneratorError } from "../utils/errors.js";
-import { headerComment } from "../utils/format.js";
-import { toConstantCase, toKebabCase } from "../utils/naming.js";
+import { headerComment, themePath } from "../utils/format.js";
+import { toKebabCase, getNamingFunction } from "../utils/naming.js";
 import { formatCssValue } from "./css.js";
 import { formatJsLiteral, inferJsType, makeIdentifier } from "./js.js";
 import { platformReadme } from "./readme.js";
@@ -46,15 +46,20 @@ const claimName = (seen: Map<string, string>, name: string, id: string, kind: st
 /**
  * Derive collision-free names for all tokens. Throws `GeneratorError` when
  * two paths collapse to the same name in any namespace.
+ * @param tsNaming Convention for TypeScript constant names (default: CONSTANT_CASE)
  */
-export const deriveAngularNames = (tokens: readonly ResolvedToken[]): readonly AngularNames[] => {
+export const deriveAngularNames = (
+  tokens: readonly ResolvedToken[],
+  tsNaming: "CONSTANT_CASE" | "SCREAMING_SNAKE_CASE" = "CONSTANT_CASE",
+): readonly AngularNames[] => {
   const seenScss = new Map<string, string>();
   const seenTs = new Map<string, string>();
   const seenProp = new Map<string, string>();
+  const tsNamingFn = getNamingFunction(tsNaming);
 
   return tokens.map((token) => {
     const scss = toKebabCase(token.path);
-    let ts = toConstantCase(token.path);
+    let ts = tsNamingFn(token.path);
     if (ts.length === 0) ts = "TOKEN";
     if (/^[0-9]/.test(ts)) ts = `_${ts}`;
     const prop = makeIdentifier(token.path);
@@ -161,25 +166,29 @@ export const angularGenerator: Generator = {
     tokens: readonly ResolvedToken[],
     options: GeneratorOptions,
   ): readonly OutputArtifact[] => {
-    const names = deriveAngularNames(tokens);
+    const tsNaming = options.naming === "SCREAMING_SNAKE_CASE"
+      ? "SCREAMING_SNAKE_CASE"
+      : "CONSTANT_CASE";
+    const names = deriveAngularNames(tokens, tsNaming);
+    const t = (p: string) => options.theme ? themePath(p, options.theme) : p;
     return [
       {
-        relativePath: "angular/_tokens.scss",
+        relativePath: t("angular/_tokens.scss"),
         format: "angular",
         content: renderScssVariables(names, options),
       },
       {
-        relativePath: "angular/tokens.scss",
+        relativePath: t("angular/tokens.scss"),
         format: "angular",
         content: renderScssEntry(names, options),
       },
       {
-        relativePath: "angular/tokens.ts",
+        relativePath: t("angular/tokens.ts"),
         format: "angular",
         content: renderTokensTs(names, options),
       },
       {
-        relativePath: "angular/tokens.module.ts",
+        relativePath: t("angular/tokens.module.ts"),
         format: "angular",
         content: renderTokensModule(names, options),
       },

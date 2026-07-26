@@ -11,7 +11,7 @@
 
 import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken } from "../core/types.js";
 import { GeneratorError } from "../utils/errors.js";
-import { headerComment } from "../utils/format.js";
+import { headerComment, themePath } from "../utils/format.js";
 import {
   categoryName,
   groupTokens,
@@ -29,6 +29,7 @@ export const renderTheme = (
   options: GeneratorOptions,
 ): string => {
   const { categories } = groupTokens(tokens);
+  const naming = options.naming ?? "camelCase";
 
   // Top-level entries in document order: category subtrees and scalar tokens
   // share one namespace, so collisions across the two are detected here.
@@ -50,7 +51,7 @@ export const renderTheme = (
   for (const token of tokens) {
     const [first, ...rest] = token.path;
     if (first === undefined || rest.length === 0) {
-      const key = makeIdentifier(token.path);
+      const key = makeIdentifier(token.path, naming);
       claim(key, token.id);
       entries.push({ key, value: inlineLiteral(token.value) });
       continue;
@@ -84,21 +85,24 @@ export const reactGenerator: Generator = {
   generate: (
     tokens: readonly ResolvedToken[],
     options: GeneratorOptions,
-  ): readonly OutputArtifact[] => [
-    {
-      relativePath: "react/theme.ts",
-      format: "react",
-      content: renderTheme(tokens, options),
-    },
-    {
-      relativePath: "react/tokens.css",
-      format: "react",
-      content: renderCssCustomProperties(tokens, options),
-    },
-    {
-      relativePath: "react/README.md",
-      format: "react",
-      content: platformReadme("react", options.version),
-    },
-  ],
+  ): readonly OutputArtifact[] => {
+    const t = (p: string) => options.theme ? themePath(p, options.theme) : p;
+    return [
+      {
+        relativePath: t("react/theme.ts"),
+        format: "react",
+        content: renderTheme(tokens, options),
+      },
+      {
+        relativePath: t("react/tokens.css"),
+        format: "react",
+        content: renderCssCustomProperties(tokens, options),
+      },
+      {
+        relativePath: "react/README.md",
+        format: "react",
+        content: platformReadme("react", options.version),
+      },
+    ];
+  },
 };

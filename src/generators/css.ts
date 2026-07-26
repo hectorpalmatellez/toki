@@ -20,8 +20,8 @@ import type {
   ResolvedToken,
   TokenValue,
 } from "../core/types.js";
-import { toKebabCase } from "../utils/naming.js";
-import { headerComment } from "../utils/format.js";
+import { getNamingFunction } from "../utils/naming.js";
+import { headerComment, themePath } from "../utils/format.js";
 import { platformReadme } from "./readme.js";
 
 /** Format a resolved token value as a CSS custom-property value. */
@@ -105,9 +105,12 @@ export const cssGenerator: Generator = {
     _options: GeneratorOptions,
   ): readonly OutputArtifact[] => {
     // Unused parameter names prefixed with `_` to satisfy no-unused-vars.
+    const cssPath = _options.theme
+      ? themePath("css/tokens.css", _options.theme)
+      : "css/tokens.css";
     return [
       {
-        relativePath: "css/tokens.css",
+        relativePath: cssPath,
         format: "css",
         content: renderCssCustomProperties(_tokens, _options),
       },
@@ -126,12 +129,13 @@ export const renderCssCustomProperties = (
   options: GeneratorOptions,
 ): string => {
   const lines: string[] = [headerComment(options.version), ""];
+  const namingFn = getNamingFunction(options.naming ?? "kebab-case");
 
   const declarations: string[] = [];
   for (const token of tokens) {
     const value = formatCssValue(token);
     if (value === undefined) continue;
-    const name = `--${toKebabCase(token.path)}`;
+    const name = `--${namingFn(token.path)}`;
     declarations.push(`  ${name}: ${value};`);
   }
 
