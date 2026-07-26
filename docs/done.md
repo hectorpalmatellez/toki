@@ -59,7 +59,7 @@ This file records tasks that have been completed and removed from [`backlog.md`]
 
 | # | Task | Type | Est. | Notes |
 |---|---|---|---|---|
-| 3.1 | Build config file loader: `toki.config.ts` (or `.js`) loaded via `jiti`. Config discovery: current directory → `--config` flag → default | Infra | 3h | `src/core/config.ts` — `discoverConfig` searches CWD for `toki.config.ts` → `.js` → `.mjs` → `tokenwright.config.ts` (legacy). `loadConfigFile` uses jiti for TS/JS loading. `loadConfig` combines discovery + loading. `mergeConfig` overlays CLI flags onto config values. Config discovery order: `--config` flag → `toki.config.ts` → `toki.config.js` → `toki.config.mjs` → `tokenwright.config.ts`. |
+| 3.1 | Build config file loader: `toki.config.ts` (or `.js`) loaded via `jiti`. Config discovery: current directory → `--config` flag → default | Infra | 3h | `src/core/config.ts` — `discoverConfig` searches CWD for `toki.config.ts` → `.js` → `.mjs`. `loadConfigFile` uses jiti for TS/JS loading. `loadConfig` combines discovery + loading. `mergeConfig` overlays CLI flags onto config values. Config discovery order: `--config` flag → `toki.config.ts` → `toki.config.js` → `toki.config.mjs`. |
 | 3.2 | Define config schema: `input` (string or array), `output` (per-format directory), `themes` (mapping of theme name → token file), `naming` (per-format naming convention), `transforms` (custom transform functions) | Types | 2h | `src/core/types.ts` — `TokiConfig` interface, `NamingConvention` type, `TransformPlugin` type, `TransformContext` interface. `GeneratorOptions` extended with `theme` and `naming` fields. `validateConfig` in `config.ts` validates all fields with clear error messages. `ConfigError` class added to `errors.ts`. |
 | 3.3 | Multi-theme support: config specifies `{ light: "tokens/light.json", dark: "tokens/dark.json" }` → generators produce separate output files per theme (e.g., `tokens.light.css`, `tokens.dark.css`) | Core | 4h | `themePath` helper in `format.ts` inserts theme suffix before file extension. All 7 generators use `themePath` when `options.theme` is set. Pipeline's `BuildOptions` and `GenerateOptions` accept `theme`. CLI iterates themes when config has `themes` map. `--theme` flag builds a single theme. README files are not themed. |
 | 3.4 | Naming transform system: `camelCase` (JS default), `kebab-case` (CSS default), `CONSTANT_CASE` (Angular/TS), `SCREAMING_SNAKE_CASE` (alias). Configurable per platform in config file | Core | 2h | `getNamingFunction` in `naming.ts` maps convention string to conversion function. `toScreamingSnakeCase` alias added. All generators accept `options.naming` and use `getNamingFunction` instead of hardcoded naming. `makeIdentifier` accepts naming parameter. Angular's `deriveAngularNames` accepts TS naming convention. |
@@ -78,3 +78,31 @@ This file records tasks that have been completed and removed from [`backlog.md`]
 - [x] `toki init` scaffolds a working starter project
 - [x] All tests pass — 215/215
 - [x] README documents config file schema completely
+
+## Phase 4 (partial) — Watch, Diff, Import
+
+**Goal:** Watch mode, diff tooling, and import from Style Dictionary + Figma Tokens Studio formats. ✅ **Complete (4 of 8 tasks).**
+
+| # | Task | Type | Est. | Notes |
+|---|---|---|---|---|
+| 4.1 | `toki watch` command: file system watcher with 200ms debounce, incremental rebuild, change summary with timestamps, graceful error handling (continues watching on build failure), SIGINT/SIGTERM cleanup | CLI | 3h | `src/core/watch.ts` — uses `chokidar` (added as runtime dependency). `startWatch()` returns a cleanup function. Resolves build config from CLI options + config file. Watches all theme files + config file. Initial build on start, then debounced rebuilds on change. `src/core/watch.test.ts` (5 tests) — startWatch exports, cleanup function, initial build output, multi-theme configs. |
+| 4.2 | `toki diff <old> <new>` command: set-diff of resolved tokens by dotted path, reports added/removed/changed with before/after values, `--json` output format | CLI | 4h | `src/core/diff.ts` — `runDiff()` reads both files, resolves tokens, computes diff by id. `diffTokens()` compares token maps. Deep value equality check for composites. `formatDiffTerminal()` renders human-readable output with `+`/`-`/`~` prefixes. `formatDiffJson()` returns flat entry array. `src/core/diff.test.ts` (20 tests) — identical/added/removed/changed/mixed, composite equality, array values, terminal formatting, JSON format, integration with file I/O. |
+| 4.3 | `toki import --from style-dictionary --input <path>`: reads SD v3 format, converts `value`→`$value`, `type`→`$type`, `comment`→`$description`, preserves `$extensions` and reference syntax, validates output as W3C DTCG | Import | 4h | `src/importers/style-dictionary.ts` — `convertStyleDictionary()` recursive converter. Handles group-level `$type`, `$extensions`, and `comment`/`description` mapping. Validates token types against DTCG spec. `importStyleDictionary()` reads file, converts, writes output (defaults to `tokens.json` in input directory). `src/importers/style-dictionary.test.ts` (17 tests) — conversion rules, group-level type, nested groups, references, extensions, validation, DTCG output validation, integration with file I/O. |
+| 4.4 | `toki import --from figma-tokens --input <path>`: reads Figma Tokens Studio export, strips `$metadata`/`$themes`, strips theme selector top-level keys, converts `value`→`$value`, `type`→`$type`, `description`→`$description`, merges multiple theme groups | Import | 3h | `src/importers/figma-tokens.ts` — `convertFigmaTokens()` strips META_KEYS, converts remaining top-level groups, merges into one DTCG root. Handles group-level `$type` and `description`. `importFigmaTokens()` reads file, converts, writes output. `src/importers/figma-tokens.test.ts` (18 tests) — theme key stripping, metadata/themes stripping, description mapping, nested groups, references, multiple theme merge, group-level type, validation, DTCG output validation, integration. |
+
+### Infrastructure changes (shared)
+
+- Added `chokidar@^5.0.0` as runtime dependency
+- Added `IMPORT_ERROR` error code + `ImportError` class to `src/utils/errors.ts`
+- Added `parseFormats()` to `src/generators/index.ts` (extracted from CLI to avoid circular deps)
+- Registered `diff`, `watch`, `import` commands in `src/cli.ts`
+- Updated barrel export `src/index.ts` with new modules
+
+### Phase 4 (partial) Exit Criteria — all satisfied
+
+- [x] `toki watch` rebuilds on file change with 200ms debounce
+- [x] `toki diff` reports all token changes accurately (added, removed, changed)
+- [x] Style Dictionary and Figma Tokens Studio imports produce valid W3C DTCG output
+- [x] 274 tests pass (59 new across diff, watch, SD import, Figma import)
+- [x] Zero TypeScript errors, zero lint warnings
+- [x] Build succeeds (tsup + type generation)

@@ -11,26 +11,18 @@
  */
 
 import { Command } from "commander";
-import type { OutputFormat } from "./core/types.js";
 import { runPipeline } from "./core/pipeline.js";
 import { writeArtifacts } from "./utils/writer.js";
-import { resolveFormats } from "./generators/index.js";
+import { parseFormats } from "./generators/index.js";
 import { TOKI_VERSION } from "./version.js";
 import { TokiError } from "./utils/errors.js";
 import { loadConfig, mergeConfig } from "./core/config.js";
 import { writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-
-const parseFormats = (raw: readonly string[]): readonly OutputFormat[] => {
-  const flat: string[] = [];
-  for (const entry of raw) {
-    for (const part of entry.split(",")) {
-      const trimmed = part.trim();
-      if (trimmed.length > 0) flat.push(trimmed);
-    }
-  }
-  return resolveFormats(flat);
-};
+import { runDiff, formatDiffTerminal, formatDiffJson } from "./core/diff.js";
+import { startWatch } from "./core/watch.js";
+import { importStyleDictionary } from "./importers/style-dictionary.js";
+import { importFigmaTokens } from "./importers/figma-tokens.js";
 
 const buildCommand = async (options: {
   input?: string;
@@ -279,6 +271,107 @@ program
   .action(async (options) => {
     try {
       await initCommand({ dir: options.dir });
+    } catch (error) {
+      if (error instanceof TokiError) {
+        console.error(`error [${error.code}]: ${error.message}`);
+        process.exitCode = 1;
+        return;
+      }
+      console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command("diff")
+  .description("Compare two token files and report added, removed, and changed tokens")
+  .argument("<old>", "Path to the old token file (W3C DTCG JSON)")
+  .argument("<new>", "Path to the new token file (W3C DTCG JSON)")
+  .option("--json", "Output as JSON instead of human-readable text", false)
+  .action(async (oldPath: string, newPath: string, options: { json: boolean }) => {
+    try {
+      const result = await runDiff(oldPath, newPath);
+      if (options.json) {
+        console.log(JSON.stringify(formatDiffJson(result), null, 2));
+      } else {
+        const output = formatDiffTerminal(result);
+        console.log(output);
+        const total = result.added.length + result.removed.length + result.changed.length;
+        if (total > 0) {
+          console.log(`\n  ${total} difference${total === 1 ? "" : "s"} found.`);
+        }
+      }
+    } catch (error) {
+      if (error instanceof TokiError) {
+        console.error(`error [${error.code}]: ${error.message}`);
+        process.exitCode = 1;
+        return;
+      }
+      console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command("watch")
+  .description("Watch token files for changes and rebuild automatically")
+  .option("-i, --input <path>", "Path to input token file (W3C DTCG JSON)")
+  .option("-o, --output <path>", "Output directory for generated artifacts")
+  .option(
+    "-f, --format <formats...>",
+    'Output formats (comma- or space-separated; "all" for every platform)',
+    ["css", "js"],
+  )
+  .option("--no-clean", "Do not clean output subdirectories before writing")
+  .option("--verbose", "Enable verbose output with resolution trace and timing", false)
+  .option("-c, --config <path>", "Path to toki config file")
+  .option("-t, --theme <name>", "Build a single theme from multi-theme config")
+  .action(async (options) => {
+    try {
+      await startWatch({
+        input: options.input,
+        output: options.output,
+        format: options.format as string[],
+        clean: options.clean,
+        verbose: options.verbose,
+        config: options.config,
+        theme: options.theme,
+      });
+    } catch (error) {
+      if (error instanceof TokiError) {
+        console.error(`error [${error.code}]: ${error.message}`);
+        process.exitCode = 1;
+        return;
+      }
+      console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command("import")
+  .description("Import tokens from another format and convert to W3C DTCG")
+  .requiredOption("--from <format>", 'Source format: "style-dictionary" or "figma-tokens"')
+  .requiredOption("-i, --input <path>", "Path to input token file")
+  .option("-o, --output <path>", "Output path for generated tokens.json")
+  .action(async (options: { from: string; input: string; output?: string }) => {
+    try {
+      let outputPath: string;
+      const importOpts = { input: options.input, ...(options.output !== undefined ? { output: options.output } : {}) };
+      switch (options.from) {
+        case "style-dictionary":
+          outputPath = await importStyleDictionary(importOpts);
+          break;
+        case "figma-tokens":
+          outputPath = await importFigmaTokens(importOpts);
+          break;
+        default:
+          throw new TokiError(
+            `Unknown source format "${options.from}". Supported: style-dictionary, figma-tokens.`,
+            "CONFIG_ERROR",
+          );
+      }
+      console.log(`  Imported tokens written to ${outputPath}`);
     } catch (error) {
       if (error instanceof TokiError) {
         console.error(`error [${error.code}]: ${error.message}`);

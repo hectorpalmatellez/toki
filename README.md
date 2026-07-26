@@ -150,7 +150,7 @@ error [MISSING_REFERENCE_ERROR]: Token "color.secondary" references unknown toke
 
 Toki can be configured via a `toki.config.ts` (or `.js` / `.mjs`) file in your project root. When present, `toki build` auto-discovers the config and uses it as the default for all options.
 
-**Discovery order:** `--config` flag → `toki.config.ts` → `toki.config.js` → `toki.config.mjs` → `tokenwright.config.ts` (legacy)
+**Discovery order:** `--config` flag → `toki.config.ts` → `toki.config.js` → `toki.config.mjs`
 
 CLI flags override config file values.
 

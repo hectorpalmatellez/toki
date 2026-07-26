@@ -54,10 +54,14 @@ export {
 export type { TransformContext, TransformFn, RnShadow } from "./core/transformer.js";
 export { runPipeline, generateFromDocument, generate } from "./core/pipeline.js";
 
+export { runDiff, diffTokens, formatDiffTerminal, formatDiffJson } from "./core/diff.js";
+export type { DiffEntry, DiffResult, DiffEntryType } from "./core/diff.js";
+
 export {
   getGenerator,
   implementedFormats,
   resolveFormats,
+  parseFormats,
   ALL_FORMATS_KEYWORD,
 } from "./generators/index.js";
 export { cssGenerator } from "./generators/css.js";

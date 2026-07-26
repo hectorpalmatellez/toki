@@ -38,22 +38,9 @@ describe("discoverConfig", () => {
     expect(discoverConfig(dir)).toBe(join(dir, "toki.config.mjs"));
   });
 
-  it("falls back to tokenwright.config.ts", () => {
-    const dir = uniqueDir();
-    writeFileSync(join(dir, "tokenwright.config.ts"), "export default {}");
-    expect(discoverConfig(dir)).toBe(join(dir, "tokenwright.config.ts"));
-  });
-
   it("returns undefined when no config file exists", () => {
     const dir = uniqueDir();
     expect(discoverConfig(dir)).toBeUndefined();
-  });
-
-  it("prefers toki.config.ts over tokenwright.config.ts", () => {
-    const dir = uniqueDir();
-    writeFileSync(join(dir, "toki.config.ts"), "export default {}");
-    writeFileSync(join(dir, "tokenwright.config.ts"), "export default {}");
-    expect(discoverConfig(dir)).toBe(join(dir, "toki.config.ts"));
   });
 });
 

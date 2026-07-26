@@ -65,3 +65,18 @@ export const resolveFormats = (formats: readonly string[]): readonly OutputForma
   }
   return parsed;
 };
+
+/**
+ * Parse a raw format string list (comma- or space-separated) into validated
+ * `OutputFormat`s. Used by both the CLI and the watch module.
+ */
+export const parseFormats = (raw: readonly string[]): readonly OutputFormat[] => {
+  const flat: string[] = [];
+  for (const entry of raw) {
+    for (const part of entry.split(",")) {
+      const trimmed = part.trim();
+      if (trimmed.length > 0) flat.push(trimmed);
+    }
+  }
+  return resolveFormats(flat);
+};

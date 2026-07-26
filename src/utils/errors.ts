@@ -14,7 +14,8 @@ export type TokiErrorCode =
   | "MISSING_REFERENCE_ERROR"
   | "GENERATOR_ERROR"
   | "IO_ERROR"
-  | "CONFIG_ERROR";
+  | "CONFIG_ERROR"
+  | "IMPORT_ERROR";
 
 export class TokiError extends Error {
   readonly code: TokiErrorCode;
@@ -83,5 +84,12 @@ export class ConfigError extends TokiError {
   constructor(message: string, cause?: unknown) {
     super(message, "CONFIG_ERROR", cause);
     this.name = "ConfigError";
+  }
+}
+
+export class ImportError extends TokiError {
+  constructor(message: string, cause?: unknown) {
+    super(message, "IMPORT_ERROR", cause);
+    this.name = "ImportError";
   }
 }

@@ -5,7 +5,6 @@
  * Config discovery order:
  * 1. `--config <path>` CLI flag (highest priority)
  * 2. `./toki.config.ts`, `./toki.config.js`, `./toki.config.mjs` in CWD
- * 3. `./tokenwright.config.ts` (legacy fallback)
  *
  * Config values are merged with CLI flags — CLI flags take precedence.
  */
@@ -21,7 +20,6 @@ const CONFIG_FILENAMES = [
   "toki.config.ts",
   "toki.config.js",
   "toki.config.mjs",
-  "tokenwright.config.ts",
 ] as const;
 
 const jiti = createJiti(process.cwd(), { interopDefault: true });

@@ -38,6 +38,7 @@
     "prepublishOnly": "pnpm clean && pnpm typecheck && pnpm lint && pnpm test && pnpm build"
   },
   "dependencies": {
+    "chokidar": "^5.0.0",
     "commander": "^13.1.0",
     "jiti": "^2.4.2"
   },
