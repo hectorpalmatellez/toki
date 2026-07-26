@@ -29,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Import from Style Dictionary** — `toki import --from style-dictionary`
 - **Import from Figma Tokens Studio** — `toki import --from figma-tokens`
 - **JSON Schema** — `schema/toki-input.json` for IDE autocomplete and validation
-- **CI workflows** — GitHub Actions and Google Cloud Build example configurations
 - **Benchmark suite** — performance measurements for 500, 1000, and 5000 token sets
 - **npm publish setup** — `bin`, `files`, `prepublishOnly` script, `.npmignore`
 - **Interactive TUI mode** — running `toki` with no arguments opens an interactive menu

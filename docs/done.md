@@ -114,14 +114,14 @@ This file records tasks that have been completed and removed from [`backlog.md`]
 | #   | Task                                                                                                                                     | Type  | Est. | Notes                                                                                                                                                                                                                                                           |
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 4.5 | JSON Schema publication: generate and publish `schema/toki-input.json` — IDE autocomplete and VS Code validation. Referenced from README | Infra | 2h   | `schema/toki-input.json` covers the full W3C DTCG spec: 13 token types, recursive group/token definitions, optional `$description`/`$extensions`. Includes `$schema` reference and `$id`. Referenced in README under a new "JSON Schema" section.               |
-| 4.6 | CI integration documentation: GitHub Actions and Google Cloud Build example workflows                                                    | Docs  | 2h   | `.github/workflows/ci.yml` — Node 24, pnpm, typecheck → lint → test → build. `.github/workflows/cloud-build.yml` — same pipeline with GCB-native alternatives documented in comments.                                                                           |
+| 4.6 | CI integration documentation                                                                                                          | Docs  | 0h   | Skipped — user opted out of CI/CD workflows.                                                                                                                                                                                                                    |
 | 4.7 | Performance benchmarking: Vitest benchmark suite — 500/1000/5000 tokens across all 7 generators                                          | Test  | 2h   | `src/core/benchmark.test.ts` (9 tests) — generates synthetic token sets (color + dimension) with 5-iteration warmup and p95 percentile assertions. Thresholds: parse/resolve <100ms (≤1k) / <200ms (5k), generate <500ms (≤1k) / <2000ms (5k). 281 total tests. |
 | 4.8 | npm publish preparation: `package.json` `bin`/`files` verified, `.npmignore`, `prepublishOnly` script, `CHANGELOG.md`                    | Infra | 2h   | `bin.toki` and `files` (dist, schema) already present. `prepublishOnly` runs clean → typecheck → lint → test → build. `.npmignore` excludes src, docs, tool configs. `CHANGELOG.md` follows Keep a Changelog with all features listed under 0.1.0.              |
 
 ### Phase 4 Exit Criteria — all satisfied
 
 - [x] JSON Schema is valid and referenced in README
-- [x] CI example workflows run successfully (GitHub Actions + Google Cloud Build)
+- [ ] CI example workflows — skipped (user opted out of CI/CD)
 - [x] Benchmark shows <2000ms for 5000 tokens across 7 platforms (p95)
 - [x] `npm publish` is possible (private registry or public when ready)
 - [x] 281 tests pass (7 new benchmark tests)
@@ -138,15 +138,15 @@ This file records tasks that have been completed and removed from [`backlog.md`]
 | 5.2 | Add `"sideEffects": false` to `package.json`                                                                               | Infra   | 0.1h | Set `sideEffects: false` for tree-shaking compatibility.                                                                                                                  |
 | 5.3 | Create `CONTRIBUTING.md` with setup, testing, and PR guidelines                                                            | Docs    | 1h   | `CONTRIBUTING.md` covers setup, dev workflow (test, lint, format), code conventions, adding generators, and PR guidelines.                                                |
 | 5.4 | Create `CODE_OF_CONDUCT.md` (Contributor Covenant)                                                                         | Docs    | 0.5h | `CODE_OF_CONDUCT.md` — Contributor Covenant v2.1 with project maintainer contact.                                                                                         |
-| 5.5 | Add `npm pack` verification to CI (check published files)                                                                  | Infra   | 1h   | Added `npm pack --dry-run` step to GitHub Actions CI to verify the tarball includes only the expected files.                                                              |
-| 5.6 | Add security policy (`SECURITY.md`) + `npm audit` to CI                                                                    | Infra   | 1h   | `SECURITY.md` created with supported versions and reporting process. `npm audit` step added to CI workflow.                                                               |
+| 5.5 | Add `npm pack` verification (check published files)                                                                        | Infra   | 1h   | Added `npm pack --dry-run` step to CI (later removed when CI was dropped). Can be verified manually before publish.                                                         |
+| 5.6 | Add security policy (`SECURITY.md`) + `npm audit`                                                                          | Infra   | 1h   | `SECURITY.md` created with supported versions and reporting process. `npm audit` can be run manually.                                                                      |
 | 5.7 | Publish v0.1.0 to npm                                                                                                      | Release | 0.5h | Published to npm registry as `toki`. Binaries available via `npx toki` or `npm install -g toki`.                                                                          |
 
 ### Phase 5 Exit Criteria — all satisfied
 
 - [x] `package.json` has complete metadata (repository, homepage, bugs, sideEffects)
 - [x] CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md published
-- [x] CI verifies `npm pack` output and runs `npm audit`
+- [ ] CI verification — skipped (user opted out of CI/CD; `npm pack --dry-run` and `npm audit` can be run manually)
 - [x] Package published to npm registry
 - [x] All 282 tests pass
 - [x] Zero TypeScript errors, zero lint warnings

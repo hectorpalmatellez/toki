@@ -1,4 +1,3 @@
-.github
 .nvmrc
 src
 tsup.config.ts
