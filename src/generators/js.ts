@@ -23,6 +23,7 @@ import type {
 import { GeneratorError } from "../utils/errors.js";
 import { toCamelCase } from "../utils/naming.js";
 import { headerComment } from "../utils/format.js";
+import { platformReadme } from "./readme.js";
 
 /** JS reserved words that cannot be used as binding identifiers. */
 const RESERVED_WORDS: ReadonlySet<string> = new Set([
@@ -75,7 +76,8 @@ const RESERVED_WORDS: ReadonlySet<string> = new Set([
   "static",
 ]);
 
-const makeIdentifier = (path: readonly string[]): string => {
+/** Derive a safe camelCase JS identifier from a token path. */
+export const makeIdentifier = (path: readonly string[]): string => {
   let id = toCamelCase(path);
   if (id.length === 0) id = "token";
   if (/^[0-9]/.test(id)) id = `_${id}`;
@@ -103,9 +105,7 @@ export const inferJsType = (value: unknown): string => {
   if (value !== null && typeof value === "object") {
     const obj = value as Record<string, unknown>;
     const keys = Object.keys(obj).toSorted();
-    const props = keys
-      .map((k) => `${JSON.stringify(k)}: ${inferJsType(obj[k])}`)
-      .join("; ");
+    const props = keys.map((k) => `${JSON.stringify(k)}: ${inferJsType(obj[k])}`).join("; ");
     return `{ readonly ${props} }`;
   }
   return "unknown";
@@ -163,5 +163,6 @@ const generateJs = (
   return [
     { relativePath: "js/tokens.js", format: "js", content: jsContent },
     { relativePath: "js/tokens.d.ts", format: "js", content: dtsContent },
+    { relativePath: "js/README.md", format: "js", content: platformReadme("js", options.version) },
   ];
 };

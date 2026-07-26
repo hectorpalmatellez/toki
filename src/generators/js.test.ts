@@ -54,7 +54,7 @@ describe("js generator", () => {
     const { js, dts } = generate({
       default: { $value: "#ffffff", $type: "color" },
     });
-    expect(js).toContain("export const default_ = \"#ffffff\";");
+    expect(js).toContain('export const default_ = "#ffffff";');
     expect(dts).toContain("export declare const default_: string;");
   });
 
@@ -102,9 +102,29 @@ describe("js generator", () => {
       { version: "0.1.0" },
     );
     expect(artifacts.map((a) => a.relativePath).sort()).toEqual([
+      "js/README.md",
       "js/tokens.d.ts",
       "js/tokens.js",
     ]);
+  });
+});
+
+describe("js generator — snapshots", () => {
+  it("matches the tokens.js and tokens.d.ts snapshots", () => {
+    const { js, dts } = generate({
+      color: {
+        $type: "color",
+        primary: { $value: "#1a73e8" },
+        secondary: { $value: "{color.primary}" },
+      },
+      spacing: { $type: "dimension", small: { $value: "8px" }, medium: { $value: "16px" } },
+      shadow: {
+        $type: "shadow",
+        sm: { $value: { x: 0, y: 4, blur: 8, color: "rgba(0,0,0,0.25)" } },
+      },
+    });
+    expect(js).toMatchSnapshot();
+    expect(dts).toMatchSnapshot();
   });
 });
 

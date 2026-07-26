@@ -22,6 +22,7 @@ import type {
 } from "../core/types.js";
 import { toKebabCase } from "../utils/naming.js";
 import { headerComment } from "../utils/format.js";
+import { platformReadme } from "./readme.js";
 
 /** Format a resolved token value as a CSS custom-property value. */
 export const formatCssValue = (token: ResolvedToken): string | undefined => {
@@ -104,14 +105,26 @@ export const cssGenerator: Generator = {
     _options: GeneratorOptions,
   ): readonly OutputArtifact[] => {
     // Unused parameter names prefixed with `_` to satisfy no-unused-vars.
-    return generateCss(_tokens, _options);
+    return [
+      {
+        relativePath: "css/tokens.css",
+        format: "css",
+        content: renderCssCustomProperties(_tokens, _options),
+      },
+      {
+        relativePath: "css/README.md",
+        format: "css",
+        content: platformReadme("css", _options.version),
+      },
+    ];
   },
 };
 
-const generateCss = (
+/** Render the `:root { --kebab-case: value; }` stylesheet shared by CSS-based formats. */
+export const renderCssCustomProperties = (
   tokens: readonly ResolvedToken[],
   options: GeneratorOptions,
-): readonly OutputArtifact[] => {
+): string => {
   const lines: string[] = [headerComment(options.version), ""];
 
   const declarations: string[] = [];
@@ -130,11 +143,5 @@ const generateCss = (
   }
   lines.push("");
 
-  return [
-    {
-      relativePath: "css/tokens.css",
-      format: "css",
-      content: lines.join("\n"),
-    },
-  ];
+  return lines.join("\n");
 };
