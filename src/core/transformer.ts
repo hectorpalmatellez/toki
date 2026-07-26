@@ -23,12 +23,9 @@
  * unit tests), because transformers for `css`/`js` are effectively identity.
  */
 
-import type { OutputFormat, ResolvedToken, TokenType, TokenValue } from "./types.js";
+import type { OutputFormat, ResolvedToken, TokenType, TokenValue, TransformContext } from "./types.js";
 
-/** Context passed to a transformer: which platform the value is bound for. */
-export interface TransformContext {
-  readonly platform: OutputFormat;
-}
+export type { TransformContext } from "./types.js";
 
 /** A value transformer: maps a resolved token to its platform value. */
 export type TransformFn = (token: ResolvedToken, context: TransformContext) => TokenValue;
