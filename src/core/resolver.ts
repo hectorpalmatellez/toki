@@ -31,6 +31,12 @@ import type {
 } from "./types.js";
 import { CircularReferenceError, MissingReferenceError, TokenTypeError } from "../utils/errors.js";
 
+/** Options for the resolver, including optional verbose trace output. */
+export interface ResolveOptions {
+  /** Callback for trace messages during resolution (verbose mode). */
+  readonly trace?: (message: string) => void;
+}
+
 /** Matches a single reference token `{path.to.token}`. */
 const PURE_REF = /^\{([^{}]+)\}$/;
 /** Matches all reference occurrences embedded in a string (global). */
@@ -247,13 +253,19 @@ const substitute = (
  * Resolve a parsed {@link DesignTokenDocument} into a flat list of
  * {@link ResolvedToken}s in document order.
  */
-export const resolveDocument = (doc: DesignTokenDocument): readonly ResolvedToken[] => {
+export const resolveDocument = (
+  doc: DesignTokenDocument,
+  options?: ResolveOptions,
+): readonly ResolvedToken[] => {
+  const trace = options?.trace;
   const leaves = collectLeaves(doc);
+  trace?.(`collected ${leaves.length} leaf token${leaves.length === 1 ? "" : "s"}`);
   const { deps, byId } = buildDependencyGraph(leaves);
   const orderedIds = topoSort(
     leaves.map((l) => l.id),
     deps,
   );
+  trace?.(`resolved order: ${orderedIds.join(", ")}`);
 
   const resolvedValues = new Map<string, TokenValue>();
   for (const id of orderedIds) {
@@ -264,6 +276,10 @@ export const resolveDocument = (doc: DesignTokenDocument): readonly ResolvedToke
   // Emit in document order for deterministic generator output.
   return leaves.map<ResolvedToken>((leaf) => {
     const value = resolvedValues.get(leaf.id)!;
+    if (trace) {
+      const display = typeof value === "string" ? value : JSON.stringify(value);
+      trace(`  resolved "${leaf.id}" (${leaf.type}) → ${display}`);
+    }
     const resolved: ResolvedToken = Object.freeze({
       path: leaf.path,
       id: leaf.id,
@@ -278,8 +294,10 @@ export const resolveDocument = (doc: DesignTokenDocument): readonly ResolvedToke
 };
 
 /** Parse + resolve convenience helper. */
-export const resolveTree = (doc: DesignTokenDocument): readonly ResolvedToken[] =>
-  resolveDocument(doc);
+export const resolveTree = (
+  doc: DesignTokenDocument,
+  options?: ResolveOptions,
+): readonly ResolvedToken[] => resolveDocument(doc, options);
 
 /** Re-export for tests / external use. */
 export type { TokenTree };
