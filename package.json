@@ -69,11 +69,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anomalyco/toki.git"
+    "url": "git+https://github.com/hectorpalmatellez/toki.git"
   },
-  "homepage": "https://github.com/anomalyco/toki#readme",
+  "homepage": "https://github.com/hectorpalmatellez/toki#readme",
   "bugs": {
-    "url": "https://github.com/anomalyco/toki/issues"
+    "url": "https://github.com/hectorpalmatellez/toki/issues"
   },
   "sideEffects": false,
   "author": "Héctor Palma Téllez",

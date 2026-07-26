@@ -35,4 +35,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Community documentation** — CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md
 - **README refactor** — split into focused docs: `docs/usage.md`, `docs/output.md`, `docs/architecture.md`
 
-[1.0.0]: https://github.com/anomalyco/toki/releases/tag/v1.0.0
+[1.0.0]: https://github.com/hectorpalmatellez/toki/releases/tag/v1.0.0
