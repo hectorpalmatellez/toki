@@ -6,6 +6,8 @@
  * returns a single identifier in the target case.
  */
 
+import type { NamingConvention } from "../core/types.js";
+
 const isWordBoundary = (ch: string): boolean => ch === "-" || ch === "_" || ch === "." || ch === " ";
 
 const splitWords = (input: string): readonly string[] => {
@@ -64,3 +66,22 @@ export const toPascalCase = (path: readonly string[]): string =>
     .flatMap((segment) => splitWords(segment) as string[])
     .map((word) => word[0]!.toUpperCase() + word.slice(1).toLowerCase())
     .join("");
+
+/** SCREAMING_SNAKE_CASE is an alias for CONSTANT_CASE (identical output). */
+export const toScreamingSnakeCase = toConstantCase;
+
+/** Map a naming convention string to its corresponding conversion function. */
+export const getNamingFunction = (
+  convention: NamingConvention,
+): ((path: readonly string[]) => string) => {
+  switch (convention) {
+    case "camelCase":
+      return toCamelCase;
+    case "kebab-case":
+      return toKebabCase;
+    case "CONSTANT_CASE":
+      return toConstantCase;
+    case "SCREAMING_SNAKE_CASE":
+      return toScreamingSnakeCase;
+  }
+};
