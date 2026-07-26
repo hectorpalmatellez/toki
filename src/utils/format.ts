@@ -54,3 +54,22 @@ const sortKeys = (value: unknown): unknown => {
 
 /** Join a path array into a dotted identifier. */
 export const joinPath = (path: readonly string[]): string => path.join(".");
+
+/**
+ * Insert a theme suffix into a relative file path.
+ * `"css/tokens.css"` + theme `"light"` → `"css/tokens.light.css"`
+ * README files are not themed (returned as-is).
+ */
+export const themePath = (relativePath: string, theme: string): string => {
+  if (relativePath.endsWith("/README.md")) return relativePath;
+  const lastSlash = relativePath.lastIndexOf("/");
+  const dir = lastSlash >= 0 ? relativePath.slice(0, lastSlash + 1) : "";
+  const file = lastSlash >= 0 ? relativePath.slice(lastSlash + 1) : relativePath;
+  // For compound extensions like ".d.ts", insert before the first dot.
+  // For simple extensions like ".css", insert before the only dot.
+  const firstDot = file.indexOf(".");
+  if (firstDot <= 0) return `${dir}${file}.${theme}`;
+  const name = file.slice(0, firstDot);
+  const ext = file.slice(firstDot);
+  return `${dir}${name}.${theme}${ext}`;
+};
