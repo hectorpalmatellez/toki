@@ -5,6 +5,15 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] — 2026-07-26
+
+### Changed
+
+- **Re-scoped package** to `@hectorpalmatellez/toki` — CLI binary unchanged (`toki`)
+- **Updated repository URLs** to `github.com/hectorpalmatellez/toki`
+- **Removed CI/CD workflows** (`.github/`) — project uses manual verification
+- **Cleaned up docs** — `docs/done.md` reflects removed CI tasks
+
 ## [1.0.0] — 2026-07-26
 
 ### Added
