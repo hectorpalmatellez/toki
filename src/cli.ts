@@ -80,7 +80,7 @@ program
   .requiredOption("-o, --output <path>", "Output directory for generated artifacts")
   .option(
     "-f, --format <formats...>",
-    "Output formats (comma-separated or space-separated)",
+    'Output formats (comma- or space-separated; "all" for every platform)',
     ["css", "js"],
   )
   .option("--no-clean", "Do not clean output subdirectories before writing")
@@ -100,7 +100,7 @@ program
         process.exitCode = 1;
         return;
       }
-      console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+      console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
       process.exitCode = 1;
     }
   });
