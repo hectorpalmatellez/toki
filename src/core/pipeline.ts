@@ -5,7 +5,14 @@
  * pipeline can run entirely in memory — this is what tests do.
  */
 
-import type { DesignTokenDocument, OutputArtifact, OutputFormat, ResolvedToken } from "./types.js";
+import type {
+  DesignTokenDocument,
+  NamingConvention,
+  OutputArtifact,
+  OutputFormat,
+  ResolvedToken,
+  TransformPlugin,
+} from "./types.js";
 import { parseTokenDocument } from "./parser.js";
 import { readTokenFile } from "./parser.js";
 import { resolveDocument } from "./resolver.js";
@@ -17,6 +24,12 @@ export interface BuildOptions {
   readonly input: string;
   readonly formats: readonly OutputFormat[];
   readonly verbose?: boolean;
+  /** Theme name for single-theme builds (affects output file naming). */
+  readonly theme?: string;
+  /** Per-format naming convention overrides from config. */
+  readonly naming?: Partial<Record<OutputFormat, NamingConvention>>;
+  /** Custom transform plugins applied after built-in platform transforms. */
+  readonly transforms?: readonly TransformPlugin[];
 }
 
 export interface BuildResult {
@@ -27,35 +40,75 @@ export interface BuildResult {
 
 /** Parse + resolve + generate, returning artifacts (no disk I/O). */
 export const runPipeline = async (options: BuildOptions): Promise<BuildResult> => {
+  const trace = options.verbose
+    ? (msg: string): void => {
+        console.log(`  ${msg}`);
+      }
+    : undefined;
   const raw = await readTokenFile(options.input);
   const doc = parseTokenDocument(raw, options.input);
-  const tokens = resolveDocument(doc);
-  return generate(tokens, options.formats);
+  const tokens = resolveDocument(doc, trace !== undefined ? { trace } : undefined);
+  return generate(tokens, {
+    formats: options.formats,
+    ...(options.theme !== undefined ? { theme: options.theme } : {}),
+    ...(options.naming !== undefined ? { naming: options.naming } : {}),
+    ...(options.transforms !== undefined ? { transforms: options.transforms } : {}),
+  });
 };
 
 /** Re-run generation from an already-parsed document (used by tests). */
 export const generateFromDocument = (
   doc: DesignTokenDocument,
   formats: readonly OutputFormat[],
-): BuildResult => generate(resolveDocument(doc), formats);
+): BuildResult => generate(resolveDocument(doc), { formats });
+
+/** Apply custom transform plugins after built-in platform transforms. */
+const applyCustomTransforms = (
+  tokens: readonly ResolvedToken[],
+  plugins: readonly TransformPlugin[],
+  platform: OutputFormat,
+): readonly ResolvedToken[] => {
+  if (plugins.length === 0) return tokens;
+  let result = tokens;
+  for (const plugin of plugins) {
+    result = result.map((token) => plugin(token, { platform }));
+  }
+  return result;
+};
+
+/** Options for the in-memory generate function. */
+export interface GenerateOptions {
+  readonly formats: readonly OutputFormat[];
+  readonly theme?: string;
+  readonly naming?: Partial<Record<OutputFormat, NamingConvention>>;
+  readonly transforms?: readonly TransformPlugin[];
+}
 
 /** Re-run generation from already-resolved tokens. */
 export const generate = (
   tokens: readonly ResolvedToken[],
-  formats: readonly OutputFormat[],
+  options: GenerateOptions,
 ): BuildResult => {
   const artifacts: OutputArtifact[] = [];
-  for (const format of formats) {
+  for (const format of options.formats) {
     const generator = getGenerator(format);
     // Transform stage: normalize values for the target platform before
     // generation (e.g. "8px" → 8 for react-native).
-    const transformed = transformTokens(tokens, format);
-    artifacts.push(...generator.generate(transformed, { version: TOKI_VERSION }));
+    let transformed = transformTokens(tokens, format);
+    // Apply custom transform plugins after built-in transforms.
+    transformed = applyCustomTransforms(transformed, options.transforms ?? [], format);
+    const naming = options.naming?.[format];
+    const generatorOptions = {
+      version: TOKI_VERSION,
+      ...(options.theme !== undefined ? { theme: options.theme } : {}),
+      ...(naming !== undefined ? { naming } : {}),
+    };
+    artifacts.push(...generator.generate(transformed, generatorOptions));
   }
   // Deterministic artifact ordering: sort by relativePath so output
   // enumeration (and any future manifest) is byte-stable.
   const sortedArtifacts = artifacts.toSorted((a, b) =>
     a.relativePath < b.relativePath ? -1 : a.relativePath > b.relativePath ? 1 : 0,
   );
-  return { artifacts: sortedArtifacts, tokenCount: tokens.length, formats };
+  return { artifacts: sortedArtifacts, tokenCount: tokens.length, formats: options.formats };
 };
