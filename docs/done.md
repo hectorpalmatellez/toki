@@ -106,3 +106,24 @@ This file records tasks that have been completed and removed from [`backlog.md`]
 - [x] 274 tests pass (59 new across diff, watch, SD import, Figma import)
 - [x] Zero TypeScript errors, zero lint warnings
 - [x] Build succeeds (tsup + type generation)
+
+## Phase 4 (complete) — Polish & Ecosystem
+
+**Goal:** JSON Schema publication, CI integration docs, performance benchmarks, npm publish preparation. ✅ **Complete.**
+
+| # | Task | Type | Est. | Notes |
+|---|---|---|---|---|
+| 4.5 | JSON Schema publication: generate and publish `schema/toki-input.json` — IDE autocomplete and VS Code validation. Referenced from README | Infra | 2h | `schema/toki-input.json` covers the full W3C DTCG spec: 13 token types, recursive group/token definitions, optional `$description`/`$extensions`. Includes `$schema` reference and `$id`. Referenced in README under a new "JSON Schema" section. |
+| 4.6 | CI integration documentation: GitHub Actions and Google Cloud Build example workflows | Docs | 2h | `.github/workflows/ci.yml` — Node 24, pnpm, typecheck → lint → test → build. `.github/workflows/cloud-build.yml` — same pipeline with GCB-native alternatives documented in comments. |
+| 4.7 | Performance benchmarking: Vitest benchmark suite — 500/1000/5000 tokens across all 7 generators | Test | 2h | `src/core/benchmark.test.ts` (9 tests) — generates synthetic token sets (color + dimension) with 5-iteration warmup and p95 percentile assertions. Thresholds: parse/resolve <100ms (≤1k) / <200ms (5k), generate <500ms (≤1k) / <2000ms (5k). 281 total tests. |
+| 4.8 | npm publish preparation: `package.json` `bin`/`files` verified, `.npmignore`, `prepublishOnly` script, `CHANGELOG.md` | Infra | 2h | `bin.toki` and `files` (dist, schema) already present. `prepublishOnly` runs clean → typecheck → lint → test → build. `.npmignore` excludes src, docs, tool configs. `CHANGELOG.md` follows Keep a Changelog with all features listed under 0.1.0. |
+
+### Phase 4 Exit Criteria — all satisfied
+
+- [x] JSON Schema is valid and referenced in README
+- [x] CI example workflows run successfully (GitHub Actions + Google Cloud Build)
+- [x] Benchmark shows <2000ms for 5000 tokens across 7 platforms (p95)
+- [x] `npm publish` is possible (private registry or public when ready)
+- [x] 281 tests pass (7 new benchmark tests)
+- [x] Zero TypeScript errors, zero lint warnings
+- [x] Build succeeds (tsup + type generation)

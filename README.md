@@ -10,9 +10,9 @@ Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates 
 
 ## Status
 
-**Phase 3 (Configuration & Multi-Theme) complete.**
+**Phase 4 (Polish & Ecosystem) complete.**
 
-`toki build` parses W3C DTCG tokens, resolves `{group.token}` references (with circular-dependency detection), applies `$type` inheritance, transforms values per platform, and generates deterministic artifacts for all seven output formats. Config file support, multi-theme output, naming transforms, custom transform plugins, and verbose debug mode are fully implemented. Watch mode, diff tooling, and ecosystem integration are tracked in [`docs/backlog.md`](./docs/backlog.md). Completed tasks are recorded in [`docs/done.md`](./docs/done.md).
+Toki is a production-ready design token pipeline. `toki build` parses W3C DTCG tokens, resolves `{group.token}` references (with circular-dependency detection), applies `$type` inheritance, transforms values per platform, and generates deterministic artifacts for all seven output formats. Watch mode, diff tooling, ecosystem imports, JSON Schema, CI workflows, and benchmark infrastructure are all implemented. Completed tasks are recorded in [`docs/done.md`](./docs/done.md).
 
 ## Features
 
@@ -136,6 +136,20 @@ dist/
 | `-t, --theme <name>` | Build a single theme from multi-theme config | all themes |
 | `--clean` / `--no-clean` | Clean the target platform subdirectories before writing | `true` |
 | `--verbose` | Print resolution trace, per-token values, and timing | `false` |
+
+### JSON Schema
+
+Toki publishes a [JSON Schema](schema/toki-input.json) for W3C DTCG input files. If your editor supports JSON Schema (VS Code, JetBrains, etc.), you get autocompletion and validation:
+
+```json
+{
+  "$schema": "https://toki.design/schema/toki-input.json",
+  "color": {
+    "$type": "color",
+    "primary": { "$value": "#1a73e8" }
+  }
+}
+```
 
 ### Errors
 
@@ -499,6 +513,7 @@ pnpm lint:fix     # oxlint src/ --fix
 pnpm format       # prettier --write 'src/**/*.ts'
 pnpm format:check # prettier --check 'src/**/*.ts'
 pnpm test         # vitest run
+pnpm bench        # vitest bench  (performance benchmarks)
 pnpm test:watch   # vitest
 pnpm test:coverage # vitest run --coverage
 pnpm build        # tsup + build:types (bundling + .d.ts generation)
@@ -543,7 +558,7 @@ See [`docs/backlog.md`](./docs/backlog.md) for the phased roadmap:
 - **Phase 1 — Foundation:** parser, resolver, CSS + JS generators, CLI ✅
 - **Phase 2 — Multi-Platform:** transformers, RN, Angular (latest + v11), Svelte, React/Next.js ✅
 - **Phase 3 — Config & Multi-Theme:** config file, naming transforms, plugin API, verbose mode ✅
-- **Phase 4 — Polish & Ecosystem:** watch mode, diff tooling, imports, JSON schema, CI
+- **Phase 4 — Polish & Ecosystem:** watch mode, diff tooling, imports, JSON schema, CI ✅
 
 ## Resources
 

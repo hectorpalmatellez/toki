@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://toki.design/schema/toki-input.json",
+  "title": "Toki Input Schema",
+  "description": "JSON Schema for W3C DTCG design token files consumed by Toki. Documents must be a top-level group object (never a bare token).",
+  "type": "object",
+  "properties": {
+    "$type": {
+      "$ref": "#/definitions/tokenType"
+    },
+    "$description": {
+      "type": "string",
+      "description": "Description of this token group"
+    },
+    "$extensions": {
+      "type": "object",
+      "description": "Vendor-extensible metadata"
+    }
+  },
+  "additionalProperties": {
+    "$ref": "#/definitions/tokenOrGroup"
+  },
+  "not": {
+    "required": ["$value"],
+    "description": "Top-level document must be a group, not a token"
+  },
+  "definitions": {
+    "tokenType": {
+      "type": "string",
+      "enum": [
+        "color",
+        "dimension",
+        "fontFamily",
+        "fontWeight",
+        "duration",
+        "cubicBezier",
+        "number",
+        "lineHeight",
+        "letterSpacing",
+        "shadow",
+        "typography",
+        "border",
+        "transition"
+      ],
+      "description": "Design token type per W3C DTCG spec"
+    },
+    "tokenValue": {
+      "description": "A design token value. May be a primitive, composite object, or array. References are plain strings matching {group.token}.",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/tokenValue"
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/tokenValue"
+          }
+        }
+      ]
+    },
+    "token": {
+      "type": "object",
+      "description": "A leaf design token carrying a $value and optional metadata",
+      "properties": {
+        "$value": {
+          "$ref": "#/definitions/tokenValue"
+        },
+        "$type": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "$description": {
+          "type": "string"
+        },
+        "$extensions": {
+          "type": "object"
+        }
+      },
+      "required": ["$value"],
+      "additionalProperties": false
+    },
+    "group": {
+      "type": "object",
+      "description": "A group node that contains child tokens or nested groups",
+      "properties": {
+        "$type": {
+          "$ref": "#/definitions/tokenType"
+        },
+        "$description": {
+          "type": "string"
+        },
+        "$extensions": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/tokenOrGroup"
+      }
+    },
+    "tokenOrGroup": {
+      "description": "A child node: either a leaf token (has $value) or a group (has children)",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/token"
+        },
+        {
+          "$ref": "#/definitions/group"
+        }
+      ]
+    }
+  }
+}
