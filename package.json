@@ -32,13 +32,14 @@
     "bench": "vitest bench",
     "lint": "oxlint src/",
     "lint:fix": "oxlint src/ --fix",
-    "format": "prettier --write 'src/**/*.ts'",
-    "format:check": "prettier --check 'src/**/*.ts'",
+    "format": "prettier --write 'src/**/*.ts' '*.md' 'docs/*.md'",
+    "format:check": "prettier --check 'src/**/*.ts' '*.md' 'docs/*.md'",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
     "prepublishOnly": "pnpm clean && pnpm typecheck && pnpm lint && pnpm test && pnpm build"
   },
   "dependencies": {
+    "@clack/prompts": "^1.7.0",
     "chokidar": "^5.0.0",
     "commander": "^13.1.0",
     "jiti": "^2.4.2"
@@ -63,6 +64,15 @@
     "react-native",
     "design-system"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anomalyco/toki.git"
+  },
+  "homepage": "https://github.com/anomalyco/toki#readme",
+  "bugs": {
+    "url": "https://github.com/anomalyco/toki/issues"
+  },
+  "sideEffects": false,
   "author": "Héctor Palma Téllez",
   "license": "MIT"
 }

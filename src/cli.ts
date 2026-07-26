@@ -10,19 +10,19 @@
  * unknown errors surface their stack under `--verbose`.
  */
 
-import { Command } from "commander";
-import { runPipeline } from "./core/pipeline.js";
-import { writeArtifacts } from "./utils/writer.js";
-import { parseFormats } from "./generators/index.js";
-import { TOKI_VERSION } from "./version.js";
-import { TokiError } from "./utils/errors.js";
-import { loadConfig, mergeConfig } from "./core/config.js";
-import { writeFileSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
-import { runDiff, formatDiffTerminal, formatDiffJson } from "./core/diff.js";
-import { startWatch } from "./core/watch.js";
-import { importStyleDictionary } from "./importers/style-dictionary.js";
-import { importFigmaTokens } from "./importers/figma-tokens.js";
+import { Command } from 'commander';
+import { runPipeline } from './core/pipeline.js';
+import { writeArtifacts } from './utils/writer.js';
+import { parseFormats } from './generators/index.js';
+import { TOKI_VERSION } from './version.js';
+import { TokiError } from './utils/errors.js';
+import { loadConfig, mergeConfig } from './core/config.js';
+import { writeFileSync, existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { runDiff, formatDiffTerminal, formatDiffJson } from './core/diff.js';
+import { startWatch } from './core/watch.js';
+import { importStyleDictionary } from './importers/style-dictionary.js';
+import { importFigmaTokens } from './importers/figma-tokens.js';
 
 const buildCommand = async (options: {
   input?: string;
@@ -46,29 +46,27 @@ const buildCommand = async (options: {
   if (options.verbose) {
     console.log(`toki v${TOKI_VERSION}`);
     if (options.config ?? config !== undefined) {
-      console.log(`  config: ${options.config ?? "discovered"}`);
+      console.log(`  config: ${options.config ?? 'discovered'}`);
     }
     console.log(`  input:  ${resolved.input}`);
     console.log(`  output: ${resolved.output}`);
-    console.log(`  formats: ${formats.join(", ")}`);
+    console.log(`  formats: ${formats.join(', ')}`);
     if (resolved.themes !== undefined) {
-      console.log(`  themes: ${Object.keys(resolved.themes).join(", ")}`);
+      console.log(`  themes: ${Object.keys(resolved.themes).join(', ')}`);
     }
   }
 
   // Multi-theme: if config has themes, build each one separately.
   const themes = resolved.themes;
   if (themes !== undefined && Object.keys(themes).length > 0) {
-    const themeNames = options.theme
-      ? [options.theme]
-      : Object.keys(themes);
+    const themeNames = options.theme ? [options.theme] : Object.keys(themes);
 
     for (const themeName of themeNames) {
       const tokenFile = themes[themeName];
       if (tokenFile === undefined) {
         throw new TokiError(
-          `Unknown theme "${themeName}". Available: ${Object.keys(themes).join(", ")}`,
-          "CONFIG_ERROR",
+          `Unknown theme "${themeName}". Available: ${Object.keys(themes).join(', ')}`,
+          'CONFIG_ERROR',
         );
       }
 
@@ -88,7 +86,9 @@ const buildCommand = async (options: {
       const elapsed = performance.now() - start;
 
       if (options.verbose) {
-        console.log(`  resolved ${result.tokenCount} token${result.tokenCount === 1 ? "" : "s"} in ${elapsed.toFixed(1)}ms`);
+        console.log(
+          `  resolved ${result.tokenCount} token${result.tokenCount === 1 ? '' : 's'} in ${elapsed.toFixed(1)}ms`,
+        );
       }
 
       const writeResult = await writeArtifacts(resolved.output, result.artifacts, {
@@ -96,8 +96,8 @@ const buildCommand = async (options: {
       });
 
       console.log(
-        `Built ${writeResult.written.length} artifact${writeResult.written.length === 1 ? "" : "s"}` +
-          ` from ${result.tokenCount} token${result.tokenCount === 1 ? "" : "s"}` +
+        `Built ${writeResult.written.length} artifact${writeResult.written.length === 1 ? '' : 's'}` +
+          ` from ${result.tokenCount} token${result.tokenCount === 1 ? '' : 's'}` +
           ` [theme: ${themeName}] → ${resolved.output}`,
       );
       for (const path of writeResult.written) {
@@ -117,7 +117,9 @@ const buildCommand = async (options: {
     const elapsed = performance.now() - start;
 
     if (options.verbose) {
-      console.log(`  resolved ${result.tokenCount} token${result.tokenCount === 1 ? "" : "s"} in ${elapsed.toFixed(1)}ms`);
+      console.log(
+        `  resolved ${result.tokenCount} token${result.tokenCount === 1 ? '' : 's'} in ${elapsed.toFixed(1)}ms`,
+      );
     }
 
     const writeResult = await writeArtifacts(resolved.output, result.artifacts, {
@@ -125,8 +127,8 @@ const buildCommand = async (options: {
     });
 
     console.log(
-      `Built ${writeResult.written.length} artifact${writeResult.written.length === 1 ? "" : "s"}` +
-        ` from ${result.tokenCount} token${result.tokenCount === 1 ? "" : "s"} → ${resolved.output}`,
+      `Built ${writeResult.written.length} artifact${writeResult.written.length === 1 ? '' : 's'}` +
+        ` from ${result.tokenCount} token${result.tokenCount === 1 ? '' : 's'} → ${resolved.output}`,
     );
     for (const path of writeResult.written) {
       console.log(`  ${path}`);
@@ -136,50 +138,50 @@ const buildCommand = async (options: {
 
 const SAMPLE_TOKENS = {
   color: {
-    $type: "color",
-    primary: { $value: "#1a73e8", $description: "Primary brand color" },
-    secondary: { $value: "#5f6368", $description: "Secondary text color" },
-    background: { $value: "#ffffff", $description: "Page background" },
+    $type: 'color',
+    primary: { $value: '#1a73e8', $description: 'Primary brand color' },
+    secondary: { $value: '#5f6368', $description: 'Secondary text color' },
+    background: { $value: '#ffffff', $description: 'Page background' },
   },
   spacing: {
-    $type: "dimension",
-    small: { $value: "8px" },
-    medium: { $value: "16px" },
-    large: { $value: "24px" },
-    xlarge: { $value: "32px" },
+    $type: 'dimension',
+    small: { $value: '8px' },
+    medium: { $value: '16px' },
+    large: { $value: '24px' },
+    xlarge: { $value: '32px' },
   },
   typography: {
     heading: {
-      $type: "typography",
+      $type: 'typography',
       heading1: {
         $value: {
-          fontFamily: "Inter, sans-serif",
-          fontSize: "32px",
-          fontWeight: "700",
-          lineHeight: "1.2",
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '32px',
+          fontWeight: '700',
+          lineHeight: '1.2',
         },
-        $description: "Main heading style",
+        $description: 'Main heading style',
       },
       heading2: {
         $value: {
-          fontFamily: "Inter, sans-serif",
-          fontSize: "24px",
-          fontWeight: "600",
-          lineHeight: "1.3",
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '24px',
+          fontWeight: '600',
+          lineHeight: '1.3',
         },
-        $description: "Subheading style",
+        $description: 'Subheading style',
       },
     },
     body: {
-      $type: "typography",
+      $type: 'typography',
       paragraph: {
         $value: {
-          fontFamily: "Inter, sans-serif",
-          fontSize: "16px",
-          fontWeight: "400",
-          lineHeight: "1.5",
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '16px',
+          fontWeight: '400',
+          lineHeight: '1.5',
         },
-        $description: "Body text style",
+        $description: 'Body text style',
       },
     },
   },
@@ -198,50 +200,50 @@ export default config;
 
 const initCommand = async (options: { readonly dir?: string }): Promise<void> => {
   const dir = options.dir ?? process.cwd();
-  const tokenPath = resolve(dir, "tokens.json");
-  const configPath = resolve(dir, "toki.config.ts");
+  const tokenPath = resolve(dir, 'tokens.json');
+  const configPath = resolve(dir, 'toki.config.ts');
 
   if (existsSync(tokenPath)) {
     console.log(`  tokens.json already exists at ${tokenPath}`);
-    console.log("  Skipping token file creation.");
+    console.log('  Skipping token file creation.');
   } else {
-    writeFileSync(tokenPath, JSON.stringify(SAMPLE_TOKENS, null, 2) + "\n", "utf8");
+    writeFileSync(tokenPath, JSON.stringify(SAMPLE_TOKENS, null, 2) + '\n', 'utf8');
     console.log(`  Created ${tokenPath}`);
   }
 
   if (existsSync(configPath)) {
     console.log(`  toki.config.ts already exists at ${configPath}`);
-    console.log("  Skipping config file creation.");
+    console.log('  Skipping config file creation.');
   } else {
-    writeFileSync(configPath, SAMPLE_CONFIG, "utf8");
+    writeFileSync(configPath, SAMPLE_CONFIG, 'utf8');
     console.log(`  Created ${configPath}`);
   }
 
-  console.log("\n  Next steps:");
-  console.log("    npx toki build");
+  console.log('\n  Next steps:');
+  console.log('    npx toki build');
 };
 
 const program = new Command();
 
 program
-  .name("toki")
-  .description("Design token pipeline CLI — W3C DTCG in, framework-specific code out")
+  .name('toki')
+  .description('Design token pipeline CLI — W3C DTCG in, framework-specific code out')
   .version(TOKI_VERSION);
 
 program
-  .command("build")
-  .description("Parse tokens and generate output artifacts")
-  .option("-i, --input <path>", "Path to input token file (W3C DTCG JSON)")
-  .option("-o, --output <path>", "Output directory for generated artifacts")
+  .command('build')
+  .description('Parse tokens and generate output artifacts')
+  .option('-i, --input <path>', 'Path to input token file (W3C DTCG JSON)')
+  .option('-o, --output <path>', 'Output directory for generated artifacts')
   .option(
-    "-f, --format <formats...>",
-    'Output formats (comma- or space-separated; "all" for every platform)',
-    ["css", "js"],
+    '-f, --format <formats...>',
+    'Output formats: css, js, react-native, angular, angular-11, svelte, react (use "all" for every platform; comma- or space-separated)',
+    ['css', 'js'],
   )
-  .option("--no-clean", "Do not clean output subdirectories before writing")
-  .option("--verbose", "Enable verbose output with resolution trace and timing", false)
-  .option("-c, --config <path>", "Path to toki config file")
-  .option("-t, --theme <name>", "Build a single theme from multi-theme config")
+  .option('--no-clean', 'Do not clean output subdirectories before writing')
+  .option('--verbose', 'Enable verbose output with resolution trace and timing', false)
+  .option('-c, --config <path>', 'Path to toki config file')
+  .option('-t, --theme <name>', 'Build a single theme from multi-theme config')
   .action(async (options) => {
     try {
       await buildCommand({
@@ -265,9 +267,9 @@ program
   });
 
 program
-  .command("init")
-  .description("Scaffold a starter project with sample tokens and config")
-  .option("--dir <path>", "Directory to scaffold in (default: current directory)")
+  .command('init')
+  .description('Scaffold a starter project with sample tokens and config')
+  .option('--dir <path>', 'Directory to scaffold in (default: current directory)')
   .action(async (options) => {
     try {
       await initCommand({ dir: options.dir });
@@ -283,11 +285,11 @@ program
   });
 
 program
-  .command("diff")
-  .description("Compare two token files and report added, removed, and changed tokens")
-  .argument("<old>", "Path to the old token file (W3C DTCG JSON)")
-  .argument("<new>", "Path to the new token file (W3C DTCG JSON)")
-  .option("--json", "Output as JSON instead of human-readable text", false)
+  .command('diff')
+  .description('Compare two token files and report added, removed, and changed tokens')
+  .argument('<old>', 'Path to the old token file (W3C DTCG JSON)')
+  .argument('<new>', 'Path to the new token file (W3C DTCG JSON)')
+  .option('--json', 'Output as JSON instead of human-readable text', false)
   .action(async (oldPath: string, newPath: string, options: { json: boolean }) => {
     try {
       const result = await runDiff(oldPath, newPath);
@@ -298,7 +300,7 @@ program
         console.log(output);
         const total = result.added.length + result.removed.length + result.changed.length;
         if (total > 0) {
-          console.log(`\n  ${total} difference${total === 1 ? "" : "s"} found.`);
+          console.log(`\n  ${total} difference${total === 1 ? '' : 's'} found.`);
         }
       }
     } catch (error) {
@@ -313,19 +315,19 @@ program
   });
 
 program
-  .command("watch")
-  .description("Watch token files for changes and rebuild automatically")
-  .option("-i, --input <path>", "Path to input token file (W3C DTCG JSON)")
-  .option("-o, --output <path>", "Output directory for generated artifacts")
+  .command('watch')
+  .description('Watch token files for changes and rebuild automatically')
+  .option('-i, --input <path>', 'Path to input token file (W3C DTCG JSON)')
+  .option('-o, --output <path>', 'Output directory for generated artifacts')
   .option(
-    "-f, --format <formats...>",
-    'Output formats (comma- or space-separated; "all" for every platform)',
-    ["css", "js"],
+    '-f, --format <formats...>',
+    'Output formats: css, js, react-native, angular, angular-11, svelte, react (use "all" for every platform; comma- or space-separated)',
+    ['css', 'js'],
   )
-  .option("--no-clean", "Do not clean output subdirectories before writing")
-  .option("--verbose", "Enable verbose output with resolution trace and timing", false)
-  .option("-c, --config <path>", "Path to toki config file")
-  .option("-t, --theme <name>", "Build a single theme from multi-theme config")
+  .option('--no-clean', 'Do not clean output subdirectories before writing')
+  .option('--verbose', 'Enable verbose output with resolution trace and timing', false)
+  .option('-c, --config <path>', 'Path to toki config file')
+  .option('-t, --theme <name>', 'Build a single theme from multi-theme config')
   .action(async (options) => {
     try {
       await startWatch({
@@ -349,26 +351,26 @@ program
   });
 
 program
-  .command("import")
-  .description("Import tokens from another format and convert to W3C DTCG")
-  .requiredOption("--from <format>", 'Source format: "style-dictionary" or "figma-tokens"')
-  .requiredOption("-i, --input <path>", "Path to input token file")
-  .option("-o, --output <path>", "Output path for generated tokens.json")
+  .command('import')
+  .description('Import tokens from another format and convert to W3C DTCG')
+  .requiredOption('--from <format>', 'Source format: style-dictionary, figma-tokens')
+  .requiredOption('-i, --input <path>', 'Path to input token file')
+  .option('-o, --output <path>', 'Output path for generated tokens.json')
   .action(async (options: { from: string; input: string; output?: string }) => {
     try {
       let outputPath: string;
       const importOpts = { input: options.input, ...(options.output !== undefined ? { output: options.output } : {}) };
       switch (options.from) {
-        case "style-dictionary":
+        case 'style-dictionary':
           outputPath = await importStyleDictionary(importOpts);
           break;
-        case "figma-tokens":
+        case 'figma-tokens':
           outputPath = await importFigmaTokens(importOpts);
           break;
         default:
           throw new TokiError(
             `Unknown source format "${options.from}". Supported: style-dictionary, figma-tokens.`,
-            "CONFIG_ERROR",
+            'CONFIG_ERROR',
           );
       }
       console.log(`  Imported tokens written to ${outputPath}`);
@@ -388,6 +390,12 @@ export { buildCommand };
 export { parseFormats };
 
 export const run = async (): Promise<void> => {
+  // If no arguments and running interactively, launch the TUI.
+  if (process.argv.length <= 2 && process.stdout.isTTY) {
+    const { runTui } = await import('./tui.js');
+    await runTui();
+    return;
+  }
   await program.parseAsync();
 };
 
@@ -396,7 +404,7 @@ export const run = async (): Promise<void> => {
 const isMainEntry = (): boolean => {
   const arg = process.argv[1];
   if (!arg) return false;
-  return arg.endsWith("cli.js") || arg.endsWith("cli.ts") || arg.endsWith("toki");
+  return arg.endsWith('cli.js') || arg.endsWith('cli.ts') || arg.endsWith('toki');
 };
 
 if (isMainEntry()) {
