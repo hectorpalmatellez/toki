@@ -1,0 +1,155 @@
+import { describe, it, expect } from "vitest";
+import { angularGenerator } from "./angular.js";
+import { resolveDocument } from "../core/resolver.js";
+import { parseTokenDocument } from "../core/parser.js";
+import { GeneratorError } from "../utils/errors.js";
+
+const FIXTURE = {
+  color: {
+    $type: "color",
+    primary: { $value: "#1a73e8" },
+    brand: { accent: { $value: "#ff8800" } },
+  },
+  spacing: { $type: "dimension", small: { $value: "8px" } },
+  type: {
+    $type: "typography",
+    body: { $value: { fontSize: "16px", lineHeight: "1.5" } },
+  },
+  motion: { $type: "cubicBezier", ease: { $value: [0.4, 0, 0.2, 1] } },
+};
+
+const generate = (raw: unknown) => {
+  const tokens = resolveDocument(parseTokenDocument(raw));
+  const artifacts = angularGenerator.generate(tokens, { version: "0.1.0" });
+  const byPath = (suffix: string): string => {
+    const artifact = artifacts.find((a) => a.relativePath === `angular/${suffix}`);
+    if (artifact === undefined) throw new Error(`missing artifact angular/${suffix}`);
+    return artifact.content;
+  };
+  return {
+    artifacts,
+    scssVars: byPath("_tokens.scss"),
+    scssEntry: byPath("tokens.scss"),
+    ts: byPath("tokens.ts"),
+    module: byPath("tokens.module.ts"),
+  };
+};
+
+describe("angular generator — _tokens.scss", () => {
+  it("emits $kebab-case SCSS variables", () => {
+    const { scssVars } = generate(FIXTURE);
+    expect(scssVars).toContain("$color-primary: #1a73e8;");
+    expect(scssVars).toContain("$color-brand-accent: #ff8800;");
+    expect(scssVars).toContain("$spacing-small: 8px;");
+    expect(scssVars).toContain("$motion-ease: cubic-bezier(0.4, 0, 0.2, 1);");
+  });
+
+  it("skips multi-property composites (typography)", () => {
+    const { scssVars } = generate(FIXTURE);
+    expect(scssVars).not.toContain("$type-body");
+  });
+
+  it("emits a placeholder comment when no token is SCSS-representable", () => {
+    const { scssVars } = generate({
+      type: { $type: "typography", body: { $value: { fontSize: "16px" } } },
+    });
+    expect(scssVars).toContain("// No SCSS-representable tokens in this set.");
+  });
+});
+
+describe("angular generator — tokens.scss (@use)", () => {
+  it("uses @use to load the partial and re-exposes tokens as CSS variables", () => {
+    const { scssEntry } = generate(FIXTURE);
+    expect(scssEntry).toContain('@use "./tokens" as tokens;');
+    expect(scssEntry).toContain("--color-primary: #{tokens.$color-primary};");
+    expect(scssEntry).not.toContain("--type-body");
+  });
+});
+
+describe("angular generator — tokens.ts", () => {
+  it("emits CONSTANT_CASE exports for every token, including composites", () => {
+    const { ts } = generate(FIXTURE);
+    expect(ts).toContain('export const COLOR_PRIMARY = "#1a73e8";');
+    expect(ts).toContain('export const COLOR_BRAND_ACCENT = "#ff8800";');
+    expect(ts).toContain('export const TYPE_BODY = {"fontSize":"16px","lineHeight":"1.5"};');
+    expect(ts).toContain("export const MOTION_EASE = [0.4,0,0.2,1];");
+  });
+
+  it("prefixes CONSTANT_CASE names that would start with a digit", () => {
+    const { ts } = generate({
+      "500": { $type: "color", value: { $value: "#fff" } },
+    });
+    expect(ts).toContain("export const _500_VALUE = ");
+  });
+});
+
+describe("angular generator — tokens.module.ts", () => {
+  it("declares an InjectionToken<DesignTokens> with value + provider", () => {
+    const { module } = generate(FIXTURE);
+    expect(module).toContain('import { InjectionToken } from "@angular/core";');
+    expect(module).toContain('import * as tokens from "./tokens";');
+    expect(module).toContain("export interface DesignTokens {");
+    expect(module).toContain("readonly colorPrimary: string;");
+    expect(module).toContain(
+      'readonly typeBody: { readonly "fontSize": string; "lineHeight": string };',
+    );
+    expect(module).toContain(
+      'export const DESIGN_TOKENS = new InjectionToken<DesignTokens>("DESIGN_TOKENS");',
+    );
+    expect(module).toContain("colorPrimary: tokens.COLOR_PRIMARY,");
+    expect(module).toContain("export const DESIGN_TOKENS_PROVIDER = {");
+    expect(module).toContain("useValue: DESIGN_TOKENS_VALUE,");
+  });
+});
+
+describe("angular generator — collisions, determinism, artifacts", () => {
+  it("throws GeneratorError on SCSS name collisions", () => {
+    expect(() =>
+      generate({
+        color: {
+          $type: "color",
+          "brand-primary": { $value: "#fff" },
+          brandPrimary: { $value: "#000" },
+        },
+      }),
+    ).toThrow(GeneratorError);
+  });
+
+  it("throws GeneratorError on TypeScript name collisions", () => {
+    expect(() =>
+      generate({
+        color: { $type: "color", primary: { $value: "#fff" } },
+        "color-primary": { $type: "color", $value: "#000" },
+      }),
+    ).toThrow(GeneratorError);
+  });
+
+  it("includes the header comment and is deterministic", () => {
+    const a = generate(FIXTURE);
+    for (const artifact of a.artifacts) {
+      expect(artifact.content).toContain("Generated by toki v0.1.0");
+    }
+    expect(a.ts).toBe(generate(FIXTURE).ts);
+    expect(a.module).toBe(generate(FIXTURE).module);
+  });
+
+  it("writes _tokens.scss, tokens.scss, tokens.ts, tokens.module.ts and README.md", () => {
+    const { artifacts } = generate(FIXTURE);
+    expect(artifacts.map((a) => a.relativePath).sort()).toEqual([
+      "angular/README.md",
+      "angular/_tokens.scss",
+      "angular/tokens.module.ts",
+      "angular/tokens.scss",
+      "angular/tokens.ts",
+    ]);
+    expect(artifacts.every((a) => a.format === "angular")).toBe(true);
+  });
+
+  it("matches the artifact snapshots", () => {
+    const { scssVars, scssEntry, ts, module } = generate(FIXTURE);
+    expect(scssVars).toMatchSnapshot();
+    expect(scssEntry).toMatchSnapshot();
+    expect(ts).toMatchSnapshot();
+    expect(module).toMatchSnapshot();
+  });
+});
