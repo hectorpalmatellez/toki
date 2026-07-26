@@ -34,7 +34,7 @@ Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates 
 | Layer | Technology |
 |---|---|
 | Runtime | Node.js 24 LTS |
-| Language | TypeScript 5.8+ (strict) |
+| Language | TypeScript 7.0+ (native Go compiler, strict) |
 | CLI | Commander.js |
 | Bundler | tsup |
 | Testing | Vitest |
@@ -58,7 +58,7 @@ pnpm install
 ### Build
 
 ```bash
-pnpm build        # tsup bundle → dist/
+pnpm build        # tsup bundle + .d.ts → dist/
 pnpm dev          # tsup --watch
 ```
 
@@ -501,7 +501,7 @@ pnpm format:check # prettier --check 'src/**/*.ts'
 pnpm test         # vitest run
 pnpm test:watch   # vitest
 pnpm test:coverage # vitest run --coverage
-pnpm build        # tsup
+pnpm build        # tsup + build:types (bundling + .d.ts generation)
 pnpm dev          # tsup --watch
 pnpm clean        # rm -rf dist
 ```
