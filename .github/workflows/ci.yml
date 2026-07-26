@@ -1,7 +1,8 @@
 # Toki CI — run on every push and pull request.
 #
-# Runs type checking, linting, testing, and build verification on
-# Node.js 24 with pnpm. Caches pnpm store for fast installs.
+# Runs type checking, linting, testing, build verification, security audit,
+# and package integrity checks on Node.js 24 with pnpm. Caches pnpm store for
+# fast installs.
 
 name: CI
 
@@ -44,3 +45,9 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Security audit
+        run: pnpm audit --audit-level=high
+
+      - name: Verify published files
+        run: npm pack --dry-run

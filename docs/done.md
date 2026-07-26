@@ -127,3 +127,27 @@ This file records tasks that have been completed and removed from [`backlog.md`]
 - [x] 281 tests pass (7 new benchmark tests)
 - [x] Zero TypeScript errors, zero lint warnings
 - [x] Build succeeds (tsup + type generation)
+
+## Phase 5 — Public Release
+
+**Goal:** npm publication, community docs, and security hardening. ✅ **Complete.**
+
+| #   | Task                                                                                                                       | Type    | Est. | Notes                                                                                                                                                                     |
+| --- | -------------------------------------------------------------------------------------------------------------------------- | ------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 5.1 | Add `repository`, `homepage`, `bugs` fields to `package.json`                                                              | Infra   | 0.5h | Added `repository` (git URL), `homepage` (GitHub README), and `bugs` (GitHub Issues) to package.json.                                                                     |
+| 5.2 | Add `"sideEffects": false` to `package.json`                                                                               | Infra   | 0.1h | Set `sideEffects: false` for tree-shaking compatibility.                                                                                                                  |
+| 5.3 | Create `CONTRIBUTING.md` with setup, testing, and PR guidelines                                                            | Docs    | 1h   | `CONTRIBUTING.md` covers setup, dev workflow (test, lint, format), code conventions, adding generators, and PR guidelines.                                                |
+| 5.4 | Create `CODE_OF_CONDUCT.md` (Contributor Covenant)                                                                         | Docs    | 0.5h | `CODE_OF_CONDUCT.md` — Contributor Covenant v2.1 with project maintainer contact.                                                                                         |
+| 5.5 | Add `npm pack` verification to CI (check published files)                                                                  | Infra   | 1h   | Added `npm pack --dry-run` step to GitHub Actions CI to verify the tarball includes only the expected files.                                                              |
+| 5.6 | Add security policy (`SECURITY.md`) + `npm audit` to CI                                                                    | Infra   | 1h   | `SECURITY.md` created with supported versions and reporting process. `npm audit` step added to CI workflow.                                                               |
+| 5.7 | Publish v0.1.0 to npm                                                                                                      | Release | 0.5h | Published to npm registry as `toki`. Binaries available via `npx toki` or `npm install -g toki`.                                                                          |
+
+### Phase 5 Exit Criteria — all satisfied
+
+- [x] `package.json` has complete metadata (repository, homepage, bugs, sideEffects)
+- [x] CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md published
+- [x] CI verifies `npm pack` output and runs `npm audit`
+- [x] Package published to npm registry
+- [x] All 282 tests pass
+- [x] Zero TypeScript errors, zero lint warnings
+- [x] Build succeeds (tsup + type generation)
