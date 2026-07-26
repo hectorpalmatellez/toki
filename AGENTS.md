@@ -4,14 +4,14 @@
 
 Toki is a design token pipeline CLI that ingests W3C DTCG-format JSON tokens and generates framework-specific code artifacts for six target platforms: CSS, JavaScript, React Native, Angular (latest + v11), Svelte, and React/Next.js.
 
-**Status:** Active development — Phase 2 (Multi-Platform) complete, Phase 3 next
+**Status:** Active development — Phases 1–3 complete, Phase 4 next
 
 ## Tech Stack
 
 | Layer | Technology | Version |
 |---|---|---|
 | Runtime | Node.js | 24 LTS (enforced via `engines` + `.nvmrc`) |
-| Language | TypeScript | 5.8+ (strict mode) |
+| Language | TypeScript | 7.0+ (native Go compiler, strict mode) |
 | CLI Framework | Commander.js | Latest |
 | Bundler | tsup | Latest |
 | Testing | Vitest | Latest |
@@ -27,7 +27,7 @@ Toki is a design token pipeline CLI that ingests W3C DTCG-format JSON tokens and
 pnpm typecheck    # tsc --noEmit — must pass with zero errors
 pnpm lint         # oxlint src/ — must pass with zero warnings
 pnpm test         # vitest run — must pass all tests
-pnpm build        # tsup — must build successfully
+pnpm build        # tsup + build:types — must build successfully (bundling + .d.ts generation)
 ```
 
 ## Coding Conventions
