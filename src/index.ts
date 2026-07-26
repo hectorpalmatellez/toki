@@ -22,12 +22,50 @@ export type {
 
 export { ALL_FORMATS, TOKEN_TYPES } from "./core/types.js";
 
-export { parseTokenDocument, parseTokenTree, parseTokenJson, readTokenFile } from "./core/parser.js";
+export {
+  parseTokenDocument,
+  parseTokenTree,
+  parseTokenJson,
+  readTokenFile,
+} from "./core/parser.js";
 export { resolveDocument, resolveTree } from "./core/resolver.js";
+export {
+  registerTransformer,
+  getTransformer,
+  transformValue,
+  transformToken,
+  transformTokens,
+  ColorTransformer,
+  DimensionTransformer,
+  FontWeightTransformer,
+  ShadowTransformer,
+  FontFamilyTransformer,
+  TypographyTransformer,
+  normalizeColor,
+  dimensionToRn,
+  dimensionToRnNumber,
+  fontWeightToRn,
+  fontFamilyToRn,
+  typographyToRn,
+  shadowToRn,
+  splitColorAlpha,
+  RN_REM_BASE,
+} from "./core/transformer.js";
+export type { TransformContext, TransformFn, RnShadow } from "./core/transformer.js";
 export { runPipeline, generateFromDocument, generate } from "./core/pipeline.js";
 
-export { getGenerator, implementedFormats, resolveFormats } from "./generators/index.js";
+export {
+  getGenerator,
+  implementedFormats,
+  resolveFormats,
+  ALL_FORMATS_KEYWORD,
+} from "./generators/index.js";
 export { cssGenerator } from "./generators/css.js";
 export { jsGenerator } from "./generators/js.js";
+export { reactNativeGenerator } from "./generators/react-native.js";
+export { angularGenerator } from "./generators/angular.js";
+export { angular11Generator } from "./generators/angular-11.js";
+export { svelteGenerator } from "./generators/svelte.js";
+export { reactGenerator } from "./generators/react.js";
 
 export { TokiError } from "./utils/errors.js";
