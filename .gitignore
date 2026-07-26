@@ -1,5 +1,33 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+
+# Test / coverage
 coverage/
+*.lcov
+.vitest/
+
+# TypeScript incremental build cache
 *.tsbuildinfo
+
+# macOS
 .DS_Store
+
+# JetBrains IDEs
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS/editor
+Thumbs.db
+.vscode/
