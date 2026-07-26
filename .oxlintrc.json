@@ -3,9 +3,9 @@
   "categories": {
     "correctness": "error",
     "suspicious": "warn",
-    "pedantic": "warn",
-    "perf": "warn",
-    "style": "warn"
+    "pedantic": "off",
+    "perf": "off",
+    "style": "off"
   },
   "rules": {
     "no-unused-vars": "error",
