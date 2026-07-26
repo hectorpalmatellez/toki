@@ -4,7 +4,7 @@
   "description": "Design token pipeline CLI — W3C DTCG in, framework-specific code out",
   "type": "module",
   "bin": {
-    "toki": "./dist/cli.js"
+    "toki": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
