@@ -5,7 +5,7 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] — 2026-07-26
+## [1.0.0] — 2026-07-26
 
 ### Added
 
@@ -32,5 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI workflows** — GitHub Actions and Google Cloud Build example configurations
 - **Benchmark suite** — performance measurements for 500, 1000, and 5000 token sets
 - **npm publish setup** — `bin`, `files`, `prepublishOnly` script, `.npmignore`
+- **Interactive TUI mode** — running `toki` with no arguments opens an interactive menu
+- **Community documentation** — CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md
+- **README refactor** — split into focused docs: `docs/usage.md`, `docs/output.md`, `docs/architecture.md`
 
-[0.1.0]: https://github.com/anomalyco/toki/releases/tag/v0.1.0
+[1.0.0]: https://github.com/anomalyco/toki/releases/tag/v1.0.0
