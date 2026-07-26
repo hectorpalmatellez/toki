@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./toki.svg" alt="Toki" width="200" />
+</p>
+
 # Toki
 
 > Design token pipeline CLI — W3C DTCG in, framework-specific code out.
