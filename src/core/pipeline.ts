@@ -12,13 +12,13 @@ import type {
   OutputFormat,
   ResolvedToken,
   TransformPlugin,
-} from "./types.js";
-import { parseTokenDocument } from "./parser.js";
-import { readTokenFile } from "./parser.js";
-import { resolveDocument } from "./resolver.js";
-import { transformTokens } from "./transformer.js";
-import { getGenerator } from "../generators/index.js";
-import { TOKI_VERSION } from "../version.js";
+} from './types.js';
+import { parseTokenDocument } from './parser.js';
+import { readTokenFile } from './parser.js';
+import { resolveDocument } from './resolver.js';
+import { transformTokens } from './transformer.js';
+import { getGenerator } from '../generators/index.js';
+import { TOKI_VERSION } from '../version.js';
 
 export interface BuildOptions {
   readonly input: string;
@@ -57,10 +57,8 @@ export const runPipeline = async (options: BuildOptions): Promise<BuildResult> =
 };
 
 /** Re-run generation from an already-parsed document (used by tests). */
-export const generateFromDocument = (
-  doc: DesignTokenDocument,
-  formats: readonly OutputFormat[],
-): BuildResult => generate(resolveDocument(doc), { formats });
+export const generateFromDocument = (doc: DesignTokenDocument, formats: readonly OutputFormat[]): BuildResult =>
+  generate(resolveDocument(doc), { formats });
 
 /** Apply custom transform plugins after built-in platform transforms. */
 const applyCustomTransforms = (
@@ -85,10 +83,7 @@ export interface GenerateOptions {
 }
 
 /** Re-run generation from already-resolved tokens. */
-export const generate = (
-  tokens: readonly ResolvedToken[],
-  options: GenerateOptions,
-): BuildResult => {
+export const generate = (tokens: readonly ResolvedToken[], options: GenerateOptions): BuildResult => {
   const artifacts: OutputArtifact[] = [];
   for (const format of options.formats) {
     const generator = getGenerator(format);

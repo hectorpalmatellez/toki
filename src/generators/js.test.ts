@@ -1,126 +1,122 @@
-import { describe, it, expect } from "vitest";
-import { jsGenerator, formatJsLiteral, inferJsType } from "./js.js";
-import { resolveDocument } from "../core/resolver.js";
-import { parseTokenDocument } from "../core/parser.js";
-import { GeneratorError } from "../utils/errors.js";
+import { describe, it, expect } from 'vitest';
+import { jsGenerator, formatJsLiteral, inferJsType } from './js.js';
+import { resolveDocument } from '../core/resolver.js';
+import { parseTokenDocument } from '../core/parser.js';
+import { GeneratorError } from '../utils/errors.js';
 
 const generate = (raw: unknown): { js: string; dts: string } => {
   const tokens = resolveDocument(parseTokenDocument(raw));
-  const artifacts = jsGenerator.generate(tokens, { version: "0.1.0" });
-  const js = artifacts.find((a) => a.relativePath === "js/tokens.js")?.content;
-  const dts = artifacts.find((a) => a.relativePath === "js/tokens.d.ts")?.content;
-  if (js === undefined || dts === undefined) throw new Error("JS generator missing artifacts");
+  const artifacts = jsGenerator.generate(tokens, { version: '0.1.0' });
+  const js = artifacts.find((a) => a.relativePath === 'js/tokens.js')?.content;
+  const dts = artifacts.find((a) => a.relativePath === 'js/tokens.d.ts')?.content;
+  if (js === undefined || dts === undefined) throw new Error('JS generator missing artifacts');
   return { js, dts };
 };
 
-describe("js generator", () => {
-  it("emits named camelCase exports", () => {
+describe('js generator', () => {
+  it('emits named camelCase exports', () => {
     const { js } = generate({
-      color: { $type: "color", primary: { $value: "#1a73e8" } },
-      spacing: { $type: "dimension", small: { $value: "8px" } },
+      color: { $type: 'color', primary: { $value: '#1a73e8' } },
+      spacing: { $type: 'dimension', small: { $value: '8px' } },
     });
     expect(js).toContain('export const colorPrimary = "#1a73e8";');
     expect(js).toContain('export const spacingSmall = "8px";');
   });
 
-  it("emits a companion .d.ts with declared types", () => {
+  it('emits a companion .d.ts with declared types', () => {
     const { dts } = generate({
-      color: { $type: "color", primary: { $value: "#1a73e8" } },
-      spacing: { $type: "dimension", count: { $value: 8 } },
+      color: { $type: 'color', primary: { $value: '#1a73e8' } },
+      spacing: { $type: 'dimension', count: { $value: 8 } },
     });
-    expect(dts).toContain("export declare const colorPrimary: string;");
-    expect(dts).toContain("export declare const spacingCount: number;");
+    expect(dts).toContain('export declare const colorPrimary: string;');
+    expect(dts).toContain('export declare const spacingCount: number;');
   });
 
-  it("emits numbers as numeric literals (not quoted)", () => {
-    const { js } = generate({ num: { $type: "number", answer: { $value: 42 } } });
-    expect(js).toContain("export const numAnswer = 42;");
+  it('emits numbers as numeric literals (not quoted)', () => {
+    const { js } = generate({ num: { $type: 'number', answer: { $value: 42 } } });
+    expect(js).toContain('export const numAnswer = 42;');
     expect(js).not.toContain('"42"');
   });
 
-  it("infers composite object and array types in .d.ts", () => {
+  it('infers composite object and array types in .d.ts', () => {
     const { dts } = generate({
       shadow: {
-        $type: "shadow",
-        sm: { $value: { x: 0, y: 4, blur: 8, color: "#000" } },
+        $type: 'shadow',
+        sm: { $value: { x: 0, y: 4, blur: 8, color: '#000' } },
         stack: { $value: [{ x: 1 }, { x: 2 }] },
       },
     });
     expect(dts).toContain('export declare const shadowSm: { readonly "blur": number; ');
-    expect(dts).toContain("export declare const shadowStack: readonly [");
+    expect(dts).toContain('export declare const shadowStack: readonly [');
   });
 
-  it("escapes reserved-word identifiers with a trailing underscore", () => {
+  it('escapes reserved-word identifiers with a trailing underscore', () => {
     const { js, dts } = generate({
-      default: { $value: "#ffffff", $type: "color" },
+      default: { $value: '#ffffff', $type: 'color' },
     });
     expect(js).toContain('export const default_ = "#ffffff";');
-    expect(dts).toContain("export declare const default_: string;");
+    expect(dts).toContain('export declare const default_: string;');
   });
 
-  it("prefixes identifiers that start with a digit", () => {
+  it('prefixes identifiers that start with a digit', () => {
     const { js } = generate({
-      500: { $type: "color", value: { $value: "#fff" } },
+      500: { $type: 'color', value: { $value: '#fff' } },
     });
     expect(js).toMatch(/export const _500Value = "#fff";/);
   });
 
-  it("throws GeneratorError on identifier collisions", () => {
+  it('throws GeneratorError on identifier collisions', () => {
     // "primary-2" and "primary2" both collapse to camelCase `colorPrimary2`.
     expect(() =>
       generate({
         color: {
-          $type: "color",
-          "primary-2": { $value: "#fff" },
-          primary2: { $value: "#000" },
+          $type: 'color',
+          'primary-2': { $value: '#fff' },
+          primary2: { $value: '#000' },
         },
       }),
     ).toThrow(GeneratorError);
   });
 
-  it("includes the header comment on both artifacts", () => {
-    const { js, dts } = generate({ color: { $type: "color", a: { $value: "#fff" } } });
-    expect(js.startsWith("/* Generated by toki v0.1.0 — do not edit */")).toBe(true);
-    expect(dts.startsWith("/* Generated by toki v0.1.0 — do not edit */")).toBe(true);
+  it('includes the header comment on both artifacts', () => {
+    const { js, dts } = generate({ color: { $type: 'color', a: { $value: '#fff' } } });
+    expect(js.startsWith('/* Generated by toki v0.1.0 — do not edit */')).toBe(true);
+    expect(dts.startsWith('/* Generated by toki v0.1.0 — do not edit */')).toBe(true);
   });
 
-  it("is deterministic — identical input produces byte-identical output", () => {
+  it('is deterministic — identical input produces byte-identical output', () => {
     const raw = {
       color: {
-        $type: "color",
-        primary: { $value: "#1a73e8" },
-        secondary: { $value: "{color.primary}" },
+        $type: 'color',
+        primary: { $value: '#1a73e8' },
+        secondary: { $value: '{color.primary}' },
       },
     };
     expect(generate(raw).js).toBe(generate(raw).js);
     expect(generate(raw).dts).toBe(generate(raw).dts);
   });
 
-  it("writes to the js/ subdirectory", () => {
+  it('writes to the js/ subdirectory', () => {
     const artifacts = jsGenerator.generate(
-      resolveDocument(parseTokenDocument({ color: { $type: "color", a: { $value: "#fff" } } })),
-      { version: "0.1.0" },
+      resolveDocument(parseTokenDocument({ color: { $type: 'color', a: { $value: '#fff' } } })),
+      { version: '0.1.0' },
     );
-    expect(artifacts.map((a) => a.relativePath).sort()).toEqual([
-      "js/README.md",
-      "js/tokens.d.ts",
-      "js/tokens.js",
-    ]);
+    expect(artifacts.map((a) => a.relativePath).sort()).toEqual(['js/README.md', 'js/tokens.d.ts', 'js/tokens.js']);
   });
 });
 
-describe("js generator — snapshots", () => {
-  it("matches the tokens.js and tokens.d.ts snapshots", () => {
+describe('js generator — snapshots', () => {
+  it('matches the tokens.js and tokens.d.ts snapshots', () => {
     const { js, dts } = generate({
       color: {
-        $type: "color",
-        primary: { $value: "#1a73e8" },
-        secondary: { $value: "{color.primary}" },
+        $type: 'color',
+        primary: { $value: '#1a73e8' },
+        secondary: { $value: '{color.primary}' },
       },
-      spacing: { $type: "dimension", small: { $value: "8px" }, medium: { $value: "16px" } },
+      spacing: { $type: 'dimension', small: { $value: '8px' }, medium: { $value: '16px' } },
       shadow: {
-        $type: "shadow",
-        sm: { $value: { x: 0, y: 4, blur: 8, color: "rgba(0,0,0,0.25)" } },
+        $type: 'shadow',
+        sm: { $value: { x: 0, y: 4, blur: 8, color: 'rgba(0,0,0,0.25)' } },
       },
     });
     expect(js).toMatchSnapshot();
@@ -128,19 +124,19 @@ describe("js generator — snapshots", () => {
   });
 });
 
-describe("js generator — format helpers", () => {
-  it("formatJsLiteral quotes strings and serializes composites as JSON", () => {
-    expect(formatJsLiteral("hello")).toBe('"hello"');
-    expect(formatJsLiteral(42)).toBe("42");
-    expect(formatJsLiteral(true)).toBe("true");
+describe('js generator — format helpers', () => {
+  it('formatJsLiteral quotes strings and serializes composites as JSON', () => {
+    expect(formatJsLiteral('hello')).toBe('"hello"');
+    expect(formatJsLiteral(42)).toBe('42');
+    expect(formatJsLiteral(true)).toBe('true');
     expect(formatJsLiteral({ a: 1, b: 2 })).toMatch(/^\{.*"a":.*"b".*\}$/s);
   });
 
-  it("inferJsType maps primitives and structures", () => {
-    expect(inferJsType("x")).toBe("string");
-    expect(inferJsType(5)).toBe("number");
-    expect(inferJsType(true)).toBe("boolean");
-    expect(inferJsType([])).toBe("readonly unknown[]");
-    expect(inferJsType([1, 2])).toBe("readonly [number, number]");
+  it('inferJsType maps primitives and structures', () => {
+    expect(inferJsType('x')).toBe('string');
+    expect(inferJsType(5)).toBe('number');
+    expect(inferJsType(true)).toBe('boolean');
+    expect(inferJsType([])).toBe('readonly unknown[]');
+    expect(inferJsType([1, 2])).toBe('readonly [number, number]');
   });
 });

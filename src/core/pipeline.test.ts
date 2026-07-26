@@ -1,22 +1,22 @@
-import { describe, it, expect } from "vitest";
-import { runPipeline, generateFromDocument, generate } from "./pipeline.js";
-import { parseTokenDocument } from "./parser.js";
-import { resolveDocument } from "./resolver.js";
-import { writeArtifacts } from "../utils/writer.js";
-import { resolveFormats } from "../generators/index.js";
-import { rm, mkdir, readFile, writeFile, readdir } from "node:fs/promises";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
-import { randomUUID } from "node:crypto";
-import type { ResolvedToken, TransformPlugin } from "./types.js";
+import { describe, it, expect } from 'vitest';
+import { runPipeline, generateFromDocument, generate } from './pipeline.js';
+import { parseTokenDocument } from './parser.js';
+import { resolveDocument } from './resolver.js';
+import { writeArtifacts } from '../utils/writer.js';
+import { resolveFormats } from '../generators/index.js';
+import { rm, mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { randomUUID } from 'node:crypto';
+import type { ResolvedToken, TransformPlugin } from './types.js';
 
 const sampleDoc = {
   color: {
-    $type: "color",
-    primary: { $value: "#1a73e8" },
-    secondary: { $value: "{color.primary}" },
+    $type: 'color',
+    primary: { $value: '#1a73e8' },
+    secondary: { $value: '{color.primary}' },
   },
-  spacing: { $type: "dimension", small: { $value: "8px" } },
+  spacing: { $type: 'dimension', small: { $value: '8px' } },
 };
 
 const uniqueDir = async (): Promise<string> => {
@@ -25,178 +25,167 @@ const uniqueDir = async (): Promise<string> => {
   return dir;
 };
 
-describe("pipeline", () => {
-  it("runs parse → resolve → generate in memory and returns artifacts", async () => {
+describe('pipeline', () => {
+  it('runs parse → resolve → generate in memory and returns artifacts', async () => {
     // Write the sample token file to disk so runPipeline can read it.
     const inputDir = await uniqueDir();
-    const inputPath = join(inputDir, "tokens.json");
-    await writeFile(inputPath, JSON.stringify(sampleDoc), "utf8");
+    const inputPath = join(inputDir, 'tokens.json');
+    await writeFile(inputPath, JSON.stringify(sampleDoc), 'utf8');
 
     const result = await runPipeline({
       input: inputPath,
-      formats: ["css", "js"],
+      formats: ['css', 'js'],
     });
     expect(result.tokenCount).toBe(3);
-    expect(result.formats).toEqual(["css", "js"]);
+    expect(result.formats).toEqual(['css', 'js']);
     const paths = result.artifacts.map((a) => a.relativePath);
-    expect(paths).toContain("css/tokens.css");
-    expect(paths).toContain("js/tokens.js");
-    expect(paths).toContain("js/tokens.d.ts");
+    expect(paths).toContain('css/tokens.css');
+    expect(paths).toContain('js/tokens.js');
+    expect(paths).toContain('js/tokens.d.ts');
     // CSS artifact carries the resolved reference (no raw {…} left).
-    const css = result.artifacts.find((a) => a.relativePath === "css/tokens.css");
-    expect(css?.content).toContain("--color-secondary: #1a73e8;");
+    const css = result.artifacts.find((a) => a.relativePath === 'css/tokens.css');
+    expect(css?.content).toContain('--color-secondary: #1a73e8;');
   });
 
-  it("generateFromDocument resolves and generates without disk I/O", () => {
-    const result = generateFromDocument(parseTokenDocument(sampleDoc), ["css"]);
-    expect(result.artifacts.map((a) => a.relativePath)).toEqual([
-      "css/README.md",
-      "css/tokens.css",
-    ]);
+  it('generateFromDocument resolves and generates without disk I/O', () => {
+    const result = generateFromDocument(parseTokenDocument(sampleDoc), ['css']);
+    expect(result.artifacts.map((a) => a.relativePath)).toEqual(['css/README.md', 'css/tokens.css']);
   });
 
-  it("walks the full end-to-end flow via the writer (clean default)", async () => {
+  it('walks the full end-to-end flow via the writer (clean default)', async () => {
     const inputDir = await uniqueDir();
-    const inputPath = join(inputDir, "tokens.json");
-    await writeFile(inputPath, JSON.stringify(sampleDoc), "utf8");
+    const inputPath = join(inputDir, 'tokens.json');
+    await writeFile(inputPath, JSON.stringify(sampleDoc), 'utf8');
     const outputDir = await uniqueDir();
 
-    const result = await runPipeline({ input: inputPath, formats: ["css", "js"] });
+    const result = await runPipeline({ input: inputPath, formats: ['css', 'js'] });
     const writeResult = await writeArtifacts(outputDir, result.artifacts, { clean: true });
 
     expect(writeResult.written.length).toBeGreaterThan(0);
-    const cssPath = writeResult.written.find((p) => p.endsWith("css/tokens.css"));
+    const cssPath = writeResult.written.find((p) => p.endsWith('css/tokens.css'));
     expect(cssPath).toBeDefined();
-    const written = await readFile(cssPath!, "utf8");
-    expect(written.startsWith("/* Generated by toki v")).toBe(true);
+    const written = await readFile(cssPath!, 'utf8');
+    expect(written.startsWith('/* Generated by toki v')).toBe(true);
   });
 
-  it("writer leaves sibling files alone but cleans only targeted subdirs", async () => {
+  it('writer leaves sibling files alone but cleans only targeted subdirs', async () => {
     const outputDir = await uniqueDir();
     // Pre-existing user file under the output root must survive a clean build.
-    await mkdir(join(outputDir, "keep-me"), { recursive: true });
-    await writeFile(join(outputDir, "keep-me", "data.txt"), "persist", "utf8");
+    await mkdir(join(outputDir, 'keep-me'), { recursive: true });
+    await writeFile(join(outputDir, 'keep-me', 'data.txt'), 'persist', 'utf8');
 
     const inputDir = await uniqueDir();
-    const inputPath = join(inputDir, "tokens.json");
-    await writeFile(inputPath, JSON.stringify(sampleDoc), "utf8");
-    const result = await runPipeline({ input: inputPath, formats: ["css"] });
+    const inputPath = join(inputDir, 'tokens.json');
+    await writeFile(inputPath, JSON.stringify(sampleDoc), 'utf8');
+    const result = await runPipeline({ input: inputPath, formats: ['css'] });
     await writeArtifacts(outputDir, result.artifacts, { clean: true });
 
     // keep-me directory and its file survived.
-    expect(await readFile(join(outputDir, "keep-me", "data.txt"), "utf8")).toBe("persist");
+    expect(await readFile(join(outputDir, 'keep-me', 'data.txt'), 'utf8')).toBe('persist');
     // css/ subdirectory was created.
-    expect(await readdir(join(outputDir, "css"))).toContain("tokens.css");
+    expect(await readdir(join(outputDir, 'css'))).toContain('tokens.css');
   });
 
-  it("resolveFormats accepts comma-free lists and rejects unknown formats", () => {
-    expect(resolveFormats(["css", "js"])).toEqual(["css", "js"]);
-    expect(resolveFormats(["css", "react"])).toEqual(["css", "react"]);
-    expect(() => resolveFormats(["css", "vue"])).toThrow(/Unknown output format/);
+  it('resolveFormats accepts comma-free lists and rejects unknown formats', () => {
+    expect(resolveFormats(['css', 'js'])).toEqual(['css', 'js']);
+    expect(resolveFormats(['css', 'react'])).toEqual(['css', 'react']);
+    expect(() => resolveFormats(['css', 'vue'])).toThrow(/Unknown output format/);
   });
 
   it('resolveFormats expands "all" to every implemented format', () => {
-    expect(resolveFormats(["all"])).toEqual([
-      "css",
-      "js",
-      "react-native",
-      "angular",
-      "angular-11",
-      "svelte",
-      "react",
-    ]);
+    expect(resolveFormats(['all'])).toEqual(['css', 'js', 'react-native', 'angular', 'angular-11', 'svelte', 'react']);
   });
 
-  it("generate accepts GenerateOptions with theme and naming", () => {
+  it('generate accepts GenerateOptions with theme and naming', () => {
     const result = generate(resolveDocument(parseTokenDocument(sampleDoc)), {
-      formats: ["css"],
-      theme: "light",
-      naming: { css: "kebab-case" },
+      formats: ['css'],
+      theme: 'light',
+      naming: { css: 'kebab-case' },
     });
     const paths = result.artifacts.map((a) => a.relativePath);
-    expect(paths).toContain("css/tokens.light.css");
-    expect(paths).toContain("css/README.md");
+    expect(paths).toContain('css/tokens.light.css');
+    expect(paths).toContain('css/README.md');
   });
 
-  it("generate applies custom transform plugins", () => {
+  it('generate applies custom transform plugins', () => {
     const upperCaseColors: TransformPlugin = (token: ResolvedToken) => {
-      if (token.type === "color" && typeof token.value === "string") {
+      if (token.type === 'color' && typeof token.value === 'string') {
         return { ...token, value: token.value.toUpperCase() };
       }
       return token;
     };
     const result = generate(resolveDocument(parseTokenDocument(sampleDoc)), {
-      formats: ["css"],
+      formats: ['css'],
       transforms: [upperCaseColors],
     });
-    const css = result.artifacts.find((a) => a.relativePath === "css/tokens.css");
-    expect(css?.content).toContain("#1A73E8");
+    const css = result.artifacts.find((a) => a.relativePath === 'css/tokens.css');
+    expect(css?.content).toContain('#1A73E8');
   });
 
-  it("generate applies transforms in registration order", () => {
+  it('generate applies transforms in registration order', () => {
     const addPrefix: TransformPlugin = (token: ResolvedToken) => {
-      if (token.type === "color" && typeof token.value === "string") {
+      if (token.type === 'color' && typeof token.value === 'string') {
         return { ...token, value: `prefix-${token.value}` };
       }
       return token;
     };
     const addSuffix: TransformPlugin = (token: ResolvedToken) => {
-      if (token.type === "color" && typeof token.value === "string") {
+      if (token.type === 'color' && typeof token.value === 'string') {
         return { ...token, value: `${token.value}-suffix` };
       }
       return token;
     };
     const result = generate(resolveDocument(parseTokenDocument(sampleDoc)), {
-      formats: ["css"],
+      formats: ['css'],
       transforms: [addPrefix, addSuffix],
     });
-    const css = result.artifacts.find((a) => a.relativePath === "css/tokens.css");
-    expect(css?.content).toContain("prefix-#1a73e8-suffix");
+    const css = result.artifacts.find((a) => a.relativePath === 'css/tokens.css');
+    expect(css?.content).toContain('prefix-#1a73e8-suffix');
   });
 
-  it("generate with empty transforms array is a no-op", () => {
+  it('generate with empty transforms array is a no-op', () => {
     const result = generate(resolveDocument(parseTokenDocument(sampleDoc)), {
-      formats: ["css"],
+      formats: ['css'],
       transforms: [],
     });
-    const css = result.artifacts.find((a) => a.relativePath === "css/tokens.css");
-    expect(css?.content).toContain("#1a73e8");
+    const css = result.artifacts.find((a) => a.relativePath === 'css/tokens.css');
+    expect(css?.content).toContain('#1a73e8');
   });
 
-  it("multi-theme generates separate output files per theme", async () => {
+  it('multi-theme generates separate output files per theme', async () => {
     const inputDir = await uniqueDir();
-    const inputPath = join(inputDir, "tokens.json");
-    await writeFile(inputPath, JSON.stringify(sampleDoc), "utf8");
+    const inputPath = join(inputDir, 'tokens.json');
+    await writeFile(inputPath, JSON.stringify(sampleDoc), 'utf8');
 
     const lightResult = await runPipeline({
       input: inputPath,
-      formats: ["css"],
-      theme: "light",
+      formats: ['css'],
+      theme: 'light',
     });
     const darkResult = await runPipeline({
       input: inputPath,
-      formats: ["css"],
-      theme: "dark",
+      formats: ['css'],
+      theme: 'dark',
     });
 
     const lightPaths = lightResult.artifacts.map((a) => a.relativePath);
     const darkPaths = darkResult.artifacts.map((a) => a.relativePath);
 
-    expect(lightPaths).toContain("css/tokens.light.css");
-    expect(darkPaths).toContain("css/tokens.dark.css");
-    expect(lightPaths).not.toContain("css/tokens.dark.css");
-    expect(darkPaths).not.toContain("css/tokens.light.css");
+    expect(lightPaths).toContain('css/tokens.light.css');
+    expect(darkPaths).toContain('css/tokens.dark.css');
+    expect(lightPaths).not.toContain('css/tokens.dark.css');
+    expect(darkPaths).not.toContain('css/tokens.light.css');
   });
 
-  it("verbose mode enables resolver trace", async () => {
+  it('verbose mode enables resolver trace', async () => {
     const inputDir = await uniqueDir();
-    const inputPath = join(inputDir, "tokens.json");
-    await writeFile(inputPath, JSON.stringify(sampleDoc), "utf8");
+    const inputPath = join(inputDir, 'tokens.json');
+    await writeFile(inputPath, JSON.stringify(sampleDoc), 'utf8');
 
     // verbose mode should not throw
     const result = await runPipeline({
       input: inputPath,
-      formats: ["css"],
+      formats: ['css'],
       verbose: true,
     });
     expect(result.tokenCount).toBe(3);

@@ -7,17 +7,17 @@
  * newline for cross-platform determinism.
  */
 
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import { dirname, join, normalize } from "node:path";
-import type { OutputArtifact } from "../core/types.js";
-import { IoError } from "./errors.js";
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { dirname, join, normalize } from 'node:path';
+import type { OutputArtifact } from '../core/types.js';
+import { IoError } from './errors.js';
 
 export interface WriteResult {
   readonly written: readonly string[];
 }
 
 const firstSegment = (relativePath: string): string => {
-  const [head] = normalize(relativePath).split("/");
+  const [head] = normalize(relativePath).split('/');
   if (head === undefined) return relativePath;
   return head;
 };
@@ -50,7 +50,7 @@ export const writeArtifacts = async (
     const absPath = join(outputDir, normalize(artifact.relativePath));
     try {
       await mkdir(dirname(absPath), { recursive: true });
-      await writeFile(absPath, `${artifact.content}\n`, "utf8");
+      await writeFile(absPath, `${artifact.content}\n`, 'utf8');
     } catch (cause) {
       throw new IoError(`Failed to write ${absPath}`, cause);
     }

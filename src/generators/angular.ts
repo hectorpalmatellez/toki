@@ -12,13 +12,13 @@
  * in SCSS (not representable as a single variable) but present in `tokens.ts`.
  */
 
-import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken } from "../core/types.js";
-import { GeneratorError } from "../utils/errors.js";
-import { headerComment, themePath } from "../utils/format.js";
-import { toKebabCase, getNamingFunction } from "../utils/naming.js";
-import { formatCssValue } from "./css.js";
-import { formatJsLiteral, inferJsType, makeIdentifier } from "./js.js";
-import { platformReadme } from "./readme.js";
+import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken } from '../core/types.js';
+import { GeneratorError } from '../utils/errors.js';
+import { headerComment, themePath } from '../utils/format.js';
+import { toKebabCase, getNamingFunction } from '../utils/naming.js';
+import { formatCssValue } from './css.js';
+import { formatJsLiteral, inferJsType, makeIdentifier } from './js.js';
+import { platformReadme } from './readme.js';
 
 /** One token's names in every Angular namespace. */
 export interface AngularNames {
@@ -50,7 +50,7 @@ const claimName = (seen: Map<string, string>, name: string, id: string, kind: st
  */
 export const deriveAngularNames = (
   tokens: readonly ResolvedToken[],
-  tsNaming: "CONSTANT_CASE" | "SCREAMING_SNAKE_CASE" = "CONSTANT_CASE",
+  tsNaming: 'CONSTANT_CASE' | 'SCREAMING_SNAKE_CASE' = 'CONSTANT_CASE',
 ): readonly AngularNames[] => {
   const seenScss = new Map<string, string>();
   const seenTs = new Map<string, string>();
@@ -60,22 +60,19 @@ export const deriveAngularNames = (
   return tokens.map((token) => {
     const scss = toKebabCase(token.path);
     let ts = tsNamingFn(token.path);
-    if (ts.length === 0) ts = "TOKEN";
+    if (ts.length === 0) ts = 'TOKEN';
     if (/^[0-9]/.test(ts)) ts = `_${ts}`;
     const prop = makeIdentifier(token.path);
-    claimName(seenScss, scss, token.id, "SCSS");
-    claimName(seenTs, ts, token.id, "TypeScript");
-    claimName(seenProp, prop, token.id, "DesignTokens");
+    claimName(seenScss, scss, token.id, 'SCSS');
+    claimName(seenTs, ts, token.id, 'TypeScript');
+    claimName(seenProp, prop, token.id, 'DesignTokens');
     return { token, scss, ts, prop };
   });
 };
 
 /** Tokens + derived names → `_tokens.scss` content (variables only). */
-export const renderScssVariables = (
-  names: readonly AngularNames[],
-  options: GeneratorOptions,
-): string => {
-  const lines: string[] = [headerComment(options.version), ""];
+export const renderScssVariables = (names: readonly AngularNames[], options: GeneratorOptions): string => {
+  const lines: string[] = [headerComment(options.version), ''];
   let emitted = 0;
   for (const { token, scss } of names) {
     const value = formatCssValue(token);
@@ -83,119 +80,99 @@ export const renderScssVariables = (
     lines.push(`$${scss}: ${value};`);
     emitted += 1;
   }
-  if (emitted === 0) lines.push("// No SCSS-representable tokens in this set.");
-  lines.push("");
-  return lines.join("\n");
+  if (emitted === 0) lines.push('// No SCSS-representable tokens in this set.');
+  lines.push('');
+  return lines.join('\n');
 };
 
 /** Entry stylesheet: `@use` the partial and expose CSS custom properties. */
-export const renderScssEntry = (
-  names: readonly AngularNames[],
-  options: GeneratorOptions,
-): string => {
-  const lines: string[] = [
-    headerComment(options.version),
-    "",
-    '@use "./tokens" as tokens;',
-    "",
-    ":root {",
-  ];
+export const renderScssEntry = (names: readonly AngularNames[], options: GeneratorOptions): string => {
+  const lines: string[] = [headerComment(options.version), '', '@use "./tokens" as tokens;', '', ':root {'];
   for (const { token, scss } of names) {
     if (formatCssValue(token) === undefined) continue;
     lines.push(`  --${scss}: #{tokens.$${scss}};`);
   }
-  lines.push("}", "");
-  return lines.join("\n");
+  lines.push('}', '');
+  return lines.join('\n');
 };
 
 /** `tokens.ts`: CONSTANT_CASE exports for every token. */
-export const renderTokensTs = (
-  names: readonly AngularNames[],
-  options: GeneratorOptions,
-): string => {
-  const lines: string[] = [headerComment(options.version), ""];
+export const renderTokensTs = (names: readonly AngularNames[], options: GeneratorOptions): string => {
+  const lines: string[] = [headerComment(options.version), ''];
   for (const { token, ts } of names) {
     lines.push(`export const ${ts} = ${formatJsLiteral(token.value)};`);
   }
-  lines.push("");
-  return lines.join("\n");
+  lines.push('');
+  return lines.join('\n');
 };
 
 /** `tokens.module.ts`: InjectionToken + value + provider for DI. */
-export const renderTokensModule = (
-  names: readonly AngularNames[],
-  options: GeneratorOptions,
-): string => {
+export const renderTokensModule = (names: readonly AngularNames[], options: GeneratorOptions): string => {
   const lines: string[] = [
     headerComment(options.version),
-    "",
+    '',
     'import { InjectionToken } from "@angular/core";',
-    "",
+    '',
     'import * as tokens from "./tokens";',
-    "",
-    "export interface DesignTokens {",
+    '',
+    'export interface DesignTokens {',
   ];
   for (const { token, prop } of names) {
     lines.push(`  readonly ${prop}: ${inferJsType(token.value)};`);
   }
   lines.push(
-    "}",
-    "",
+    '}',
+    '',
     'export const DESIGN_TOKENS = new InjectionToken<DesignTokens>("DESIGN_TOKENS");',
-    "",
-    "export const DESIGN_TOKENS_VALUE: DesignTokens = {",
+    '',
+    'export const DESIGN_TOKENS_VALUE: DesignTokens = {',
   );
   for (const { ts, prop } of names) {
     lines.push(`  ${prop}: tokens.${ts},`);
   }
   lines.push(
-    "};",
-    "",
-    "export const DESIGN_TOKENS_PROVIDER = {",
-    "  provide: DESIGN_TOKENS,",
-    "  useValue: DESIGN_TOKENS_VALUE,",
-    "};",
-    "",
+    '};',
+    '',
+    'export const DESIGN_TOKENS_PROVIDER = {',
+    '  provide: DESIGN_TOKENS,',
+    '  useValue: DESIGN_TOKENS_VALUE,',
+    '};',
+    '',
   );
-  return lines.join("\n");
+  return lines.join('\n');
 };
 
 export const angularGenerator: Generator = {
-  format: "angular",
-  generate: (
-    tokens: readonly ResolvedToken[],
-    options: GeneratorOptions,
-  ): readonly OutputArtifact[] => {
-    const tsNaming = options.naming === "SCREAMING_SNAKE_CASE"
-      ? "SCREAMING_SNAKE_CASE"
-      : "CONSTANT_CASE";
+  format: 'angular',
+  generate: (tokens: readonly ResolvedToken[], options: GeneratorOptions): readonly OutputArtifact[] => {
+    const tsNaming = options.naming === 'SCREAMING_SNAKE_CASE' ? 'SCREAMING_SNAKE_CASE' : 'CONSTANT_CASE';
     const names = deriveAngularNames(tokens, tsNaming);
-    const t = (p: string) => options.theme ? themePath(p, options.theme) : p;
+    const t = (p: string) => (options.theme ? themePath(p, options.theme) : p);
     return [
       {
-        relativePath: t("angular/_tokens.scss"),
-        format: "angular",
+        relativePath: t('angular/_tokens.scss'),
+        format: 'angular',
         content: renderScssVariables(names, options),
       },
       {
-        relativePath: t("angular/tokens.scss"),
-        format: "angular",
+        relativePath: t('angular/tokens.scss'),
+        format: 'angular',
         content: renderScssEntry(names, options),
       },
       {
-        relativePath: t("angular/tokens.ts"),
-        format: "angular",
+        relativePath: t('angular/tokens.ts'),
+        format: 'angular',
         content: renderTokensTs(names, options),
       },
       {
-        relativePath: t("angular/tokens.module.ts"),
-        format: "angular",
+        relativePath: t('angular/tokens.module.ts'),
+        format: 'angular',
         content: renderTokensModule(names, options),
       },
       {
-        relativePath: "angular/README.md",
-        format: "angular",
-        content: platformReadme("angular", options.version),
+        relativePath: 'angular/README.md',
+        format: 'angular',
+        content: platformReadme('angular', options.version),
       },
     ];
   },

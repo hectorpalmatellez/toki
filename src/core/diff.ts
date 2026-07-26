@@ -9,12 +9,12 @@
  * - JSON array with `--json` flag
  */
 
-import type { ResolvedToken, TokenValue } from "./types.js";
-import { readTokenFile } from "./parser.js";
-import { parseTokenDocument } from "./parser.js";
-import { resolveDocument } from "./resolver.js";
+import type { ResolvedToken, TokenValue } from './types.js';
+import { readTokenFile } from './parser.js';
+import { parseTokenDocument } from './parser.js';
+import { resolveDocument } from './resolver.js';
 
-export type DiffEntryType = "added" | "removed" | "changed";
+export type DiffEntryType = 'added' | 'removed' | 'changed';
 
 export interface DiffEntry {
   readonly type: DiffEntryType;
@@ -56,7 +56,7 @@ export const diffTokens = (
     const oldToken = oldTokens.get(id);
     if (oldToken === undefined) {
       added.push({
-        type: "added",
+        type: 'added',
         id,
         path: newToken.path,
         newValue: newToken.value,
@@ -64,7 +64,7 @@ export const diffTokens = (
       });
     } else if (!valuesEqual(oldToken.value, newToken.value)) {
       changed.push({
-        type: "changed",
+        type: 'changed',
         id,
         path: newToken.path,
         oldValue: oldToken.value,
@@ -77,7 +77,7 @@ export const diffTokens = (
   for (const [id, oldToken] of oldTokens) {
     if (!newTokens.has(id)) {
       removed.push({
-        type: "removed",
+        type: 'removed',
         id,
         path: oldToken.path,
         oldValue: oldToken.value,
@@ -93,7 +93,7 @@ export const diffTokens = (
 const valuesEqual = (a: TokenValue, b: TokenValue): boolean => {
   if (a === b) return true;
   if (typeof a !== typeof b) return false;
-  if (typeof a === "object" && typeof b === "object" && a !== null && b !== null) {
+  if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null) {
     if (Array.isArray(a) !== Array.isArray(b)) return false;
     if (Array.isArray(a) && Array.isArray(b)) {
       if (a.length !== b.length) return false;
@@ -111,17 +111,14 @@ const valuesEqual = (a: TokenValue, b: TokenValue): boolean => {
 
 /** Run the full diff: read both files, compute diff, return result. */
 export const runDiff = async (oldPath: string, newPath: string): Promise<DiffResult> => {
-  const [oldTokens, newTokens] = await Promise.all([
-    resolveTokens(oldPath),
-    resolveTokens(newPath),
-  ]);
+  const [oldTokens, newTokens] = await Promise.all([resolveTokens(oldPath), resolveTokens(newPath)]);
   return diffTokens(oldTokens, newTokens);
 };
 
 /** Format a single token value for display. */
 const displayValue = (value: TokenValue): string => {
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   return JSON.stringify(value);
 };
 
@@ -130,8 +127,8 @@ export const formatDiffTerminal = (result: DiffResult): string => {
   const lines: string[] = [];
   const total = result.added.length + result.removed.length + result.changed.length;
   if (total === 0) {
-    lines.push("  No differences found.");
-    return lines.join("\n");
+    lines.push('  No differences found.');
+    return lines.join('\n');
   }
 
   if (result.added.length > 0) {
@@ -142,7 +139,7 @@ export const formatDiffTerminal = (result: DiffResult): string => {
   }
 
   if (result.removed.length > 0) {
-    if (lines.length > 0) lines.push("");
+    if (lines.length > 0) lines.push('');
     lines.push(`  Removed (${result.removed.length}):`);
     for (const entry of result.removed) {
       lines.push(`    - ${entry.id}    ${displayValue(entry.oldValue!)}`);
@@ -150,14 +147,14 @@ export const formatDiffTerminal = (result: DiffResult): string => {
   }
 
   if (result.changed.length > 0) {
-    if (lines.length > 0) lines.push("");
+    if (lines.length > 0) lines.push('');
     lines.push(`  Changed (${result.changed.length}):`);
     for (const entry of result.changed) {
       lines.push(`    ~ ${entry.id}    ${displayValue(entry.oldValue!)} → ${displayValue(entry.newValue!)}`);
     }
   }
 
-  return lines.join("\n");
+  return lines.join('\n');
 };
 
 /** Format a diff result as a JSON-serializable array. */

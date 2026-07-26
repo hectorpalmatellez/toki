@@ -28,8 +28,8 @@ import type {
   TokenValue,
   ResolvedToken,
   TokenTree,
-} from "./types.js";
-import { CircularReferenceError, MissingReferenceError, TokenTypeError } from "../utils/errors.js";
+} from './types.js';
+import { CircularReferenceError, MissingReferenceError, TokenTypeError } from '../utils/errors.js';
 
 /** Options for the resolver, including optional verbose trace output. */
 export interface ResolveOptions {
@@ -64,7 +64,7 @@ const parseRefId = (ref: string): string => {
 const extractReferences = (value: TokenValue): readonly string[] => {
   const found: string[] = [];
   const walk = (v: unknown): void => {
-    if (typeof v === "string") {
+    if (typeof v === 'string') {
       if (PURE_REF.test(v)) {
         found.push(parseRefId(v));
         return;
@@ -80,7 +80,7 @@ const extractReferences = (value: TokenValue): readonly string[] => {
       v.forEach(walk);
       return;
     }
-    if (v !== null && typeof v === "object") {
+    if (v !== null && typeof v === 'object') {
       for (const k of Object.keys(v as Record<string, unknown>)) {
         walk((v as Record<string, unknown>)[k]);
       }
@@ -98,10 +98,10 @@ const extractReferences = (value: TokenValue): readonly string[] => {
 const collectLeaves = (doc: DesignTokenDocument): readonly Leaf[] => {
   const leaves: Leaf[] = [];
   const visit = (node: TokenNode, inheritedType: TokenType | undefined): void => {
-    if (node.kind === "token") {
+    if (node.kind === 'token') {
       const type = resolveTokenType(node, inheritedType);
       leaves.push({
-        id: node.path.join("."),
+        id: node.path.join('.'),
         path: node.path,
         name: node.name,
         type,
@@ -124,8 +124,8 @@ const resolveTokenType = (token: DesignToken, inherited: TokenType | undefined):
   const type = token.$type ?? inherited;
   if (type === undefined) {
     throw new TokenTypeError(
-      `Token "${token.path.join(".")}" has no $type and no group $type to inherit from. ` +
-        "Add a $type on the token or an ancestor group.",
+      `Token "${token.path.join('.')}" has no $type and no group $type to inherit from. ` +
+        'Add a $type on the token or an ancestor group.',
     );
   }
   return type;
@@ -153,7 +153,7 @@ const buildDependencyGraph = (
       if (!byId.has(refId)) {
         throw new MissingReferenceError(
           `Token "${leaf.id}" references unknown token "{${refId}}". ` +
-            "References must point to an existing leaf token by its dotted path.",
+            'References must point to an existing leaf token by its dotted path.',
         );
       }
     }
@@ -167,10 +167,7 @@ const buildDependencyGraph = (
  * references. Uses DFS with a coloring scheme (white / gray / black) for
  * cycle detection. On a cycle, throws naming all tokens in the cycle.
  */
-const topoSort = (
-  ids: readonly string[],
-  deps: ReadonlyMap<string, readonly string[]>,
-): readonly string[] => {
+const topoSort = (ids: readonly string[], deps: ReadonlyMap<string, readonly string[]>): readonly string[] => {
   const WHITE = 0;
   const GRAY = 1;
   const BLACK = 2;
@@ -186,9 +183,7 @@ const topoSort = (
     if (state === GRAY) {
       const cycleStart = stack.indexOf(id);
       const cycle = stack.slice(cycleStart).concat(id);
-      throw new CircularReferenceError(
-        `Circular reference detected: ${cycle.join(" → ")}`,
-      );
+      throw new CircularReferenceError(`Circular reference detected: ${cycle.join(' → ')}`);
     }
     color.set(id, GRAY);
     stack.push(id);
@@ -211,11 +206,8 @@ const topoSort = (
  * token's resolved value (preserving native type). Embedded references are
  * string-interpolated.
  */
-const substitute = (
-  raw: TokenValue,
-  resolved: ReadonlyMap<string, TokenValue>,
-): TokenValue => {
-  if (typeof raw === "string") {
+const substitute = (raw: TokenValue, resolved: ReadonlyMap<string, TokenValue>): TokenValue => {
+  if (typeof raw === 'string') {
     if (PURE_REF.test(raw)) {
       const refId = parseRefId(raw);
       const target = resolved.get(refId);
@@ -224,7 +216,7 @@ const substitute = (
       }
       return target;
     }
-    if (raw.includes("{")) {
+    if (raw.includes('{')) {
       return raw.replace(EMBEDDED_REF, (_match, inner: string) => {
         const target = resolved.get(inner);
         if (target === undefined) {
@@ -238,7 +230,7 @@ const substitute = (
   if (Array.isArray(raw)) {
     return raw.map((item) => substitute(item, resolved));
   }
-  if (raw !== null && typeof raw === "object") {
+  if (raw !== null && typeof raw === 'object') {
     const out: Record<string, TokenValue> = {};
     for (const key of Object.keys(raw as Record<string, unknown>)) {
       const v = (raw as Record<string, unknown>)[key] as TokenValue;
@@ -253,19 +245,16 @@ const substitute = (
  * Resolve a parsed {@link DesignTokenDocument} into a flat list of
  * {@link ResolvedToken}s in document order.
  */
-export const resolveDocument = (
-  doc: DesignTokenDocument,
-  options?: ResolveOptions,
-): readonly ResolvedToken[] => {
+export const resolveDocument = (doc: DesignTokenDocument, options?: ResolveOptions): readonly ResolvedToken[] => {
   const trace = options?.trace;
   const leaves = collectLeaves(doc);
-  trace?.(`collected ${leaves.length} leaf token${leaves.length === 1 ? "" : "s"}`);
+  trace?.(`collected ${leaves.length} leaf token${leaves.length === 1 ? '' : 's'}`);
   const { deps, byId } = buildDependencyGraph(leaves);
   const orderedIds = topoSort(
     leaves.map((l) => l.id),
     deps,
   );
-  trace?.(`resolved order: ${orderedIds.join(", ")}`);
+  trace?.(`resolved order: ${orderedIds.join(', ')}`);
 
   const resolvedValues = new Map<string, TokenValue>();
   for (const id of orderedIds) {
@@ -277,7 +266,7 @@ export const resolveDocument = (
   return leaves.map<ResolvedToken>((leaf) => {
     const value = resolvedValues.get(leaf.id)!;
     if (trace) {
-      const display = typeof value === "string" ? value : JSON.stringify(value);
+      const display = typeof value === 'string' ? value : JSON.stringify(value);
       trace(`  resolved "${leaf.id}" (${leaf.type}) → ${display}`);
     }
     const resolved: ResolvedToken = Object.freeze({
@@ -294,10 +283,8 @@ export const resolveDocument = (
 };
 
 /** Parse + resolve convenience helper. */
-export const resolveTree = (
-  doc: DesignTokenDocument,
-  options?: ResolveOptions,
-): readonly ResolvedToken[] => resolveDocument(doc, options);
+export const resolveTree = (doc: DesignTokenDocument, options?: ResolveOptions): readonly ResolvedToken[] =>
+  resolveDocument(doc, options);
 
 /** Re-export for tests / external use. */
 export type { TokenTree };

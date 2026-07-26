@@ -12,13 +12,13 @@
  * - Cleans up watcher on SIGINT/SIGTERM
  */
 
-import { watch as chokidarWatch, type FSWatcher } from "chokidar";
-import type { OutputFormat } from "./types.js";
-import { runPipeline } from "./pipeline.js";
-import { writeArtifacts } from "../utils/writer.js";
-import { TokiError } from "../utils/errors.js";
-import { loadConfig, mergeConfig } from "./config.js";
-import { parseFormats } from "../generators/index.js";
+import { watch as chokidarWatch, type FSWatcher } from 'chokidar';
+import type { OutputFormat } from './types.js';
+import { runPipeline } from './pipeline.js';
+import { writeArtifacts } from '../utils/writer.js';
+import { TokiError } from '../utils/errors.js';
+import { loadConfig, mergeConfig } from './config.js';
+import { parseFormats } from '../generators/index.js';
 
 export interface WatchOptions {
   readonly input?: string;
@@ -35,9 +35,9 @@ const DEBOUNCE_MS = 200;
 /** Get a timestamp string [HH:MM:SS]. */
 const timestamp = (): string => {
   const now = new Date();
-  const h = String(now.getHours()).padStart(2, "0");
-  const m = String(now.getMinutes()).padStart(2, "0");
-  const s = String(now.getSeconds()).padStart(2, "0");
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
   return `[${h}:${m}:${s}]`;
 };
 
@@ -68,8 +68,8 @@ const executeBuild = async (
       const tokenFile = themes[themeName];
       if (tokenFile === undefined) {
         throw new TokiError(
-          `Unknown theme "${themeName}". Available: ${Object.keys(themes).join(", ")}`,
-          "CONFIG_ERROR",
+          `Unknown theme "${themeName}". Available: ${Object.keys(themes).join(', ')}`,
+          'CONFIG_ERROR',
         );
       }
       const result = await runPipeline({
@@ -130,8 +130,8 @@ export const startWatch = async (options: WatchOptions): Promise<() => void> => 
 
   if (options.verbose) {
     console.log(`toki watch v${TOKI_VERSION}`);
-    console.log(`  watching: ${watchPaths.join(", ")}`);
-    console.log(`  formats: ${formats.join(", ")}`);
+    console.log(`  watching: ${watchPaths.join(', ')}`);
+    console.log(`  formats: ${formats.join(', ')}`);
     console.log(`  output: ${resolved.output}`);
   }
 
@@ -140,8 +140,8 @@ export const startWatch = async (options: WatchOptions): Promise<() => void> => 
   const initial = await executeBuild(resolved, formats, options);
   const elapsed = performance.now() - start;
   console.log(
-    `${timestamp()} Initial build: ${initial.artifacts} artifact${initial.artifacts === 1 ? "" : "s"}` +
-      ` from ${initial.tokens} token${initial.tokens === 1 ? "" : "s"}` +
+    `${timestamp()} Initial build: ${initial.artifacts} artifact${initial.artifacts === 1 ? '' : 's'}` +
+      ` from ${initial.tokens} token${initial.tokens === 1 ? '' : 's'}` +
       ` (${elapsed.toFixed(1)}ms)`,
   );
 
@@ -159,8 +159,8 @@ export const startWatch = async (options: WatchOptions): Promise<() => void> => 
         const result = await executeBuild(resolved, formats, options);
         const buildElapsed = performance.now() - buildStart;
         console.log(
-          `${timestamp()} Rebuilt ${result.artifacts} artifact${result.artifacts === 1 ? "" : "s"}` +
-            ` from ${result.tokens} token${result.tokens === 1 ? "" : "s"}` +
+          `${timestamp()} Rebuilt ${result.artifacts} artifact${result.artifacts === 1 ? '' : 's'}` +
+            ` from ${result.tokens} token${result.tokens === 1 ? '' : 's'}` +
             ` (${buildElapsed.toFixed(1)}ms) — ${changedPath}`,
         );
       } catch (error) {
@@ -177,15 +177,15 @@ export const startWatch = async (options: WatchOptions): Promise<() => void> => 
     awaitWriteFinish: { stabilityThreshold: 50, pollInterval: 10 },
   });
 
-  watcher.on("change", (path) => {
+  watcher.on('change', (path) => {
     triggerBuild(path);
   });
 
-  watcher.on("add", (path) => {
+  watcher.on('add', (path) => {
     triggerBuild(path);
   });
 
-  watcher.on("error", (err: unknown) => {
+  watcher.on('error', (err: unknown) => {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`${timestamp()} Watcher error: ${message}`);
   });
@@ -198,11 +198,11 @@ export const startWatch = async (options: WatchOptions): Promise<() => void> => 
     watcher.close();
   };
 
-  process.on("SIGINT", () => {
+  process.on('SIGINT', () => {
     cleanup();
     process.exit(0);
   });
-  process.on("SIGTERM", () => {
+  process.on('SIGTERM', () => {
     cleanup();
     process.exit(0);
   });
@@ -211,4 +211,4 @@ export const startWatch = async (options: WatchOptions): Promise<() => void> => 
 };
 
 // Re-export version for watch module header
-import { TOKI_VERSION } from "../version.js";
+import { TOKI_VERSION } from '../version.js';

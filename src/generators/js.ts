@@ -20,105 +20,102 @@ import type {
   OutputArtifact,
   ResolvedToken,
   TokenValue,
-} from "../core/types.js";
-import { GeneratorError } from "../utils/errors.js";
-import { getNamingFunction } from "../utils/naming.js";
-import { headerComment, themePath } from "../utils/format.js";
-import { platformReadme } from "./readme.js";
+} from '../core/types.js';
+import { GeneratorError } from '../utils/errors.js';
+import { getNamingFunction } from '../utils/naming.js';
+import { headerComment, themePath } from '../utils/format.js';
+import { platformReadme } from './readme.js';
 
 /** JS reserved words that cannot be used as binding identifiers. */
 const RESERVED_WORDS: ReadonlySet<string> = new Set([
-  "break",
-  "case",
-  "catch",
-  "class",
-  "const",
-  "continue",
-  "debugger",
-  "default",
-  "delete",
-  "do",
-  "else",
-  "export",
-  "extends",
-  "finally",
-  "for",
-  "function",
-  "if",
-  "import",
-  "in",
-  "instanceof",
-  "let",
-  "new",
-  "return",
-  "super",
-  "switch",
-  "this",
-  "throw",
-  "try",
-  "typeof",
-  "var",
-  "void",
-  "while",
-  "with",
-  "yield",
-  "null",
-  "true",
-  "false",
-  "undefined",
-  "await",
-  "enum",
-  "implements",
-  "interface",
-  "package",
-  "private",
-  "protected",
-  "public",
-  "static",
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'export',
+  'extends',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'import',
+  'in',
+  'instanceof',
+  'let',
+  'new',
+  'return',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'try',
+  'typeof',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
+  'null',
+  'true',
+  'false',
+  'undefined',
+  'await',
+  'enum',
+  'implements',
+  'interface',
+  'package',
+  'private',
+  'protected',
+  'public',
+  'static',
 ]);
 
 /** Derive a safe JS identifier from a token path using the given naming convention. */
-export const makeIdentifier = (
-  path: readonly string[],
-  naming: NamingConvention = "camelCase",
-): string => {
+export const makeIdentifier = (path: readonly string[], naming: NamingConvention = 'camelCase'): string => {
   const namingFn = getNamingFunction(naming);
   let id = namingFn(path);
-  if (id.length === 0) id = "token";
+  if (id.length === 0) id = 'token';
   if (/^[0-9]/.test(id)) id = `_${id}`;
-  if (naming === "camelCase" && RESERVED_WORDS.has(id)) id = `${id}_`;
+  if (naming === 'camelCase' && RESERVED_WORDS.has(id)) id = `${id}_`;
   return id;
 };
 
 /** Format a resolved value as a JS literal expression. */
 export const formatJsLiteral = (value: TokenValue): string => {
-  if (typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "number") return Number.isFinite(value) ? String(value) : "null";
-  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === 'string') return JSON.stringify(value);
+  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : 'null';
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
   return JSON.stringify(sortKeys(value));
 };
 
 /** Infer a TypeScript type literal string for a resolved value. */
 export const inferJsType = (value: unknown): string => {
-  if (typeof value === "string") return "string";
-  if (typeof value === "number") return Number.isFinite(value) ? "number" : "null";
-  if (typeof value === "boolean") return "boolean";
+  if (typeof value === 'string') return 'string';
+  if (typeof value === 'number') return Number.isFinite(value) ? 'number' : 'null';
+  if (typeof value === 'boolean') return 'boolean';
   if (Array.isArray(value)) {
-    if (value.length === 0) return "readonly unknown[]";
-    return `readonly [${value.map(inferJsType).join(", ")}]`;
+    if (value.length === 0) return 'readonly unknown[]';
+    return `readonly [${value.map(inferJsType).join(', ')}]`;
   }
-  if (value !== null && typeof value === "object") {
+  if (value !== null && typeof value === 'object') {
     const obj = value as Record<string, unknown>;
     const keys = Object.keys(obj).toSorted();
-    const props = keys.map((k) => `${JSON.stringify(k)}: ${inferJsType(obj[k])}`).join("; ");
+    const props = keys.map((k) => `${JSON.stringify(k)}: ${inferJsType(obj[k])}`).join('; ');
     return `{ readonly ${props} }`;
   }
-  return "unknown";
+  return 'unknown';
 };
 
 const sortKeys = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(sortKeys);
-  if (value !== null && typeof value === "object") {
+  if (value !== null && typeof value === 'object') {
     const obj = value as Record<string, unknown>;
     const out: Record<string, unknown> = {};
     for (const key of Object.keys(obj).toSorted()) out[key] = sortKeys(obj[key]);
@@ -128,23 +125,17 @@ const sortKeys = (value: unknown): unknown => {
 };
 
 export const jsGenerator: Generator = {
-  format: "js",
-  generate: (
-    _tokens: readonly ResolvedToken[],
-    _options: GeneratorOptions,
-  ): readonly OutputArtifact[] => {
+  format: 'js',
+  generate: (_tokens: readonly ResolvedToken[], _options: GeneratorOptions): readonly OutputArtifact[] => {
     return generateJs(_tokens, _options);
   },
 };
 
-const generateJs = (
-  tokens: readonly ResolvedToken[],
-  options: GeneratorOptions,
-): readonly OutputArtifact[] => {
+const generateJs = (tokens: readonly ResolvedToken[], options: GeneratorOptions): readonly OutputArtifact[] => {
   const seen = new Map<string, string>();
   const exports: string[] = [];
   const decls: string[] = [];
-  const naming = options.naming ?? "camelCase";
+  const naming = options.naming ?? 'camelCase';
 
   for (const token of tokens) {
     const identifier = makeIdentifier(token.path, naming);
@@ -163,15 +154,15 @@ const generateJs = (
   }
 
   const header = headerComment(options.version);
-  const jsContent = [header, "", ...exports, ""].join("\n");
-  const dtsContent = [header, "", ...decls, ""].join("\n");
+  const jsContent = [header, '', ...exports, ''].join('\n');
+  const dtsContent = [header, '', ...decls, ''].join('\n');
 
-  const jsPath = options.theme ? themePath("js/tokens.js", options.theme) : "js/tokens.js";
-  const dtsPath = options.theme ? themePath("js/tokens.d.ts", options.theme) : "js/tokens.d.ts";
+  const jsPath = options.theme ? themePath('js/tokens.js', options.theme) : 'js/tokens.js';
+  const dtsPath = options.theme ? themePath('js/tokens.d.ts', options.theme) : 'js/tokens.d.ts';
 
   return [
-    { relativePath: jsPath, format: "js", content: jsContent },
-    { relativePath: dtsPath, format: "js", content: dtsContent },
-    { relativePath: "js/README.md", format: "js", content: platformReadme("js", options.version) },
+    { relativePath: jsPath, format: 'js', content: jsContent },
+    { relativePath: dtsPath, format: 'js', content: dtsContent },
+    { relativePath: 'js/README.md', format: 'js', content: platformReadme('js', options.version) },
   ];
 };

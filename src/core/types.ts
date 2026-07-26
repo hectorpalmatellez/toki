@@ -15,39 +15,39 @@
 
 /** All `$type` values supported by Toki. */
 export type TokenType =
-  | "color"
-  | "dimension"
-  | "fontFamily"
-  | "fontWeight"
-  | "duration"
-  | "cubicBezier"
-  | "number"
-  | "lineHeight"
-  | "letterSpacing"
-  | "shadow"
-  | "typography"
-  | "border"
-  | "transition";
+  | 'color'
+  | 'dimension'
+  | 'fontFamily'
+  | 'fontWeight'
+  | 'duration'
+  | 'cubicBezier'
+  | 'number'
+  | 'lineHeight'
+  | 'letterSpacing'
+  | 'shadow'
+  | 'typography'
+  | 'border'
+  | 'transition';
 
 /** Readonly set of valid `TokenType` values for runtime validation. */
 export const TOKEN_TYPES: ReadonlySet<string> = new Set<TokenType>([
-  "color",
-  "dimension",
-  "fontFamily",
-  "fontWeight",
-  "duration",
-  "cubicBezier",
-  "number",
-  "lineHeight",
-  "letterSpacing",
-  "shadow",
-  "typography",
-  "border",
-  "transition",
+  'color',
+  'dimension',
+  'fontFamily',
+  'fontWeight',
+  'duration',
+  'cubicBezier',
+  'number',
+  'lineHeight',
+  'letterSpacing',
+  'shadow',
+  'typography',
+  'border',
+  'transition',
 ]);
 
 /** Reserved top-level DTCG property keys (the `$`-prefixed ones). */
-export const RESERVED_KEYS = ["$type", "$value", "$description", "$extensions"] as const;
+export const RESERVED_KEYS = ['$type', '$value', '$description', '$extensions'] as const;
 export type ReservedKey = (typeof RESERVED_KEYS)[number];
 
 /**
@@ -64,14 +64,14 @@ export type TokenValue = string | number | boolean | TokenComposite | readonly T
 export type TokenComposite = Readonly<Record<string, unknown>>;
 
 /** Discriminator union node type. */
-export type TokenNodeKind = "group" | "token";
+export type TokenNodeKind = 'group' | 'token';
 
 /**
  * Interior group node. Group `$type` propagates to descendant tokens unless
  * overridden by a nearer group or the token itself.
  */
 export interface TokenGroupNode {
-  readonly kind: "group";
+  readonly kind: 'group';
   readonly name: string;
   readonly path: readonly string[];
   readonly children: Readonly<Record<string, TokenNode>>;
@@ -85,7 +85,7 @@ export interface TokenGroupNode {
  * `$type` is optional here; the resolver applies inheritance if it is absent.
  */
 export interface DesignToken {
-  readonly kind: "token";
+  readonly kind: 'token';
   readonly id: string;
   readonly name: string;
   readonly path: readonly string[];
@@ -127,24 +127,17 @@ export interface ResolvedToken {
 }
 
 /** Output formats Toki can generate. Phase 1 ships `css` and `js`. */
-export type OutputFormat =
-  | "css"
-  | "js"
-  | "react-native"
-  | "angular"
-  | "angular-11"
-  | "svelte"
-  | "react";
+export type OutputFormat = 'css' | 'js' | 'react-native' | 'angular' | 'angular-11' | 'svelte' | 'react';
 
 /** All output formats supported by the generator registry. */
 export const ALL_FORMATS: readonly OutputFormat[] = [
-  "css",
-  "js",
-  "react-native",
-  "angular",
-  "angular-11",
-  "svelte",
-  "react",
+  'css',
+  'js',
+  'react-native',
+  'angular',
+  'angular-11',
+  'svelte',
+  'react',
 ];
 
 /** A generated artifact ready to be written to disk. */
@@ -168,10 +161,7 @@ export interface GeneratorOptions {
 /** A platform generator module. */
 export interface Generator {
   readonly format: OutputFormat;
-  generate(
-    tokens: readonly ResolvedToken[],
-    options: GeneratorOptions,
-  ): readonly OutputArtifact[];
+  generate(tokens: readonly ResolvedToken[], options: GeneratorOptions): readonly OutputArtifact[];
 }
 
 // ---------------------------------------------------------------------------
@@ -179,17 +169,14 @@ export interface Generator {
 // ---------------------------------------------------------------------------
 
 /** Supported naming conventions for token identifiers. */
-export type NamingConvention = "camelCase" | "kebab-case" | "CONSTANT_CASE" | "SCREAMING_SNAKE_CASE";
+export type NamingConvention = 'camelCase' | 'kebab-case' | 'CONSTANT_CASE' | 'SCREAMING_SNAKE_CASE';
 
 /**
  * A user-defined transform function that modifies resolved tokens before
  * generation. Transforms execute in registration order after built-in
  * platform transformers.
  */
-export type TransformPlugin = (
-  token: ResolvedToken,
-  context: TransformContext,
-) => ResolvedToken;
+export type TransformPlugin = (token: ResolvedToken, context: TransformContext) => ResolvedToken;
 
 /** Context passed to a transform plugin. */
 export interface TransformContext {

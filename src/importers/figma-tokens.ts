@@ -30,11 +30,11 @@
  * - Nested group structure is preserved
  */
 
-import { readFile, writeFile } from "node:fs/promises";
-import { resolve, dirname } from "node:path";
-import { TOKEN_TYPES } from "../core/types.js";
-import type { TokenType } from "../core/types.js";
-import { ImportError } from "../utils/errors.js";
+import { readFile, writeFile } from 'node:fs/promises';
+import { resolve, dirname } from 'node:path';
+import { TOKEN_TYPES } from '../core/types.js';
+import type { TokenType } from '../core/types.js';
+import { ImportError } from '../utils/errors.js';
 
 /** Figma Tokens Studio token shape. */
 interface FigmaToken {
@@ -47,11 +47,11 @@ interface FigmaToken {
 /** Figma Tokens Studio node — either a token or a group. */
 type FigmaNode = FigmaToken | Record<string, unknown>;
 
-const META_KEYS = new Set(["$metadata", "$themes"]);
+const META_KEYS = new Set(['$metadata', '$themes']);
 
 const isFigmaToken = (node: FigmaNode): boolean => {
-  if (node === null || typeof node !== "object" || Array.isArray(node)) return false;
-  return "value" in node;
+  if (node === null || typeof node !== 'object' || Array.isArray(node)) return false;
+  return 'value' in node;
 };
 
 const isValidType = (type: string): type is TokenType => TOKEN_TYPES.has(type);
@@ -71,9 +71,7 @@ const convertNode = (node: FigmaNode, path: readonly string[]): Record<string, u
  */
 const convertToken = (node: FigmaToken, path: readonly string[]): Record<string, unknown> => {
   if (node.value === undefined) {
-    throw new ImportError(
-      `Token at "${path.join(".")}" is missing a "value" property.`,
-    );
+    throw new ImportError(`Token at "${path.join('.')}" is missing a "value" property.`);
   }
 
   const result: Record<string, unknown> = {
@@ -82,23 +80,21 @@ const convertToken = (node: FigmaToken, path: readonly string[]): Record<string,
 
   // Validate and map type
   if (node.type !== undefined) {
-    if (typeof node.type !== "string") {
-      throw new ImportError(
-        `Token at "${path.join(".")}" has an invalid "type" property (expected a string).`,
-      );
+    if (typeof node.type !== 'string') {
+      throw new ImportError(`Token at "${path.join('.')}" has an invalid "type" property (expected a string).`);
     }
     if (!isValidType(node.type)) {
       throw new ImportError(
-        `Token at "${path.join(".")}" has an unknown type "${node.type}". ` +
-          `Supported types: ${[...TOKEN_TYPES].join(", ")}.`,
+        `Token at "${path.join('.')}" has an unknown type "${node.type}". ` +
+          `Supported types: ${[...TOKEN_TYPES].join(', ')}.`,
       );
     }
-    result["$type"] = node.type as TokenType;
+    result['$type'] = node.type as TokenType;
   }
 
   // Figma TS uses "description" (matches DTCG $description)
-  if (typeof node.description === "string") {
-    result["$description"] = node.description;
+  if (typeof node.description === 'string') {
+    result['$description'] = node.description;
   }
 
   return result;
@@ -111,34 +107,28 @@ const convertGroup = (node: FigmaNode, path: readonly string[]): Record<string, 
   const result: Record<string, unknown> = {};
 
   // Group-level $type: Figma TS uses "type", DTCG uses "$type"
-  const groupType = node.type ?? node["$type"];
+  const groupType = node.type ?? node['$type'];
   if (groupType !== undefined) {
-    if (typeof groupType !== "string") {
-      throw new ImportError(
-        `Group at "${path.join(".")}" has an invalid "type" property.`,
-      );
+    if (typeof groupType !== 'string') {
+      throw new ImportError(`Group at "${path.join('.')}" has an invalid "type" property.`);
     }
     if (!isValidType(groupType)) {
-      throw new ImportError(
-        `Group at "${path.join(".")}" has an unknown type "${groupType}".`,
-      );
+      throw new ImportError(`Group at "${path.join('.')}" has an unknown type "${groupType}".`);
     }
-    result["$type"] = groupType as TokenType;
+    result['$type'] = groupType as TokenType;
   }
 
   // Group-level description
-  if (typeof node.description === "string") {
-    result["$description"] = node.description;
+  if (typeof node.description === 'string') {
+    result['$description'] = node.description;
   }
 
   // Convert children
-  const reserved = new Set(["value", "type", "description", "$type", "$description"]);
+  const reserved = new Set(['value', 'type', 'description', '$type', '$description']);
   for (const [key, child] of Object.entries(node)) {
     if (reserved.has(key)) continue;
-    if (child === null || typeof child !== "object" || Array.isArray(child)) {
-      throw new ImportError(
-        `Group at "${path.join(".")}" has a non-object child "${key}".`,
-      );
+    if (child === null || typeof child !== 'object' || Array.isArray(child)) {
+      throw new ImportError(`Group at "${path.join('.')}" has a non-object child "${key}".`);
     }
     result[key] = convertNode(child as FigmaNode, [...path, key]);
   }
@@ -155,8 +145,8 @@ const convertGroup = (node: FigmaNode, path: readonly string[]): Record<string, 
  * under a single DTCG root (last-write-wins for conflicts).
  */
 export const convertFigmaTokens = (input: unknown): Record<string, unknown> => {
-  if (input === null || typeof input !== "object" || Array.isArray(input)) {
-    throw new ImportError("Figma Tokens Studio input must be a JSON object.");
+  if (input === null || typeof input !== 'object' || Array.isArray(input)) {
+    throw new ImportError('Figma Tokens Studio input must be a JSON object.');
   }
 
   const obj = input as Record<string, unknown>;
@@ -165,7 +155,7 @@ export const convertFigmaTokens = (input: unknown): Record<string, unknown> => {
   // Find theme groups (skip $metadata, $themes)
   for (const [key, value] of Object.entries(obj)) {
     if (META_KEYS.has(key)) continue;
-    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
       throw new ImportError(`Top-level key "${key}" must be a JSON object (a token set).`);
     }
 
@@ -177,8 +167,8 @@ export const convertFigmaTokens = (input: unknown): Record<string, unknown> => {
 
   if (Object.keys(result).length === 0) {
     throw new ImportError(
-      "No token sets found in the Figma Tokens Studio file. " +
-        "Ensure the file contains at least one token set (excluding $metadata and $themes).",
+      'No token sets found in the Figma Tokens Studio file. ' +
+        'Ensure the file contains at least one token set (excluding $metadata and $themes).',
     );
   }
 
@@ -196,7 +186,7 @@ export const importFigmaTokens = async (options: {
 
   let raw: string;
   try {
-    raw = await readFile(inputPath, "utf8");
+    raw = await readFile(inputPath, 'utf8');
   } catch (cause) {
     throw new ImportError(`Failed to read file: ${inputPath}`, cause);
   }
@@ -205,15 +195,18 @@ export const importFigmaTokens = async (options: {
   try {
     parsed = JSON.parse(raw) as unknown;
   } catch (cause) {
-    throw new ImportError(`Invalid JSON in ${inputPath}: ${cause instanceof Error ? cause.message : String(cause)}`, cause);
+    throw new ImportError(
+      `Invalid JSON in ${inputPath}: ${cause instanceof Error ? cause.message : String(cause)}`,
+      cause,
+    );
   }
 
   const dtcg = convertFigmaTokens(parsed);
 
-  const outputPath = resolve(options.output ?? dirname(inputPath), "tokens.json");
+  const outputPath = resolve(options.output ?? dirname(inputPath), 'tokens.json');
 
   try {
-    await writeFile(outputPath, JSON.stringify(dtcg, null, 2) + "\n", "utf8");
+    await writeFile(outputPath, JSON.stringify(dtcg, null, 2) + '\n', 'utf8');
   } catch (cause) {
     throw new ImportError(`Failed to write output: ${outputPath}`, cause);
   }

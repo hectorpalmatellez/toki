@@ -23,9 +23,9 @@
  * unit tests), because transformers for `css`/`js` are effectively identity.
  */
 
-import type { OutputFormat, ResolvedToken, TokenType, TokenValue, TransformContext } from "./types.js";
+import type { OutputFormat, ResolvedToken, TokenType, TokenValue, TransformContext } from './types.js';
 
-export type { TransformContext } from "./types.js";
+export type { TransformContext } from './types.js';
 
 /** A value transformer: maps a resolved token to its platform value. */
 export type TransformFn = (token: ResolvedToken, context: TransformContext) => TokenValue;
@@ -51,10 +51,8 @@ export const transformToken = (token: ResolvedToken, context: TransformContext):
 });
 
 /** Transform a whole token list for one platform (pipeline Transform stage). */
-export const transformTokens = (
-  tokens: readonly ResolvedToken[],
-  platform: OutputFormat,
-): readonly ResolvedToken[] => tokens.map((token) => transformToken(token, { platform }));
+export const transformTokens = (tokens: readonly ResolvedToken[], platform: OutputFormat): readonly ResolvedToken[] =>
+  tokens.map((token) => transformToken(token, { platform }));
 
 // ---------------------------------------------------------------------------
 // Color
@@ -73,7 +71,7 @@ export const normalizeColor = (value: string): string => {
   const short = HEX_SHORT.exec(value);
   if (short !== null) {
     const digits = short[1] as string;
-    const expanded = [...digits].map((ch) => ch + ch).join("");
+    const expanded = [...digits].map((ch) => ch + ch).join('');
     return `#${expanded.toLowerCase()}`;
   }
   if (HEX_LONG.test(value)) return value.toLowerCase();
@@ -97,8 +95,8 @@ const BARE_NUMBER = /^-?\d+(?:\.\d+)?$/;
  * - non-convertible strings (`"50%"`, `"auto"`) pass through unchanged.
  */
 export const dimensionToRn = (value: TokenValue): TokenValue => {
-  if (typeof value === "number") return value;
-  if (typeof value !== "string") return value;
+  if (typeof value === 'number') return value;
+  if (typeof value !== 'string') return value;
   const trimmed = value.trim();
   const px = PX.exec(trimmed);
   if (px !== null) return Number(px[1]);
@@ -114,7 +112,7 @@ export const dimensionToRn = (value: TokenValue): TokenValue => {
  */
 export const dimensionToRnNumber = (value: unknown): number => {
   const converted = dimensionToRn(value as TokenValue);
-  return typeof converted === "number" ? converted : 0;
+  return typeof converted === 'number' ? converted : 0;
 };
 
 // ---------------------------------------------------------------------------
@@ -122,8 +120,8 @@ export const dimensionToRnNumber = (value: unknown): number => {
 // ---------------------------------------------------------------------------
 
 const FONT_WEIGHT_KEYWORDS: Readonly<Record<string, string>> = {
-  normal: "400",
-  bold: "700",
+  normal: '400',
+  bold: '700',
 };
 
 /**
@@ -133,8 +131,8 @@ const FONT_WEIGHT_KEYWORDS: Readonly<Record<string, string>> = {
  * - unrecognized strings pass through unchanged.
  */
 export const fontWeightToRn = (value: TokenValue): TokenValue => {
-  if (typeof value === "number") return String(value);
-  if (typeof value !== "string") return value;
+  if (typeof value === 'number') return String(value);
+  if (typeof value !== 'string') return value;
   const keyword = FONT_WEIGHT_KEYWORDS[value.trim().toLowerCase()];
   if (keyword !== undefined) return keyword;
   if (BARE_NUMBER.test(value.trim())) return String(Number(value.trim()));
@@ -168,7 +166,7 @@ export const splitColorAlpha = (color: string): { base: string; alpha: number } 
   // rgb()/rgba()
   const fn = RGBA.exec(normalized);
   if (fn !== null) {
-    const parts = (fn[1] as string).split(",").map((part) => part.trim());
+    const parts = (fn[1] as string).split(',').map((part) => part.trim());
     if (parts.length === 4) {
       const alpha = Number(parts[3]);
       if (Number.isFinite(alpha)) {
@@ -185,13 +183,11 @@ export const splitColorAlpha = (color: string): { base: string; alpha: number } 
 
 /** Convert a single DTCG shadow object to the React Native shape. */
 const singleShadowToRn = (value: Readonly<Record<string, unknown>>): RnShadow => {
-  const width = dimensionToRnNumber(value["x"] ?? 0);
-  const height = dimensionToRnNumber(value["y"] ?? 0);
-  const blur = dimensionToRnNumber(value["blur"] ?? 0);
+  const width = dimensionToRnNumber(value['x'] ?? 0);
+  const height = dimensionToRnNumber(value['y'] ?? 0);
+  const blur = dimensionToRnNumber(value['blur'] ?? 0);
   const { base, alpha } =
-    typeof value["color"] === "string"
-      ? splitColorAlpha(value["color"])
-      : { base: "#000000", alpha: 1 };
+    typeof value['color'] === 'string' ? splitColorAlpha(value['color']) : { base: '#000000', alpha: 1 };
   const shadowRadius = Math.round((blur / 2) * 100) / 100;
   return {
     shadowColor: base,
@@ -211,12 +207,12 @@ const singleShadowToRn = (value: Readonly<Record<string, unknown>>): RnShadow =>
 export const shadowToRn = (value: TokenValue): TokenValue => {
   if (Array.isArray(value)) {
     return value.map((entry) =>
-      entry !== null && typeof entry === "object" && !Array.isArray(entry)
+      entry !== null && typeof entry === 'object' && !Array.isArray(entry)
         ? singleShadowToRn(entry as Readonly<Record<string, unknown>>)
         : entry,
     );
   }
-  if (value !== null && typeof value === "object") {
+  if (value !== null && typeof value === 'object') {
     return singleShadowToRn(value as Readonly<Record<string, unknown>>);
   }
   return value;
@@ -232,9 +228,9 @@ export const shadowToRn = (value: TokenValue): TokenValue => {
  * stripped). Non-strings pass through.
  */
 export const fontFamilyToRn = (value: TokenValue): TokenValue => {
-  if (typeof value !== "string") return value;
-  const first = value.split(",")[0]?.trim() ?? value;
-  return first.replace(/^["']+|["']+$/g, "");
+  if (typeof value !== 'string') return value;
+  const first = value.split(',')[0]?.trim() ?? value;
+  return first.replace(/^["']+|["']+$/g, '');
 };
 
 /**
@@ -245,21 +241,21 @@ export const fontFamilyToRn = (value: TokenValue): TokenValue => {
  * non-object values pass through unchanged.
  */
 export const typographyToRn = (value: TokenValue): TokenValue => {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) return value;
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return value;
   const source = value as Readonly<Record<string, unknown>>;
   const out: Record<string, unknown> = {};
   for (const key of Object.keys(source)) {
     const field = source[key] as TokenValue;
     switch (key) {
-      case "fontSize":
-      case "lineHeight":
-      case "letterSpacing":
+      case 'fontSize':
+      case 'lineHeight':
+      case 'letterSpacing':
         out[key] = dimensionToRn(field);
         break;
-      case "fontWeight":
+      case 'fontWeight':
         out[key] = fontWeightToRn(field);
         break;
-      case "fontFamily":
+      case 'fontFamily':
         out[key] = fontFamilyToRn(field);
         break;
       default:
@@ -275,31 +271,31 @@ export const typographyToRn = (value: TokenValue): TokenValue => {
 
 /** Color: canonicalize hex strings for every platform. */
 export const ColorTransformer: TransformFn = (token) =>
-  typeof token.value === "string" ? normalizeColor(token.value) : token.value;
+  typeof token.value === 'string' ? normalizeColor(token.value) : token.value;
 
 /** Dimension: raw numbers for React Native; authored strings elsewhere. */
 export const DimensionTransformer: TransformFn = (token, context) =>
-  context.platform === "react-native" ? dimensionToRn(token.value) : token.value;
+  context.platform === 'react-native' ? dimensionToRn(token.value) : token.value;
 
 /** FontWeight: canonical numeric strings for React Native; as-is elsewhere. */
 export const FontWeightTransformer: TransformFn = (token, context) =>
-  context.platform === "react-native" ? fontWeightToRn(token.value) : token.value;
+  context.platform === 'react-native' ? fontWeightToRn(token.value) : token.value;
 
 /** Shadow: RN shadow objects for React Native; as-is elsewhere. */
 export const ShadowTransformer: TransformFn = (token, context) =>
-  context.platform === "react-native" ? shadowToRn(token.value) : token.value;
+  context.platform === 'react-native' ? shadowToRn(token.value) : token.value;
 
 /** FontFamily: first family name for React Native; as-is elsewhere. */
 export const FontFamilyTransformer: TransformFn = (token, context) =>
-  context.platform === "react-native" ? fontFamilyToRn(token.value) : token.value;
+  context.platform === 'react-native' ? fontFamilyToRn(token.value) : token.value;
 
 /** Typography: RN-normalized composite fields for React Native; as-is elsewhere. */
 export const TypographyTransformer: TransformFn = (token, context) =>
-  context.platform === "react-native" ? typographyToRn(token.value) : token.value;
+  context.platform === 'react-native' ? typographyToRn(token.value) : token.value;
 
-registerTransformer("color", ColorTransformer);
-registerTransformer("dimension", DimensionTransformer);
-registerTransformer("fontWeight", FontWeightTransformer);
-registerTransformer("shadow", ShadowTransformer);
-registerTransformer("fontFamily", FontFamilyTransformer);
-registerTransformer("typography", TypographyTransformer);
+registerTransformer('color', ColorTransformer);
+registerTransformer('dimension', DimensionTransformer);
+registerTransformer('fontWeight', FontWeightTransformer);
+registerTransformer('shadow', ShadowTransformer);
+registerTransformer('fontFamily', FontFamilyTransformer);
+registerTransformer('typography', TypographyTransformer);

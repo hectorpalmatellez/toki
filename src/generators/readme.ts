@@ -6,13 +6,13 @@
  * multi-theme usage (where applicable), and known limitations.
  */
 
-import type { OutputFormat } from "../core/types.js";
-import { headerCommentHtml } from "../utils/format.js";
+import type { OutputFormat } from '../core/types.js';
+import { headerCommentHtml } from '../utils/format.js';
 
 const MULTI_THEME_NOTE =
-  "Toki currently emits a single theme per run. To produce multiple themes, run " +
-  "`toki build` once per theme token file into separate output directories. " +
-  "First-class multi-theme output is planned (see `docs/backlog.md`, Phase 3).";
+  'Toki currently emits a single theme per run. To produce multiple themes, run ' +
+  '`toki build` once per theme token file into separate output directories. ' +
+  'First-class multi-theme output is planned (see `docs/backlog.md`, Phase 3).';
 
 /** Render the README for one output platform subdirectory. */
 export const platformReadme = (format: OutputFormat, version: string): string => {
@@ -82,7 +82,7 @@ ${MULTI_THEME_NOTE}
   \`GENERATOR_ERROR\` (rename one of the tokens).
 `,
 
-  "react-native": `
+  'react-native': `
 # Design tokens — React Native
 
 ## Quick start
@@ -165,7 +165,7 @@ ${MULTI_THEME_NOTE}
   \`@import\`-only projects use the \`angular-11\` format instead.
 `,
 
-  "angular-11": `
+  'angular-11': `
 # Design tokens — Angular 11 (legacy)
 
 ## Quick start

@@ -9,27 +9,18 @@
  *   - `react/README.md` — platform quick start.
  */
 
-import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken } from "../core/types.js";
-import { GeneratorError } from "../utils/errors.js";
-import { headerComment, themePath } from "../utils/format.js";
-import {
-  categoryName,
-  groupTokens,
-  inlineLiteral,
-  jsKey,
-  serializeTokenTree,
-} from "../utils/grouping.js";
-import { renderCssCustomProperties } from "./css.js";
-import { makeIdentifier } from "./js.js";
-import { platformReadme } from "./readme.js";
+import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken } from '../core/types.js';
+import { GeneratorError } from '../utils/errors.js';
+import { headerComment, themePath } from '../utils/format.js';
+import { categoryName, groupTokens, inlineLiteral, jsKey, serializeTokenTree } from '../utils/grouping.js';
+import { renderCssCustomProperties } from './css.js';
+import { makeIdentifier } from './js.js';
+import { platformReadme } from './readme.js';
 
 /** `theme.ts`: nested category object + `Theme` type + default export. */
-export const renderTheme = (
-  tokens: readonly ResolvedToken[],
-  options: GeneratorOptions,
-): string => {
+export const renderTheme = (tokens: readonly ResolvedToken[], options: GeneratorOptions): string => {
   const { categories } = groupTokens(tokens);
-  const naming = options.naming ?? "camelCase";
+  const naming = options.naming ?? 'camelCase';
 
   // Top-level entries in document order: category subtrees and scalar tokens
   // share one namespace, so collisions across the two are detected here.
@@ -65,43 +56,33 @@ export const renderTheme = (
     entries.push({ key: category, value: serializeTokenTree(node, 1) });
   }
 
-  const lines: string[] = [headerComment(options.version), "", "export const theme = {"];
+  const lines: string[] = [headerComment(options.version), '', 'export const theme = {'];
   for (const entry of entries) {
     lines.push(`  ${jsKey(entry.key)}: ${entry.value},`);
   }
-  lines.push(
-    "} as const;",
-    "",
-    "export type Theme = typeof theme;",
-    "",
-    "export default theme;",
-    "",
-  );
-  return lines.join("\n");
+  lines.push('} as const;', '', 'export type Theme = typeof theme;', '', 'export default theme;', '');
+  return lines.join('\n');
 };
 
 export const reactGenerator: Generator = {
-  format: "react",
-  generate: (
-    tokens: readonly ResolvedToken[],
-    options: GeneratorOptions,
-  ): readonly OutputArtifact[] => {
-    const t = (p: string) => options.theme ? themePath(p, options.theme) : p;
+  format: 'react',
+  generate: (tokens: readonly ResolvedToken[], options: GeneratorOptions): readonly OutputArtifact[] => {
+    const t = (p: string) => (options.theme ? themePath(p, options.theme) : p);
     return [
       {
-        relativePath: t("react/theme.ts"),
-        format: "react",
+        relativePath: t('react/theme.ts'),
+        format: 'react',
         content: renderTheme(tokens, options),
       },
       {
-        relativePath: t("react/tokens.css"),
-        format: "react",
+        relativePath: t('react/tokens.css'),
+        format: 'react',
         content: renderCssCustomProperties(tokens, options),
       },
       {
-        relativePath: "react/README.md",
-        format: "react",
-        content: platformReadme("react", options.version),
+        relativePath: 'react/README.md',
+        format: 'react',
+        content: platformReadme('react', options.version),
       },
     ];
   },
