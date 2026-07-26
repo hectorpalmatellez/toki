@@ -13,7 +13,8 @@ export type TokiErrorCode =
   | "CIRCULAR_REFERENCE_ERROR"
   | "MISSING_REFERENCE_ERROR"
   | "GENERATOR_ERROR"
-  | "IO_ERROR";
+  | "IO_ERROR"
+  | "CONFIG_ERROR";
 
 export class TokiError extends Error {
   readonly code: TokiErrorCode;
@@ -75,5 +76,12 @@ export class IoError extends TokiError {
   constructor(message: string, cause?: unknown) {
     super(message, "IO_ERROR", cause);
     this.name = "IoError";
+  }
+}
+
+export class ConfigError extends TokiError {
+  constructor(message: string, cause?: unknown) {
+    super(message, "CONFIG_ERROR", cause);
+    this.name = "ConfigError";
   }
 }
