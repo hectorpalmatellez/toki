@@ -3,6 +3,7 @@
  * Toki CLI entry point.
  *
  *   toki build --input tokens.json --output ./dist --format css,js
+ *   toki init
  *
  * Drives the pipeline (Parse → Resolve → Generate → Write) and reports a
  * concise summary. Errors of type `TokiError` are formatted cleanly;
@@ -16,6 +17,9 @@ import { writeArtifacts } from "./utils/writer.js";
 import { resolveFormats } from "./generators/index.js";
 import { TOKI_VERSION } from "./version.js";
 import { TokiError } from "./utils/errors.js";
+import { loadConfig, mergeConfig } from "./core/config.js";
+import { writeFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
 
 const parseFormats = (raw: readonly string[]): readonly OutputFormat[] => {
   const flat: string[] = [];
@@ -29,41 +33,200 @@ const parseFormats = (raw: readonly string[]): readonly OutputFormat[] => {
 };
 
 const buildCommand = async (options: {
-  input: string;
-  output: string;
+  input?: string;
+  output?: string;
   format: string[];
   clean: boolean;
   verbose: boolean;
+  config?: string;
+  theme?: string;
 }): Promise<void> => {
-  const formats = parseFormats(options.format);
+  const config = loadConfig(options.config);
+  const cliOpts: { input?: string; output?: string; format?: readonly string[]; clean?: boolean } = {};
+  if (options.input !== undefined) cliOpts.input = options.input;
+  if (options.output !== undefined) cliOpts.output = options.output;
+  cliOpts.format = options.format;
+  cliOpts.clean = options.clean;
+  const resolved = mergeConfig(config, cliOpts);
+
+  const formats = parseFormats(resolved.formats as string[]);
+
   if (options.verbose) {
     console.log(`toki v${TOKI_VERSION}`);
-    console.log(`  input:  ${options.input}`);
-    console.log(`  output: ${options.output}`);
+    if (options.config ?? config !== undefined) {
+      console.log(`  config: ${options.config ?? "discovered"}`);
+    }
+    console.log(`  input:  ${resolved.input}`);
+    console.log(`  output: ${resolved.output}`);
     console.log(`  formats: ${formats.join(", ")}`);
+    if (resolved.themes !== undefined) {
+      console.log(`  themes: ${Object.keys(resolved.themes).join(", ")}`);
+    }
   }
 
-  const result = await runPipeline({
-    input: options.input,
-    formats,
-    verbose: options.verbose,
-  });
+  // Multi-theme: if config has themes, build each one separately.
+  const themes = resolved.themes;
+  if (themes !== undefined && Object.keys(themes).length > 0) {
+    const themeNames = options.theme
+      ? [options.theme]
+      : Object.keys(themes);
 
-  if (options.verbose) {
-    console.log(`  resolved ${result.tokenCount} token${result.tokenCount === 1 ? "" : "s"}`);
+    for (const themeName of themeNames) {
+      const tokenFile = themes[themeName];
+      if (tokenFile === undefined) {
+        throw new TokiError(
+          `Unknown theme "${themeName}". Available: ${Object.keys(themes).join(", ")}`,
+          "CONFIG_ERROR",
+        );
+      }
+
+      if (options.verbose) {
+        console.log(`\n  theme "${themeName}": ${tokenFile}`);
+      }
+
+      const start = performance.now();
+      const result = await runPipeline({
+        input: tokenFile,
+        formats,
+        verbose: options.verbose,
+        theme: themeName,
+        ...(resolved.naming !== undefined ? { naming: resolved.naming } : {}),
+        ...(resolved.transforms !== undefined ? { transforms: resolved.transforms } : {}),
+      });
+      const elapsed = performance.now() - start;
+
+      if (options.verbose) {
+        console.log(`  resolved ${result.tokenCount} token${result.tokenCount === 1 ? "" : "s"} in ${elapsed.toFixed(1)}ms`);
+      }
+
+      const writeResult = await writeArtifacts(resolved.output, result.artifacts, {
+        clean: resolved.clean,
+      });
+
+      console.log(
+        `Built ${writeResult.written.length} artifact${writeResult.written.length === 1 ? "" : "s"}` +
+          ` from ${result.tokenCount} token${result.tokenCount === 1 ? "" : "s"}` +
+          ` [theme: ${themeName}] → ${resolved.output}`,
+      );
+      for (const path of writeResult.written) {
+        console.log(`  ${path}`);
+      }
+    }
+  } else {
+    // Single-theme build (no themes in config).
+    const start = performance.now();
+    const result = await runPipeline({
+      input: resolved.input,
+      formats,
+      verbose: options.verbose,
+      ...(resolved.naming !== undefined ? { naming: resolved.naming } : {}),
+      ...(resolved.transforms !== undefined ? { transforms: resolved.transforms } : {}),
+    });
+    const elapsed = performance.now() - start;
+
+    if (options.verbose) {
+      console.log(`  resolved ${result.tokenCount} token${result.tokenCount === 1 ? "" : "s"} in ${elapsed.toFixed(1)}ms`);
+    }
+
+    const writeResult = await writeArtifacts(resolved.output, result.artifacts, {
+      clean: resolved.clean,
+    });
+
+    console.log(
+      `Built ${writeResult.written.length} artifact${writeResult.written.length === 1 ? "" : "s"}` +
+        ` from ${result.tokenCount} token${result.tokenCount === 1 ? "" : "s"} → ${resolved.output}`,
+    );
+    for (const path of writeResult.written) {
+      console.log(`  ${path}`);
+    }
+  }
+};
+
+const SAMPLE_TOKENS = {
+  color: {
+    $type: "color",
+    primary: { $value: "#1a73e8", $description: "Primary brand color" },
+    secondary: { $value: "#5f6368", $description: "Secondary text color" },
+    background: { $value: "#ffffff", $description: "Page background" },
+  },
+  spacing: {
+    $type: "dimension",
+    small: { $value: "8px" },
+    medium: { $value: "16px" },
+    large: { $value: "24px" },
+    xlarge: { $value: "32px" },
+  },
+  typography: {
+    heading: {
+      $type: "typography",
+      heading1: {
+        $value: {
+          fontFamily: "Inter, sans-serif",
+          fontSize: "32px",
+          fontWeight: "700",
+          lineHeight: "1.2",
+        },
+        $description: "Main heading style",
+      },
+      heading2: {
+        $value: {
+          fontFamily: "Inter, sans-serif",
+          fontSize: "24px",
+          fontWeight: "600",
+          lineHeight: "1.3",
+        },
+        $description: "Subheading style",
+      },
+    },
+    body: {
+      $type: "typography",
+      paragraph: {
+        $value: {
+          fontFamily: "Inter, sans-serif",
+          fontSize: "16px",
+          fontWeight: "400",
+          lineHeight: "1.5",
+        },
+        $description: "Body text style",
+      },
+    },
+  },
+};
+
+const SAMPLE_CONFIG = `import type { TokiConfig } from "toki";
+
+const config: TokiConfig = {
+  input: "./tokens.json",
+  output: "./dist/tokens",
+  formats: ["css", "js"],
+};
+
+export default config;
+`;
+
+const initCommand = async (options: { readonly dir?: string }): Promise<void> => {
+  const dir = options.dir ?? process.cwd();
+  const tokenPath = resolve(dir, "tokens.json");
+  const configPath = resolve(dir, "toki.config.ts");
+
+  if (existsSync(tokenPath)) {
+    console.log(`  tokens.json already exists at ${tokenPath}`);
+    console.log("  Skipping token file creation.");
+  } else {
+    writeFileSync(tokenPath, JSON.stringify(SAMPLE_TOKENS, null, 2) + "\n", "utf8");
+    console.log(`  Created ${tokenPath}`);
   }
 
-  const writeResult = await writeArtifacts(options.output, result.artifacts, {
-    clean: options.clean,
-  });
-
-  console.log(
-    `Built ${writeResult.written.length} artifact${writeResult.written.length === 1 ? "" : "s"}` +
-      ` from ${result.tokenCount} token${result.tokenCount === 1 ? "" : "s"} → ${options.output}`,
-  );
-  for (const path of writeResult.written) {
-    console.log(`  ${path}`);
+  if (existsSync(configPath)) {
+    console.log(`  toki.config.ts already exists at ${configPath}`);
+    console.log("  Skipping config file creation.");
+  } else {
+    writeFileSync(configPath, SAMPLE_CONFIG, "utf8");
+    console.log(`  Created ${configPath}`);
   }
+
+  console.log("\n  Next steps:");
+  console.log("    npx toki build");
 };
 
 const program = new Command();
@@ -76,15 +239,17 @@ program
 program
   .command("build")
   .description("Parse tokens and generate output artifacts")
-  .requiredOption("-i, --input <path>", "Path to input token file (W3C DTCG JSON)")
-  .requiredOption("-o, --output <path>", "Output directory for generated artifacts")
+  .option("-i, --input <path>", "Path to input token file (W3C DTCG JSON)")
+  .option("-o, --output <path>", "Output directory for generated artifacts")
   .option(
     "-f, --format <formats...>",
     'Output formats (comma- or space-separated; "all" for every platform)',
     ["css", "js"],
   )
   .option("--no-clean", "Do not clean output subdirectories before writing")
-  .option("--verbose", "Enable verbose output", false)
+  .option("--verbose", "Enable verbose output with resolution trace and timing", false)
+  .option("-c, --config <path>", "Path to toki config file")
+  .option("-t, --theme <name>", "Build a single theme from multi-theme config")
   .action(async (options) => {
     try {
       await buildCommand({
@@ -93,7 +258,27 @@ program
         format: options.format as string[],
         clean: options.clean,
         verbose: options.verbose,
+        config: options.config,
+        theme: options.theme,
       });
+    } catch (error) {
+      if (error instanceof TokiError) {
+        console.error(`error [${error.code}]: ${error.message}`);
+        process.exitCode = 1;
+        return;
+      }
+      console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command("init")
+  .description("Scaffold a starter project with sample tokens and config")
+  .option("--dir <path>", "Directory to scaffold in (default: current directory)")
+  .action(async (options) => {
+    try {
+      await initCommand({ dir: options.dir });
     } catch (error) {
       if (error instanceof TokiError) {
         console.error(`error [${error.code}]: ${error.message}`);
