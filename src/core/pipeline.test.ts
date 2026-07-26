@@ -1,12 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { runPipeline, generateFromDocument } from "./pipeline.js";
+import { runPipeline, generateFromDocument, generate } from "./pipeline.js";
 import { parseTokenDocument } from "./parser.js";
+import { resolveDocument } from "./resolver.js";
 import { writeArtifacts } from "../utils/writer.js";
 import { resolveFormats } from "../generators/index.js";
 import { rm, mkdir, readFile, writeFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
+import type { ResolvedToken, TransformPlugin } from "./types.js";
 
 const sampleDoc = {
   color: {
@@ -103,5 +105,100 @@ describe("pipeline", () => {
       "svelte",
       "react",
     ]);
+  });
+
+  it("generate accepts GenerateOptions with theme and naming", () => {
+    const result = generate(resolveDocument(parseTokenDocument(sampleDoc)), {
+      formats: ["css"],
+      theme: "light",
+      naming: { css: "kebab-case" },
+    });
+    const paths = result.artifacts.map((a) => a.relativePath);
+    expect(paths).toContain("css/tokens.light.css");
+    expect(paths).toContain("css/README.md");
+  });
+
+  it("generate applies custom transform plugins", () => {
+    const upperCaseColors: TransformPlugin = (token: ResolvedToken) => {
+      if (token.type === "color" && typeof token.value === "string") {
+        return { ...token, value: token.value.toUpperCase() };
+      }
+      return token;
+    };
+    const result = generate(resolveDocument(parseTokenDocument(sampleDoc)), {
+      formats: ["css"],
+      transforms: [upperCaseColors],
+    });
+    const css = result.artifacts.find((a) => a.relativePath === "css/tokens.css");
+    expect(css?.content).toContain("#1A73E8");
+  });
+
+  it("generate applies transforms in registration order", () => {
+    const addPrefix: TransformPlugin = (token: ResolvedToken) => {
+      if (token.type === "color" && typeof token.value === "string") {
+        return { ...token, value: `prefix-${token.value}` };
+      }
+      return token;
+    };
+    const addSuffix: TransformPlugin = (token: ResolvedToken) => {
+      if (token.type === "color" && typeof token.value === "string") {
+        return { ...token, value: `${token.value}-suffix` };
+      }
+      return token;
+    };
+    const result = generate(resolveDocument(parseTokenDocument(sampleDoc)), {
+      formats: ["css"],
+      transforms: [addPrefix, addSuffix],
+    });
+    const css = result.artifacts.find((a) => a.relativePath === "css/tokens.css");
+    expect(css?.content).toContain("prefix-#1a73e8-suffix");
+  });
+
+  it("generate with empty transforms array is a no-op", () => {
+    const result = generate(resolveDocument(parseTokenDocument(sampleDoc)), {
+      formats: ["css"],
+      transforms: [],
+    });
+    const css = result.artifacts.find((a) => a.relativePath === "css/tokens.css");
+    expect(css?.content).toContain("#1a73e8");
+  });
+
+  it("multi-theme generates separate output files per theme", async () => {
+    const inputDir = await uniqueDir();
+    const inputPath = join(inputDir, "tokens.json");
+    await writeFile(inputPath, JSON.stringify(sampleDoc), "utf8");
+
+    const lightResult = await runPipeline({
+      input: inputPath,
+      formats: ["css"],
+      theme: "light",
+    });
+    const darkResult = await runPipeline({
+      input: inputPath,
+      formats: ["css"],
+      theme: "dark",
+    });
+
+    const lightPaths = lightResult.artifacts.map((a) => a.relativePath);
+    const darkPaths = darkResult.artifacts.map((a) => a.relativePath);
+
+    expect(lightPaths).toContain("css/tokens.light.css");
+    expect(darkPaths).toContain("css/tokens.dark.css");
+    expect(lightPaths).not.toContain("css/tokens.dark.css");
+    expect(darkPaths).not.toContain("css/tokens.light.css");
+  });
+
+  it("verbose mode enables resolver trace", async () => {
+    const inputDir = await uniqueDir();
+    const inputPath = join(inputDir, "tokens.json");
+    await writeFile(inputPath, JSON.stringify(sampleDoc), "utf8");
+
+    // verbose mode should not throw
+    const result = await runPipeline({
+      input: inputPath,
+      formats: ["css"],
+      verbose: true,
+    });
+    expect(result.tokenCount).toBe(3);
   });
 });
