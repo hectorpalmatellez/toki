@@ -1,34 +1,6 @@
 # Toki — Complete Task Checklist
 
-> Phases 1 (Foundation) and 2 (Multi-Platform) are complete — see [`done.md`](./done.md) for the record of completed tasks and exit-criteria checks. This file tracks the remaining phases.
-
----
-
-## Phase 3 — Configuration & Multi-Theme (Weeks 8–10)
-
-**Goal:** Production-grade ergonomics. Config file support, multi-theme output, naming transforms, and plugin hooks.
-
-| # | Task | Type | Est. |
-|---|---|---|---|
-| 3.1 | Build config file loader: `tokenwright.config.ts` (or `.js`) loaded via `jiti`. Config discovery: current directory → `--config` flag → default | Infra | 3h |
-| 3.2 | Define config schema: `input` (glob patterns), `output` (per-format directory), `themes` (mapping of theme name → token file), `naming` (per-format naming convention), `transforms` (custom transform functions) | Types | 2h |
-| 3.3 | Multi-theme support: config specifies `{ light: "tokens/light.json", dark: "tokens/dark.json" }` → generators produce separate output files per theme (e.g., `tokens.light.css`, `tokens.dark.css`) | Core | 4h |
-| 3.4 | Naming transform system: `camelCase` (JS default), `kebab-case` (CSS default), `CONSTANT_CASE` (Angular/TS), `SCREAMING_SNAKE_CASE` (SCSS). Configurable per platform in config file | Core | 2h |
-| 3.5 | Custom transform plugin API: users can register transform functions in config that modify token values before generation. Example: `transforms: [addAlphaChannel, convertToRem]` | Core | 4h |
-| 3.6 | `toki init` command: interactive scaffolding wizard that generates a starter `tokens.json` (with sample color, spacing, typography tokens) + `tokenwright.config.ts` | CLI | 2h |
-| 3.7 | Verbose/debug mode: `--verbose` flag prints resolution trace (which tokens were resolved, in what order, cycle detection details), generator output paths, and timing | CLI | 1h |
-| 3.8 | Write Vitest tests: config loading (TS and JS), multi-theme output, naming transforms for all 4 conventions, plugin execution order | Test | 4h |
-| 3.9 | Update README: config file reference, multi-theme examples, plugin API documentation | Docs | 2h |
-
-### Phase 3 Exit Criteria
-
-- [ ] `toki build` with no flags discovers and loads `tokenwright.config.ts`
-- [ ] Multi-theme config produces separate output files per theme
-- [ ] Naming transforms produce correct output for each convention
-- [ ] Custom transform functions execute in registration order
-- [ ] `toki init` scaffolds a working starter project
-- [ ] All tests pass
-- [ ] README documents config file schema completely
+> Phases 1 (Foundation), 2 (Multi-Platform), and 3 (Configuration & Multi-Theme) are complete — see [`done.md`](./done.md) for the record of completed tasks and exit-criteria checks. This file tracks the remaining phases.
 
 ---
 
@@ -65,8 +37,8 @@
 |---|---|---|
 | ~~Phase 1 — Foundation~~ | ~~10 tasks~~ | ~~~26h~~ ✅ done |
 | ~~Phase 2 — Multi-Platform~~ | ~~9 tasks~~ | ~~~25h~~ ✅ done |
-| Phase 3 — Config & Multi-Theme | 9 tasks | ~24h |
+| ~~Phase 3 — Config & Multi-Theme~~ | ~~9 tasks~~ | ~~~24h~~ ✅ done |
 | Phase 4 — Polish & Ecosystem | 8 tasks | ~22h |
-| **Remaining** | **17 tasks** | **~46h** |
+| **Remaining** | **8 tasks** | **~22h** |
 
-**Estimated Timeline:** 12–16 weekends at 6–8h per weekend (3–4 months part-time).
+**Estimated Timeline:** 3–4 weekends at 6–8h per weekend (1 month part-time).

@@ -52,3 +52,29 @@ This file records tasks that have been completed and removed from [`backlog.md`]
 - [x] React theme object is nested by category (colors, spacing, typography)
 - [x] All tests pass, snapshot tests capture output regressions — 160/160
 - [x] Each output subdirectory has a README
+
+## Phase 3 — Configuration & Multi-Theme
+
+**Goal:** Production-grade ergonomics. Config file support, multi-theme output, naming transforms, and plugin hooks. ✅ **Complete.**
+
+| # | Task | Type | Est. | Notes |
+|---|---|---|---|---|
+| 3.1 | Build config file loader: `toki.config.ts` (or `.js`) loaded via `jiti`. Config discovery: current directory → `--config` flag → default | Infra | 3h | `src/core/config.ts` — `discoverConfig` searches CWD for `toki.config.ts` → `.js` → `.mjs` → `tokenwright.config.ts` (legacy). `loadConfigFile` uses jiti for TS/JS loading. `loadConfig` combines discovery + loading. `mergeConfig` overlays CLI flags onto config values. Config discovery order: `--config` flag → `toki.config.ts` → `toki.config.js` → `toki.config.mjs` → `tokenwright.config.ts`. |
+| 3.2 | Define config schema: `input` (string or array), `output` (per-format directory), `themes` (mapping of theme name → token file), `naming` (per-format naming convention), `transforms` (custom transform functions) | Types | 2h | `src/core/types.ts` — `TokiConfig` interface, `NamingConvention` type, `TransformPlugin` type, `TransformContext` interface. `GeneratorOptions` extended with `theme` and `naming` fields. `validateConfig` in `config.ts` validates all fields with clear error messages. `ConfigError` class added to `errors.ts`. |
+| 3.3 | Multi-theme support: config specifies `{ light: "tokens/light.json", dark: "tokens/dark.json" }` → generators produce separate output files per theme (e.g., `tokens.light.css`, `tokens.dark.css`) | Core | 4h | `themePath` helper in `format.ts` inserts theme suffix before file extension. All 7 generators use `themePath` when `options.theme` is set. Pipeline's `BuildOptions` and `GenerateOptions` accept `theme`. CLI iterates themes when config has `themes` map. `--theme` flag builds a single theme. README files are not themed. |
+| 3.4 | Naming transform system: `camelCase` (JS default), `kebab-case` (CSS default), `CONSTANT_CASE` (Angular/TS), `SCREAMING_SNAKE_CASE` (alias). Configurable per platform in config file | Core | 2h | `getNamingFunction` in `naming.ts` maps convention string to conversion function. `toScreamingSnakeCase` alias added. All generators accept `options.naming` and use `getNamingFunction` instead of hardcoded naming. `makeIdentifier` accepts naming parameter. Angular's `deriveAngularNames` accepts TS naming convention. |
+| 3.5 | Custom transform plugin API: users can register transform functions in config that modify token values before generation. Example: `transforms: [addAlphaChannel, convertToRem]` | Core | 4h | `applyCustomTransforms` in `pipeline.ts` executes plugins in registration order after built-in platform transforms. `TransformPlugin` type: `(token, context) => ResolvedToken`. Config `transforms` array threaded through `BuildOptions` → `GenerateOptions` → pipeline. Each transform receives `TransformContext` with `platform`. |
+| 3.6 | `toki init` command: scaffolding wizard that generates a starter `tokens.json` (with sample color, spacing, typography tokens) + `toki.config.ts` | CLI | 2h | `init` command in `cli.ts` writes sample `tokens.json` (color, spacing, typography tokens) and `toki.config.ts` (TypeScript with `TokiConfig` type). `--dir` flag specifies scaffold directory. Conflict detection: skips existing files with message. Prints next steps. |
+| 3.7 | Verbose/debug mode: `--verbose` flag prints resolution trace (which tokens were resolved, in what order), generator output paths, and timing | CLI | 1h | `ResolveOptions` with `trace` callback in `resolver.ts`. Pipeline threads trace through to resolver. CLI `--verbose` logs config discovery, per-theme processing, token resolution trace (collection count, order, resolved values), and per-build timing via `performance.now()`. |
+| 3.8 | Write Vitest tests: config loading (TS and JS), multi-theme output, naming transforms for all 4 conventions, plugin execution order | Test | 4h | 55 new tests (215 total): `config.test.ts` (39 — discovery, loading, validation, merging), `format.test.ts` (5 — themePath), extended `pipeline.test.ts` (+6 — theme, transforms, verbose), extended `naming.test.ts` (+5 — getNamingFunction, SCREAMING_SNAKE_CASE). All green. |
+| 3.9 | Update README: config file reference, multi-theme examples, plugin API documentation | Docs | 2h | README updated: Status → Phase 3 complete. Added sections for Configuration File (schema table), Multi-Theme Support (config example + output tree), Naming Conventions (table + override example), Custom Transform Plugins (function signature + example), Verbose Mode (flag docs + output example). Updated CLI flags table with `--config`, `--theme`, `--verbose`. Updated architecture tree with `config.ts`. |
+
+### Phase 3 Exit Criteria — all satisfied
+
+- [x] `toki build` with no flags discovers and loads `toki.config.ts`
+- [x] Multi-theme config produces separate output files per theme
+- [x] Naming transforms produce correct output for each convention
+- [x] Custom transform functions execute in registration order
+- [x] `toki init` scaffolds a working starter project
+- [x] All tests pass — 215/215
+- [x] README documents config file schema completely
