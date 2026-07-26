@@ -4,7 +4,7 @@
 
 Toki is a design token pipeline CLI that ingests W3C DTCG-format JSON tokens and generates framework-specific code artifacts for six target platforms: CSS, JavaScript, React Native, Angular (latest + v11), Svelte, and React/Next.js.
 
-**Status:** Active development — Phase 1 (Foundation)
+**Status:** Active development — Phase 2 (Multi-Platform) complete, Phase 3 next
 
 ## Tech Stack
 
@@ -115,7 +115,7 @@ src/
 │   ├── types.ts           # Core type definitions
 │   ├── parser.ts          # JSON → TokenTree
 │   ├── resolver.ts        # Reference expansion + cycle detection
-│   ├── transformer.ts     # Value transformation registry
+│   ├── transformer.ts     # Value transformation registry (per-platform)
 │   └── pipeline.ts        # Orchestrates parse → resolve → transform → generate
 ├── generators/
 │   ├── css.ts
@@ -125,9 +125,11 @@ src/
 │   ├── angular-11.ts
 │   ├── svelte.ts
 │   ├── react.ts
+│   ├── readme.ts          # Per-platform README artifacts
 │   └── index.ts           # Generator registry
 └── utils/
     ├── naming.ts          # camelCase, kebab-case, etc.
+    ├── grouping.ts        # Category grouping + JS object-literal serialization
     ├── format.ts          # Value formatting helpers
     └── errors.ts          # Custom error classes
 ```

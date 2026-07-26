@@ -1,34 +1,6 @@
 # Toki — Complete Task Checklist
 
-> Phase 1 (Foundation) is complete — see [`done.md`](./done.md) for the record of completed tasks and exit-criteria checks. This file tracks the remaining phases.
-
-## Phase 2 — Multi-Platform (Weeks 4–7)
-
-## Phase 2 — Multi-Platform (Weeks 4–7)
-
-**Goal:** All six target platforms plus React/Next.js generate correct, idiomatic output from the same input.
-
-| # | Task | Type | Est. |
-|---|---|---|---|
-| 2.1 | Build value transformer registry: `ColorTransformer`, `DimensionTransformer`, `FontWeightTransformer`, `ShadowTransformer` — each converts raw token values to platform-appropriate formats | Core | 3h |
-| 2.2 | Build React Native generator: tokens → `export const colors = { primary: "#1a73e8" }` grouped by category + `StyleSheet.create()` helper file. Dimensions use raw numbers (dp). Font sizes use `sp` | Gen | 3h |
-| 2.3 | Build Angular latest generator: `_tokens.scss` with `$color-primary: #1a73e8;` (uses `@use` syntax) + `tokens.ts` with `export const COLOR_PRIMARY` + `tokens.module.ts` with `InjectionToken` for DI | Gen | 3h |
-| 2.4 | Build Angular 11 legacy generator: `_tokens.scss` using `@import`-compatible syntax only (no `@use`/`@forward`) + `tokens.ts` with `export const COLOR_PRIMARY`. No `InjectionToken` module (Angular 11 patterns differ) | Gen | 2h |
-| 2.5 | Build Svelte generator: `tokens.css` with CSS custom properties + `tokens.ts` ES module. Output must work with Svelte's `<style>` scoping and CSS variable consumption patterns | Gen | 2h |
-| 2.6 | Build React / Next.js generator: `theme.ts` with nested object (`{ colors: { primary: "..." }, spacing: { ... } }`) + companion `tokens.css` for `next-themes` integration. Theme object must be compatible with CSS-in-JS and Tailwind `theme.extend` patterns | Gen | 3h |
-| 2.7 | Multi-format single run: update CLI to accept `--format css,js,react-native,angular,angular-11,svelte,react` and write all outputs to `--output ./dist/` under platform-specific subdirectories | CLI | 2h |
-| 2.8 | Generate per-platform README in each output subdirectory: quick start, naming convention, multi-theme usage (where applicable), known limitations | Docs | 2h |
-| 2.9 | Write Vitest tests for all new generators + value transformers. Snapshot tests for output comparison. Property-based tests for transformer edge cases (e.g., any valid hex → valid RN color) | Test | 5h |
-
-### Phase 2 Exit Criteria
-
-- [ ] All 7 generators (css, js, react-native, angular, angular-11, svelte, react) produce correct output
-- [ ] `toki build --format all` generates the complete output tree
-- [ ] Angular latest output uses `@use`; Angular 11 output uses `@import` only
-- [ ] React Native output uses raw numbers for dimensions (not `px` strings)
-- [ ] React theme object is nested by category (colors, spacing, typography)
-- [ ] All tests pass, snapshot tests capture output regressions
-- [ ] Each output subdirectory has a README
+> Phases 1 (Foundation) and 2 (Multi-Platform) are complete — see [`done.md`](./done.md) for the record of completed tasks and exit-criteria checks. This file tracks the remaining phases.
 
 ---
 
@@ -91,10 +63,10 @@
 
 | Phase | Tasks | Estimated Hours |
 |---|---|---|
-| ~~Phase 1 — Foundation~~ | ~~9 tasks~~ | ~~~24h~~ ✅ done |
-| Phase 2 — Multi-Platform | 9 tasks | ~25h |
+| ~~Phase 1 — Foundation~~ | ~~10 tasks~~ | ~~~26h~~ ✅ done |
+| ~~Phase 2 — Multi-Platform~~ | ~~9 tasks~~ | ~~~25h~~ ✅ done |
 | Phase 3 — Config & Multi-Theme | 9 tasks | ~24h |
 | Phase 4 — Polish & Ecosystem | 8 tasks | ~22h |
-| **Remaining** | **26 tasks** | **~71h** |
+| **Remaining** | **17 tasks** | **~46h** |
 
 **Estimated Timeline:** 12–16 weekends at 6–8h per weekend (3–4 months part-time).

@@ -6,16 +6,17 @@ Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates 
 
 ## Status
 
-**Phase 1 (Foundation) complete.**
+**Phase 2 (Multi-Platform) complete.**
 
-`toki build` parses W3C DTCG tokens, resolves `{group.token}` references (with circular-dependency detection), applies `$type` inheritance, and generates deterministic CSS and JavaScript artifacts. The remaining five platforms (React Native, Angular latest + v11, Svelte, React/Next.js), config file, multi-theme, and ecosystem tooling are tracked in [`docs/backlog.md`](./docs/backlog.md). Completed tasks are recorded in [`docs/done.md`](./docs/done.md).
+`toki build` parses W3C DTCG tokens, resolves `{group.token}` references (with circular-dependency detection), applies `$type` inheritance, transforms values per platform, and generates deterministic artifacts for all seven output formats: CSS, JavaScript, React Native, Angular (latest + v11), Svelte, and React/Next.js. Config file support, multi-theme output, and ecosystem tooling are tracked in [`docs/backlog.md`](./docs/backlog.md). Completed tasks are recorded in [`docs/done.md`](./docs/done.md).
 
 ## Features
 
 - **W3C DTCG input** — conforms to the [Design Tokens Community Group format](https://design-tokens.github.io/community-group/format/).
 - **Reference resolution** — expands `{group.token}` aliases and detects circular dependencies.
 - **`$type` inheritance** — group-level types propagate to child tokens unless overridden.
-- **Six target platforms** — one input, idiomatic output per platform.
+- **Seven output formats** — one input, idiomatic output per platform: CSS, JS, React Native, Angular (latest + v11), Svelte, React/Next.js.
+- **Platform value transforms** — hex normalization, `px`/`rem` → raw dp/sp numbers for React Native, RN shadow objects, canonical font weights.
 - **Deterministic output** — same input produces byte-identical artifacts.
 - **Zero runtime dependencies** — generated files never import from toki.
 
@@ -61,26 +62,54 @@ toki build \
   --output ./dist \
   --format css,js
 
+# Generate every platform in one run:
+toki build --input tokens.json --output ./dist --format all
+
 # Generate CSS only, without clearing pre-existing output first:
 toki build --input tokens.json --output ./dist --format css --no-clean
 ```
 
-Output is written under platform subdirectories:
+Output is written under platform subdirectories (each with its own README):
 
 ```
 dist/
 ├── css/
-│   └── tokens.css
-└── js/
-    ├── tokens.js
-    └── tokens.d.ts
+│   ├── tokens.css
+│   └── README.md
+├── js/
+│   ├── tokens.js
+│   ├── tokens.d.ts
+│   └── README.md
+├── react-native/
+│   ├── tokens.js        # values grouped by category (raw dp/sp numbers)
+│   ├── styles.js        # StyleSheet.create() helpers
+│   └── README.md
+├── angular/
+│   ├── _tokens.scss     # $kebab-case variables (@use-ready)
+│   ├── tokens.scss      # @use entry + :root custom properties
+│   ├── tokens.ts        # CONSTANT_CASE exports
+│   ├── tokens.module.ts # InjectionToken<DesignTokens> + provider
+│   └── README.md
+├── angular-11/
+│   ├── _tokens.scss     # @import-compatible only
+│   ├── tokens.scss
+│   ├── tokens.ts
+│   └── README.md
+├── svelte/
+│   ├── tokens.css       # :root custom properties (scoped <style> friendly)
+│   ├── tokens.ts        # camelCase ES module
+│   └── README.md
+└── react/
+    ├── theme.ts         # nested theme object `as const` + Theme type
+    ├── tokens.css       # companion custom properties for next-themes
+    └── README.md
 ```
 
 | Flag | Description | Default |
 |---|---|---|
 | `-i, --input <path>` | Path to input token file (W3C DTCG JSON) | — |
 | `-o, --output <path>` | Output directory for generated artifacts | — |
-| `-f, --format <formats...>` | Output formats (comma- or space-separated) | `["css", "js"]` |
+| `-f, --format <formats...>` | Output formats (comma- or space-separated; `all` for every platform) | `["css", "js"]` |
 | `--clean` / `--no-clean` | Clean the target platform subdirectories before writing | `true` |
 | `--verbose` | Print input/output/formats and resolution summary | `false` |
 
@@ -132,11 +161,11 @@ Platform conventions:
 
 - **CSS** — `:root` selector with `--kebab-case` custom properties
 - **JavaScript** — `export const camelCase` named exports + `.d.ts` declarations
-- **React Native** — raw numbers for dimensions (not `px` strings), grouped by category *(Phase 2)*
-- **Angular (latest)** — SCSS `@use` syntax, TypeScript `CONSTANT_CASE` *(Phase 2)*
-- **Angular 11** — SCSS `@import` only (no `@use`/`@forward`), no `InjectionToken` module *(Phase 2)*
-- **Svelte** — CSS custom properties + ES module, compatible with `<style>` scoping *(Phase 2)*
-- **React / Next.js** — nested theme object + companion CSS for `next-themes` *(Phase 2)*
+- **React Native** — values grouped by category (`colors`, `spacing`, …), raw numbers for dimensions (dp / sp), `StyleSheet.create()` helper file
+- **Angular (latest)** — SCSS variables consumed via `@use`, TypeScript `CONSTANT_CASE`, `InjectionToken<DesignTokens>` module for DI
+- **Angular 11** — SCSS `@import` only (no `@use`/`@forward`), TypeScript `CONSTANT_CASE`, no `InjectionToken` module
+- **Svelte** — `:root` CSS custom properties (cascade through scoped `<style>` blocks) + `camelCase` ES module
+- **React / Next.js** — nested theme object exported `as const` (CSS-in-JS and Tailwind `theme.extend` compatible) + companion CSS for `next-themes`
 
 ## Output examples
 
@@ -202,6 +231,76 @@ export declare const spacingMedium: string;
 export declare const fontSans: string;
 ```
 
+With `--format react-native,angular,svelte,react` the same input also produces:
+
+**`dist/react-native/tokens.js`** — grouped by category, dimensions as raw dp/sp numbers:
+
+```js
+/* Generated by toki v0.1.0 — do not edit */
+
+export const colors = {
+  primary: "#1a73e8",
+  secondary: "#1a73e8",
+};
+
+export const spacing = {
+  small: 8,
+  medium: 16,
+};
+
+export const fonts = {
+  sans: "Inter",
+};
+```
+
+**`dist/angular/_tokens.scss`** — SCSS variables, plus `tokens.ts` (`CONSTANT_CASE`) and `tokens.module.ts` (`InjectionToken<DesignTokens>`):
+
+```scss
+/* Generated by toki v0.1.0 — do not edit */
+
+$color-primary: #1a73e8;
+$color-secondary: #1a73e8;
+$spacing-small: 8px;
+$spacing-medium: 16px;
+$font-sans: Inter, sans-serif;
+```
+
+**`dist/svelte/tokens.ts`** — ES module (plus a `tokens.css` mirroring the CSS format):
+
+```ts
+/* Generated by toki v0.1.0 — do not edit */
+
+export const colorPrimary = "#1a73e8";
+export const colorSecondary = "#1a73e8";
+export const spacingSmall = "8px";
+export const spacingMedium = "16px";
+export const fontSans = "Inter, sans-serif";
+```
+
+**`dist/react/theme.ts`** — nested theme object (plus `tokens.css` for `next-themes`):
+
+```ts
+/* Generated by toki v0.1.0 — do not edit */
+
+export const theme = {
+  colors: {
+    primary: "#1a73e8",
+    secondary: "#1a73e8",
+  },
+  spacing: {
+    small: "8px",
+    medium: "16px",
+  },
+  fonts: {
+    sans: "Inter, sans-serif",
+  },
+} as const;
+
+export type Theme = typeof theme;
+
+export default theme;
+```
+
 ## Pipeline architecture
 
 ```
@@ -261,8 +360,8 @@ src/
 
 See [`docs/backlog.md`](./docs/backlog.md) for the phased roadmap:
 
-- **Phase 1 — Foundation:** parser, resolver, CSS + JS generators, CLI
-- **Phase 2 — Multi-Platform:** RN, Angular (latest + v11), Svelte, React/Next.js
+- **Phase 1 — Foundation:** parser, resolver, CSS + JS generators, CLI ✅
+- **Phase 2 — Multi-Platform:** transformers, RN, Angular (latest + v11), Svelte, React/Next.js ✅
 - **Phase 3 — Config & Multi-Theme:** config file, naming transforms, plugin API
 - **Phase 4 — Polish & Ecosystem:** watch mode, diff tooling, imports, JSON schema, CI
 
