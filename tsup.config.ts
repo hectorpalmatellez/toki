@@ -9,7 +9,4 @@ export default defineConfig({
   splitting: false,
   target: "node24",
   outDir: "dist",
-  banner: {
-    js: "#!/usr/bin/env node",
-  },
 });
