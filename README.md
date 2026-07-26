@@ -10,9 +10,9 @@ Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates 
 
 ## Status
 
-**Phase 2 (Multi-Platform) complete.**
+**Phase 3 (Configuration & Multi-Theme) complete.**
 
-`toki build` parses W3C DTCG tokens, resolves `{group.token}` references (with circular-dependency detection), applies `$type` inheritance, transforms values per platform, and generates deterministic artifacts for all seven output formats: CSS, JavaScript, React Native, Angular (latest + v11), Svelte, and React/Next.js. Config file support, multi-theme output, and ecosystem tooling are tracked in [`docs/backlog.md`](./docs/backlog.md). Completed tasks are recorded in [`docs/done.md`](./docs/done.md).
+`toki build` parses W3C DTCG tokens, resolves `{group.token}` references (with circular-dependency detection), applies `$type` inheritance, transforms values per platform, and generates deterministic artifacts for all seven output formats. Config file support, multi-theme output, naming transforms, custom transform plugins, and verbose debug mode are fully implemented. Watch mode, diff tooling, and ecosystem integration are tracked in [`docs/backlog.md`](./docs/backlog.md). Completed tasks are recorded in [`docs/done.md`](./docs/done.md).
 
 ## Features
 
@@ -21,6 +21,11 @@ Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates 
 - **`$type` inheritance** — group-level types propagate to child tokens unless overridden.
 - **Seven output formats** — one input, idiomatic output per platform: CSS, JS, React Native, Angular (latest + v11), Svelte, React/Next.js.
 - **Platform value transforms** — hex normalization, `px`/`rem` → raw dp/sp numbers for React Native, RN shadow objects, canonical font weights.
+- **Configuration file** — `toki.config.ts` (or `.js`) with input, output, formats, themes, naming, and transforms.
+- **Multi-theme output** — config-driven theme mapping produces separate output files per theme (e.g., `tokens.light.css`, `tokens.dark.css`).
+- **Naming transforms** — configurable per platform: `camelCase`, `kebab-case`, `CONSTANT_CASE`, `SCREAMING_SNAKE_CASE`.
+- **Custom transform plugins** — register functions in config that modify token values before generation.
+- **Verbose debug mode** — `--verbose` prints resolution trace, per-token values, and generation timing.
 - **Deterministic output** — same input produces byte-identical artifacts.
 - **Zero runtime dependencies** — generated files never import from toki.
 
@@ -60,6 +65,9 @@ pnpm dev          # tsup --watch
 ### Run
 
 ```bash
+# Initialize a starter project with sample tokens and config:
+toki init
+
 # Generate CSS + JS (default formats) from a W3C DTCG token file:
 toki build \
   --input tokens.json \
@@ -71,6 +79,16 @@ toki build --input tokens.json --output ./dist --format all
 
 # Generate CSS only, without clearing pre-existing output first:
 toki build --input tokens.json --output ./dist --format css --no-clean
+
+# Use a config file (auto-discovered or specify path):
+toki build
+toki build --config ./my-config.ts
+
+# Build a specific theme from multi-theme config:
+toki build --theme dark
+
+# Verbose mode with resolution trace and timing:
+toki build --input tokens.json --output ./dist --verbose
 ```
 
 Output is written under platform subdirectories (each with its own README):
@@ -114,8 +132,10 @@ dist/
 | `-i, --input <path>` | Path to input token file (W3C DTCG JSON) | — |
 | `-o, --output <path>` | Output directory for generated artifacts | — |
 | `-f, --format <formats...>` | Output formats (comma- or space-separated; `all` for every platform) | `["css", "js"]` |
+| `-c, --config <path>` | Path to toki config file | auto-discovered |
+| `-t, --theme <name>` | Build a single theme from multi-theme config | all themes |
 | `--clean` / `--no-clean` | Clean the target platform subdirectories before writing | `true` |
-| `--verbose` | Print input/output/formats and resolution summary | `false` |
+| `--verbose` | Print resolution trace, per-token values, and timing | `false` |
 
 ### Errors
 
@@ -124,6 +144,159 @@ Toki reports errors with a stable code prefix and exits non-zero:
 ```
 error [CIRCULAR_REFERENCE_ERROR]: Circular reference detected: color.a → color.b → color.a
 error [MISSING_REFERENCE_ERROR]: Token "color.secondary" references unknown token "{color.doesNotExist}".
+```
+
+## Configuration file
+
+Toki can be configured via a `toki.config.ts` (or `.js` / `.mjs`) file in your project root. When present, `toki build` auto-discovers the config and uses it as the default for all options.
+
+**Discovery order:** `--config` flag → `toki.config.ts` → `toki.config.js` → `toki.config.mjs` → `tokenwright.config.ts` (legacy)
+
+CLI flags override config file values.
+
+```ts
+// toki.config.ts
+import type { TokiConfig } from "toki";
+
+const config: TokiConfig = {
+  input: "./tokens.json",
+  output: "./dist/tokens",
+  formats: ["css", "js", "react-native"],
+  clean: true,
+};
+
+export default config;
+```
+
+### Config schema
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `input` | `string \| string[]` | — | Input token file path(s) (required) |
+| `output` | `string` | — | Output directory (required) |
+| `formats` | `OutputFormat[]` | `["css", "js"]` | Output formats to generate |
+| `themes` | `Record<string, string>` | — | Theme name → token file mapping for multi-theme builds |
+| `naming` | `Record<OutputFormat, NamingConvention>` | per-platform defaults | Per-format naming convention overrides |
+| `transforms` | `TransformPlugin[]` | `[]` | Custom transform functions applied after built-in transforms |
+| `clean` | `boolean` | `true` | Clean output subdirectories before writing |
+
+## Multi-theme support
+
+Configure multiple themes to generate separate output files per theme:
+
+```ts
+// toki.config.ts
+import type { TokiConfig } from "toki";
+
+const config: TokiConfig = {
+  input: "./tokens.json",
+  output: "./dist/tokens",
+  themes: {
+    light: "./tokens/light.json",
+    dark: "./tokens/dark.json",
+  },
+  formats: ["css", "js"],
+};
+
+export default config;
+```
+
+Running `toki build` with this config produces:
+
+```
+dist/tokens/
+├── css/
+│   ├── tokens.light.css
+│   └── tokens.dark.css
+└── js/
+    ├── tokens.light.js
+    ├── tokens.light.d.ts
+    ├── tokens.dark.js
+    └── tokens.dark.d.ts
+```
+
+Build a single theme with `--theme`:
+
+```bash
+toki build --theme dark
+```
+
+## Naming conventions
+
+Toki supports four naming conventions for token identifiers:
+
+| Convention | Example | Default for |
+|---|---|---|
+| `camelCase` | `colorPrimary` | JS, React Native, React, Svelte |
+| `kebab-case` | `color-primary` | CSS, Svelte CSS |
+| `CONSTANT_CASE` | `COLOR_PRIMARY` | Angular, Angular 11 |
+| `SCREAMING_SNAKE_CASE` | `COLOR_PRIMARY` | alias for CONSTANT_CASE |
+
+Override per platform in config:
+
+```ts
+const config: TokiConfig = {
+  input: "./tokens.json",
+  output: "./dist/tokens",
+  naming: {
+    css: "kebab-case",
+    js: "CONSTANT_CASE",
+    react: "camelCase",
+  },
+};
+```
+
+## Custom transform plugins
+
+Register transform functions in config that modify token values before generation. Transforms execute in registration order after built-in platform transforms:
+
+```ts
+import type { TokiConfig, TransformPlugin } from "toki";
+
+const addAlphaChannel: TransformPlugin = (token, context) => {
+  if (token.type === "color" && typeof token.value === "string" && token.value.length === 7) {
+    return { ...token, value: token.value + "cc" }; // 80% opacity
+  }
+  return token;
+};
+
+const config: TokiConfig = {
+  input: "./tokens.json",
+  output: "./dist/tokens",
+  transforms: [addAlphaChannel],
+};
+
+export default config;
+```
+
+Each transform receives a `ResolvedToken` and a `TransformContext` (with `platform`), and must return a `ResolvedToken`.
+
+## Verbose mode
+
+The `--verbose` flag enables detailed output including:
+
+- Config file discovery
+- Per-theme processing
+- Token resolution trace (collection order, resolved values)
+- Per-format generation timing
+
+```bash
+toki build --input tokens.json --output ./dist --verbose
+```
+
+```
+toki v0.1.0
+  config: discovered
+  input:  ./tokens.json
+  output: ./dist
+  formats: css, js
+  collected 3 leaf tokens
+  resolved order: color.primary, color.secondary, spacing.small
+    resolved "color.primary" (color) → #1a73e8
+    resolved "color.secondary" (color) → #1a73e8
+    resolved "spacing.small" (dimension) → 8px
+  resolved 3 tokens in 2.1ms
+Built 5 artifacts from 3 tokens → ./dist
 ```
 
 ## Input format (W3C DTCG)
@@ -337,10 +510,11 @@ pnpm clean        # rm -rf dist
 
 ```
 src/
-├── cli.ts                 # Commander.js entry point
+├── cli.ts                 # Commander.js entry point (build, init)
 ├── index.ts               # Barrel export
 ├── core/
 │   ├── types.ts           # Core type definitions
+│   ├── config.ts          # Config file discovery, loading, validation
 │   ├── parser.ts          # JSON → TokenTree
 │   ├── resolver.ts        # Reference expansion + cycle detection
 │   ├── transformer.ts    # Value transformation registry
@@ -355,8 +529,10 @@ src/
 │   ├── react.ts
 │   └── index.ts           # Generator registry
 └── utils/
-    ├── naming.ts          # camelCase, kebab-case, etc.
-    ├── format.ts          # Value formatting helpers
+    ├── naming.ts          # camelCase, kebab-case, CONSTANT_CASE, etc.
+    ├── grouping.ts        # Category grouping + JS object-literal serialization
+    ├── format.ts          # Value formatting + theme path helpers
+    ├── writer.ts          # Disk I/O for artifacts
     └── errors.ts          # Custom error classes
 ```
 
@@ -366,7 +542,7 @@ See [`docs/backlog.md`](./docs/backlog.md) for the phased roadmap:
 
 - **Phase 1 — Foundation:** parser, resolver, CSS + JS generators, CLI ✅
 - **Phase 2 — Multi-Platform:** transformers, RN, Angular (latest + v11), Svelte, React/Next.js ✅
-- **Phase 3 — Config & Multi-Theme:** config file, naming transforms, plugin API
+- **Phase 3 — Config & Multi-Theme:** config file, naming transforms, plugin API, verbose mode ✅
 - **Phase 4 — Polish & Ecosystem:** watch mode, diff tooling, imports, JSON schema, CI
 
 ## Resources
