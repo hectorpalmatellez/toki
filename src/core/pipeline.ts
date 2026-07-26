@@ -1,19 +1,15 @@
 /**
- * Pipeline orchestrator: drives Parse → Resolve → Generate.
+ * Pipeline orchestrator: drives Parse → Resolve → Transform → Generate.
  *
  * The writer (disk I/O) is intentionally separate (`writer.ts`) so the
  * pipeline can run entirely in memory — this is what tests do.
  */
 
-import type {
-  DesignTokenDocument,
-  OutputArtifact,
-  OutputFormat,
-  ResolvedToken,
-} from "./types.js";
+import type { DesignTokenDocument, OutputArtifact, OutputFormat, ResolvedToken } from "./types.js";
 import { parseTokenDocument } from "./parser.js";
 import { readTokenFile } from "./parser.js";
 import { resolveDocument } from "./resolver.js";
+import { transformTokens } from "./transformer.js";
 import { getGenerator } from "../generators/index.js";
 import { TOKI_VERSION } from "../version.js";
 
@@ -51,7 +47,10 @@ export const generate = (
   const artifacts: OutputArtifact[] = [];
   for (const format of formats) {
     const generator = getGenerator(format);
-    artifacts.push(...generator.generate(tokens, { version: TOKI_VERSION }));
+    // Transform stage: normalize values for the target platform before
+    // generation (e.g. "8px" → 8 for react-native).
+    const transformed = transformTokens(tokens, format);
+    artifacts.push(...generator.generate(transformed, { version: TOKI_VERSION }));
   }
   // Deterministic artifact ordering: sort by relativePath so output
   // enumeration (and any future manifest) is byte-stable.

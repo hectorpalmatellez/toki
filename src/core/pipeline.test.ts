@@ -47,8 +47,10 @@ describe("pipeline", () => {
 
   it("generateFromDocument resolves and generates without disk I/O", () => {
     const result = generateFromDocument(parseTokenDocument(sampleDoc), ["css"]);
-    expect(result.artifacts).toHaveLength(1);
-    expect(result.artifacts[0]?.relativePath).toBe("css/tokens.css");
+    expect(result.artifacts.map((a) => a.relativePath)).toEqual([
+      "css/README.md",
+      "css/tokens.css",
+    ]);
   });
 
   it("walks the full end-to-end flow via the writer (clean default)", async () => {
@@ -87,6 +89,19 @@ describe("pipeline", () => {
 
   it("resolveFormats accepts comma-free lists and rejects unknown formats", () => {
     expect(resolveFormats(["css", "js"])).toEqual(["css", "js"]);
-    expect(() => resolveFormats(["css", "react"])).toThrow(/Unknown or unimplemented/);
+    expect(resolveFormats(["css", "react"])).toEqual(["css", "react"]);
+    expect(() => resolveFormats(["css", "vue"])).toThrow(/Unknown output format/);
+  });
+
+  it('resolveFormats expands "all" to every implemented format', () => {
+    expect(resolveFormats(["all"])).toEqual([
+      "css",
+      "js",
+      "react-native",
+      "angular",
+      "angular-11",
+      "svelte",
+      "react",
+    ]);
   });
 });
