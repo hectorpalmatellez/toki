@@ -1,0 +1,64 @@
+{
+  "name": "toki",
+  "version": "0.1.0",
+  "description": "Design token pipeline CLI — W3C DTCG in, framework-specific code out",
+  "type": "module",
+  "bin": {
+    "toki": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "schema"
+  ],
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "oxlint src/",
+    "lint:fix": "oxlint src/ --fix",
+    "format": "prettier --write 'src/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.ts'",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm clean && pnpm typecheck && pnpm lint && pnpm test && pnpm build"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "jiti": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "oxlint": "^1.6.0",
+    "prettier": "^3.5.3",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
+  },
+  "keywords": [
+    "design-tokens",
+    "w3c-dtcg",
+    "cli",
+    "css",
+    "react",
+    "angular",
+    "svelte",
+    "react-native",
+    "design-system"
+  ],
+  "author": "Héctor Palma Téllez",
+  "license": "MIT"
+}
