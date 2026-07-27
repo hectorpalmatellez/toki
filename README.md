@@ -8,8 +8,6 @@
 
 Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates idiomatic, framework-specific code artifacts for eight target platforms: CSS, JavaScript, React Native, Angular (latest + v11), Svelte, React/Next.js, and StencilJS.
 
-**Status:** All four development phases complete. Production-ready.
-
 ## Features
 
 - **W3C DTCG input** — conforms to the [Design Tokens Community Group format](https://design-tokens.github.io/community-group/format/)
@@ -27,6 +25,15 @@ Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates 
 - **Zero runtime dependencies** in generated files
 
 ## Quick start
+
+### Global Installation
+
+```bash
+npm i -g @hectorpalmatellez/toki
+toki build --input tokens.json --output ./dist --format css,js
+```
+
+### Local Development
 
 ```bash
 pnpm install
