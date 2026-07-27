@@ -189,6 +189,7 @@ export const DEFAULT_NAMING: Readonly<Record<OutputFormat, NamingConvention>> = 
   svelte: 'kebab-case',
   react: 'camelCase',
   stencil: 'camelCase',
+  vue: 'kebab-case',
 };
 
 /**

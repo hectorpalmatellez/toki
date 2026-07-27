@@ -89,11 +89,11 @@ describe('pipeline', () => {
   it('resolveFormats accepts comma-free lists and rejects unknown formats', () => {
     expect(resolveFormats(['css', 'js'])).toEqual(['css', 'js']);
     expect(resolveFormats(['css', 'react'])).toEqual(['css', 'react']);
-    expect(() => resolveFormats(['css', 'vue'])).toThrow(/Unknown output format/);
+    expect(() => resolveFormats(['css', 'flutter'])).toThrow(/Unknown output format/);
   });
 
   it('resolveFormats expands "all" to every implemented format', () => {
-    expect(resolveFormats(['all'])).toEqual(['css', 'js', 'react-native', 'angular', 'angular-11', 'svelte', 'react', 'stencil']);
+    expect(resolveFormats(['all'])).toEqual(['css', 'js', 'react-native', 'angular', 'angular-11', 'svelte', 'react', 'stencil', 'vue']);
   });
 
   it('generate accepts GenerateOptions with theme and naming', () => {

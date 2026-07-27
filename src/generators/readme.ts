@@ -332,4 +332,45 @@ theme objects per color scheme.
 - Composite values (\`shadow\`, \`typography\`) are nested plain objects.
 - \`tokens.css\` skips multi-property composites (mirrors the CSS format).
 `,
+
+  vue: `
+# Design tokens — Vue
+
+## Quick start
+
+Import the CSS once (e.g. in \`App.vue\` or your main entry):
+
+\`\`\`vue
+<script setup>
+import "./tokens.css";
+import { colorPrimary } from "./tokens.ts";
+</script>
+
+<style scoped>
+button {
+  background: var(--color-primary);
+}
+</style>
+\`\`\`
+
+## Naming convention
+
+- CSS custom properties: \`--kebab-case\` (\`color.brand.primary\` → \`--color-brand-primary\`).
+- ES module exports: \`camelCase\` (\`color.brand.primary\` → \`colorBrandPrimary\`).
+
+## Scoped styles
+
+\`tokens.css\` declares variables on \`:root\`, so they cascade through Vue's
+scoped \`<style>\` blocks — \`var(--color-primary)\` works in any component
+without extra setup.
+
+## Multi-theme usage
+
+${MULTI_THEME_NOTE}
+
+## Known limitations
+
+- Multi-property composite tokens (\`typography\`, \`border\`, \`transition\`)
+  are skipped in \`tokens.css\`; import them from \`tokens.ts\` instead.
+`,
 };

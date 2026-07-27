@@ -125,7 +125,7 @@ describe('validateConfig', () => {
   });
 
   it('rejects invalid format', () => {
-    expect(() => validateConfig({ input: './tokens.json', output: './dist', formats: ['vue'] })).toThrow(
+    expect(() => validateConfig({ input: './tokens.json', output: './dist', formats: ['flutter'] })).toThrow(
       /not a valid format/,
     );
   });
@@ -137,7 +137,7 @@ describe('validateConfig', () => {
   });
 
   it('rejects invalid naming format key', () => {
-    expect(() => validateConfig({ input: './tokens.json', output: './dist', naming: { vue: 'camelCase' } })).toThrow(
+    expect(() => validateConfig({ input: './tokens.json', output: './dist', naming: { flutter: 'camelCase' } })).toThrow(
       /not a valid format/,
     );
   });
