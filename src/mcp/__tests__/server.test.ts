@@ -55,7 +55,8 @@ describe('MCP server', () => {
     expect(names).toContain('build_tokens');
     expect(names).toContain('diff_tokens');
     expect(names).toContain('list_formats');
-    expect(tools.length).toBe(6);
+    expect(names).toContain('extract_tokens');
+    expect(tools.length).toBe(7);
   });
 });
 
@@ -239,3 +240,109 @@ describe('list_formats', () => {
   });
 });
 
+describe('extract_tokens', () => {
+  it('returns raw extracted data with type reference', async () => {
+    const dir = await uniqueDir();
+    await writeFile(
+      join(dir, 'vars.css'),
+      ':root {\n  --color-primary: #1a73e8;\n  --spacing-md: 16px;\n}\n',
+      'utf8',
+    );
+
+    const result = await client.callTool({
+      name: 'extract_tokens',
+      arguments: { path: dir },
+    });
+
+    expect(result.isError).toBeFalsy();
+    const payload = JSON.parse(result.content[0].text) as {
+      extracted: Array<{ id: string; value: string; inferredType: string }>;
+      summary: { totalExtracted: number; sources: string[] };
+      tokiReference: { tokenTypes: Array<{ type: string }>; outputFormats: string[] };
+    };
+    expect(payload.summary.totalExtracted).toBe(2);
+    expect(payload.extracted[0]?.inferredType).toBe('color');
+    expect(payload.extracted[1]?.inferredType).toBe('dimension');
+    expect(payload.tokiReference.tokenTypes.length).toBeGreaterThan(0);
+    expect(payload.tokiReference.outputFormats).toContain('css');
+  });
+
+  it('returns flat JSON when output is "json"', async () => {
+    const dir = await uniqueDir();
+    await writeFile(
+      join(dir, 'vars.css'),
+      ':root {\n  --color-primary: #1a73e8;\n  --spacing-md: 16px;\n}\n',
+      'utf8',
+    );
+
+    const result = await client.callTool({
+      name: 'extract_tokens',
+      arguments: { path: dir, output: 'json' },
+    });
+
+    expect(result.isError).toBeFalsy();
+    const payload = JSON.parse(result.content[0].text) as {
+      tokens: Record<string, { $type?: string; $value: string }>;
+      tokenCount: number;
+    };
+    expect(payload.tokenCount).toBe(2);
+    expect(payload.tokens['color-primary']?.$value).toBe('#1a73e8');
+    expect(payload.tokens['color-primary']?.$type).toBe('color');
+    expect(payload.tokens['spacing-md']?.$value).toBe('16px');
+  });
+
+  it('generates CSS output when output is a format name', async () => {
+    const dir = await uniqueDir();
+    await writeFile(
+      join(dir, 'vars.css'),
+      ':root {\n  --color-primary: #1a73e8;\n  --spacing-md: 16px;\n}\n',
+      'utf8',
+    );
+
+    const result = await client.callTool({
+      name: 'extract_tokens',
+      arguments: { path: dir, output: 'css' },
+    });
+
+    expect(result.isError).toBeFalsy();
+    const payload = JSON.parse(result.content[0].text) as {
+      format: string;
+      artifacts: Array<{ relativePath: string; content: string }>;
+      tokenCount: number;
+    };
+    expect(payload.format).toBe('css');
+    expect(payload.artifacts.length).toBeGreaterThan(0);
+    expect(payload.tokenCount).toBeGreaterThan(0);
+  });
+
+  it('scans SCSS files', async () => {
+    const dir = await uniqueDir();
+    await writeFile(
+      join(dir, '_theme.scss'),
+      '$color-primary: #1a73e8;\n$spacing-md: 16px;\n',
+      'utf8',
+    );
+
+    const result = await client.callTool({
+      name: 'extract_tokens',
+      arguments: { path: dir, output: 'json' },
+    });
+
+    expect(result.isError).toBeFalsy();
+    const payload = JSON.parse(result.content[0].text) as {
+      tokens: Record<string, { $value: string }>;
+      tokenCount: number;
+    };
+    expect(payload.tokenCount).toBe(2);
+    expect(payload.tokens['color-primary']?.$value).toBe('#1a73e8');
+  });
+
+  it('returns error for non-existent path', async () => {
+    const result = await client.callTool({
+      name: 'extract_tokens',
+      arguments: { path: '/nonexistent/path' },
+    });
+
+    expect(result.isError).toBe(true);
+  });
+});

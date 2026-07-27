@@ -7,9 +7,11 @@ import { generate } from '../core/pipeline.js';
 import { runDiff } from '../core/diff.js';
 import { writeArtifacts } from '../utils/writer.js';
 import { parseFormats, implementedFormats } from '../generators/index.js';
+import { scanFiles, TOKEN_TYPE_PATTERNS } from '../extractors/index.js';
+import type { ExtractedToken, ScanResult } from '../extractors/index.js';
 import { TOKI_VERSION } from '../version.js';
 import { TokiError } from '../utils/errors.js';
-import type { OutputFormat, NamingConvention } from '../core/types.js';
+import type { OutputFormat, NamingConvention, ResolvedToken, TokenType } from '../core/types.js';
 
 const textContent = (text: string): { content: Array<{ type: 'text'; text: string }> } => ({
   content: [{ type: 'text', text }],
@@ -38,6 +40,13 @@ const namingConventionSchema = z
   .enum(['camelCase', 'kebab-case', 'CONSTANT_CASE', 'SCREAMING_SNAKE_CASE'])
   .optional();
 
+const extractedToResolved = (token: ExtractedToken): ResolvedToken => ({
+  id: token.id,
+  name: token.id,
+  path: token.id.split('-'),
+  type: (token.inferredType ?? 'color') as TokenType,
+  value: token.value,
+});
 
 export const createMcpServer = (): McpServer => {
   const server = new McpServer(
@@ -215,6 +224,124 @@ export const createMcpServer = (): McpServer => {
       return textContent(
         JSON.stringify({ formats: implementedFormats() }, null, 2),
       );
+    },
+  );
+
+  const outputModeSchema = z
+    .union([z.literal('raw'), z.literal('json'), formatEnumSchema])
+    .optional()
+    .default('raw');
+
+  server.tool(
+    'extract_tokens',
+    'Scan CSS/SCSS files in a project directory, extract design token candidates (custom properties and variables), infer their types, and return the raw data for the AI agent to organize. Optionally outputs flat JSON or pipes through Toki pipeline to generate a specific format.',
+    {
+      path: z.string().describe('File or directory path to scan for CSS/SCSS tokens'),
+      extensions: z
+        .array(z.string())
+        .optional()
+        .default(['.css', '.scss'])
+        .describe('File extensions to scan'),
+      output: outputModeSchema.describe(
+        'Output mode: "raw" returns extracted data + Toki type reference for AI organization; "json" returns flat token map; or any output format name (css, js, etc.) to generate artifacts',
+      ),
+    },
+    async ({ path: scanPath, extensions, output }) => {
+      try {
+        const result: ScanResult = await scanFiles({ path: scanPath, extensions });
+
+        if (result.errors.length > 0 && result.tokens.length === 0) {
+          return errorContent(
+            `Scan failed:\n${result.errors.map((e) => `  ${e.file}: ${e.message}`).join('\n')}`,
+          );
+        }
+
+        if (output === 'raw') {
+          const byType: Record<string, number> = {};
+          let untyped = 0;
+          for (const token of result.tokens) {
+            if (token.inferredType !== undefined) {
+              byType[token.inferredType] = (byType[token.inferredType] ?? 0) + 1;
+            } else {
+              untyped++;
+            }
+          }
+
+          const tokenTypes = Object.entries(TOKEN_TYPE_PATTERNS).map(([type, info]) => ({
+            type,
+            patterns: info.patterns,
+            examples: info.examples,
+          }));
+
+          return textContent(
+            JSON.stringify(
+              {
+                extracted: result.tokens,
+                summary: {
+                  totalExtracted: result.tokens.length,
+                  byType,
+                  untyped,
+                  sources: result.sources,
+                },
+                errors: result.errors,
+                tokiReference: {
+                  tokenTypes,
+                  outputFormats: implementedFormats(),
+                  hint: 'Use the extracted tokens and type reference above to organize tokens into a W3C DTCG structure. Write the organized JSON to a file, then call build_tokens or preview_format to generate output.',
+                },
+              },
+              null,
+              2,
+            ),
+          );
+        }
+
+        if (output === 'json') {
+          const flat: Record<string, { $type?: string; $value: string }> = {};
+          for (const token of result.tokens) {
+            const entry: { $type?: string; $value: string } = { $value: token.value };
+            if (token.inferredType !== undefined) {
+              entry.$type = token.inferredType;
+            }
+            flat[token.id] = entry;
+          }
+          return textContent(
+            JSON.stringify(
+              {
+                tokens: flat,
+                tokenCount: result.tokens.length,
+                sources: result.sources,
+              },
+              null,
+              2,
+            ),
+          );
+        }
+
+        const format = output as OutputFormat;
+        const resolvedTokens = result.tokens
+          .filter((t) => t.inferredType !== undefined)
+          .map(extractedToResolved);
+        const genResult = generate(resolvedTokens, { formats: [format] });
+        return textContent(
+          JSON.stringify(
+            {
+              format,
+              artifacts: genResult.artifacts.map((a) => ({
+                relativePath: a.relativePath,
+                content: a.content,
+              })),
+              tokenCount: resolvedTokens.length,
+              skippedUntyped: result.tokens.length - resolvedTokens.length,
+              sources: result.sources,
+            },
+            null,
+            2,
+          ),
+        );
+      } catch (error) {
+        return handleTokiError(error);
+      }
     },
   );
 
