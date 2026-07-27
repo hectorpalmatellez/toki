@@ -70,6 +70,7 @@ Parse → Resolve → Transform → Generate → Write
 - **Functions/Variables:** camelCase (`resolveReferences`, `tokenTree`)
 - **Constants:** SCREAMING_SNAKE_CASE (`DEFAULT_OUTPUT_FORMATS`)
 - **CLI commands:** kebab-case (`toki build`, `toki init`)
+- **Version tags/releases:** plain semver without `v` prefix (`1.2.1`, not `v1.2.1`)
 
 ### Testing
 
