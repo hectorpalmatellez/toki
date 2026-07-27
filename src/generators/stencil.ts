@@ -171,8 +171,7 @@ export const renderUnionTypes = (tokens: readonly ResolvedToken[], options: Gene
     lines.push(`export type ${typeName} =`);
     for (let i = 0; i < ids.length; i++) {
       const isLast = i === ids.length - 1;
-      const prefix = isLast ? '  ' : '  |';
-      lines.push(`${prefix} ${JSON.stringify(ids[i]!)}${isLast ? ';' : ''}`);
+      lines.push(`  | ${JSON.stringify(ids[i]!)}${isLast ? ';' : ''}`);
     }
     lines.push('');
   }
@@ -182,8 +181,7 @@ export const renderUnionTypes = (tokens: readonly ResolvedToken[], options: Gene
     lines.push('export type TokenName =');
     for (let i = 0; i < allTypeNames.length; i++) {
       const isLast = i === allTypeNames.length - 1;
-      const prefix = isLast ? '  ' : '  |';
-      lines.push(`${prefix} ${allTypeNames[i]}${isLast ? ';' : ''}`);
+      lines.push(`  | ${allTypeNames[i]}${isLast ? ';' : ''}`);
     }
     lines.push('');
   }

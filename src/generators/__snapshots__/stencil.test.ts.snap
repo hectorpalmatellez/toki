@@ -61,22 +61,22 @@ exports[`stencil generator > matches the artifact snapshots 4`] = `
 
 export type ColorToken =
   | "color.primary"
-   "color.secondary";
+  | "color.secondary";
 
 export type SpacingToken =
   | "spacing.small"
-   "spacing.medium";
+  | "spacing.medium";
 
 export type TypeToken =
-   "type.body";
+  | "type.body";
 
 export type MotionToken =
-   "motion.ease";
+  | "motion.ease";
 
 export type TokenName =
   | ColorToken
   | SpacingToken
   | TypeToken
-   MotionToken;
+  | MotionToken;
 "
 `;

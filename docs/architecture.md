@@ -33,7 +33,7 @@ src/
 │   ├── diff.ts            # Token diffing for `toki diff`
 │   └── watch.ts           # File system watcher for `toki watch`
 ├── generators/
-│   ├── index.ts           # Generator registry (7 platforms)
+│   ├── index.ts           # Generator registry (8 platforms)
 │   ├── css.ts
 │   ├── js.ts
 │   ├── react-native.ts
@@ -41,6 +41,7 @@ src/
 │   ├── angular-11.ts
 │   ├── svelte.ts
 │   ├── react.ts
+│   ├── stencil.ts
 │   └── readme.ts          # Per-platform README artifacts
 ├── importers/
 │   ├── style-dictionary.ts
