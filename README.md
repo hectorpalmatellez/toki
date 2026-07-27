@@ -30,7 +30,6 @@ Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates 
 
 ```bash
 npm i -g @hectorpalmatellez/toki
-toki build --input tokens.json --output ./dist --format css,js
 ```
 
 ### Local Development
