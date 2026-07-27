@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Toki is a design token pipeline CLI that ingests W3C DTCG-format JSON tokens and generates framework-specific code artifacts for eight target platforms: CSS, JavaScript, React Native, Angular (latest + v11), Svelte, React/Next.js, and StencilJS.
+Toki is a design token pipeline CLI that ingests W3C DTCG-format JSON tokens and generates framework-specific code artifacts for nine target platforms: CSS, JavaScript, React Native, Angular (latest + v11), Svelte, React/Next.js, StencilJS, and Vue.
 
 **Status:** All development phases complete. Production-ready.
 
@@ -100,6 +100,7 @@ Generated files must:
 - **Svelte:** CSS custom properties + ES module, compatible with `<style>` scoping
 - **React/Next.js:** Nested theme object + companion CSS for `next-themes`
 - **StencilJS:** `:root` CSS custom properties + `camelCase` ES module with grouped `tokens` object + per-category union types (`XToken`) and full `TokenName` union for type-safe `@Prop()` decorators
+- **Vue:** CSS custom properties + ES module, compatible with scoped `<style>` blocks
 
 ## What NOT To Do
 
@@ -131,6 +132,7 @@ src/
 │   ├── svelte.ts
 │   ├── react.ts
 │   ├── stencil.ts
+│   ├── vue.ts
 │   ├── readme.ts          # Per-platform README artifacts
 │   └── index.ts           # Generator registry
 ├── extractors/

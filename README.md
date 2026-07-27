@@ -6,13 +6,13 @@
 
 > Design token pipeline CLI — W3C DTCG in, framework-specific code out.
 
-Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates idiomatic, framework-specific code artifacts for eight target platforms: CSS, JavaScript, React Native, Angular (latest + v11), Svelte, React/Next.js, and StencilJS.
+Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates idiomatic, framework-specific code artifacts for nine target platforms: CSS, JavaScript, React Native, Angular (latest + v11), Svelte, React/Next.js, StencilJS, and Vue.
 
 ## Features
 
 - **W3C DTCG input** — conforms to the [Design Tokens Community Group format](https://design-tokens.github.io/community-group/format/)
 - **Reference resolution** — expands `{group.token}` aliases, detects circular dependencies, applies `$type` inheritance
-- **Eight output formats** — CSS, JS, React Native, Angular (latest + v11), Svelte, React/Next.js, StencilJS
+- **Nine output formats** — CSS, JS, React Native, Angular (latest + v11), Svelte, React/Next.js, StencilJS, Vue
 - **Platform value transforms** — hex normalization, `px`/`rem` → raw dp/sp, RN shadow objects, canonical font weights
 - **Configuration file** — `toki.config.ts` (or `.js`) with input, output, formats, themes, naming, and transforms
 - **Multi-theme output** — separate output files per theme (e.g., `tokens.light.css`, `tokens.dark.css`)
@@ -57,7 +57,8 @@ dist/
 ├── angular-11/
 ├── svelte/
 ├── react/
-└── stencil/
+├── stencil/
+└── vue/
 ```
 
 Run `toki` with no arguments for an interactive menu. Run `toki init` to scaffold a starter project.
@@ -80,7 +81,7 @@ Run `toki` with no arguments for an interactive menu. Run `toki init` to scaffol
 | ------------------------------------ | ------------------------------------------------------------------------------------------- |
 | [Usage Guide](docs/usage.md)         | Detailed CLI commands, config file, multi-theme, naming, plugins, verbose mode, error codes |
 | [MCP Guide](docs/mcp.md)             | AI agent integration — `toki mcp` setup, tools, examples                                   |
-| [Output Guide](docs/output.md)       | Input format (W3C DTCG), output conventions, code examples for all 8 platforms              |
+| [Output Guide](docs/output.md)       | Input format (W3C DTCG), output conventions, code examples for all 9 platforms              |
 | [Architecture](docs/architecture.md) | Pipeline design, source tree, key design decisions                                          |
 | [Changelog](CHANGELOG.md)            | Release history following Keep a Changelog                                                  |
 | [Roadmap](docs/backlog.md)           | Completed tasks and planned work                                                            |
