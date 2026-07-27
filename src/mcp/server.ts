@@ -352,4 +352,5 @@ export const startMcpServer = async (): Promise<void> => {
   const server = createMcpServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
+  console.error('[toki mcp] server started (stdio transport)');
 };
