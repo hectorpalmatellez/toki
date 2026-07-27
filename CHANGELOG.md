@@ -5,6 +5,12 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-07-27
+
+### Added
+
+- **Vue generator** — ninth platform target emitting `vue/tokens.css` (`:root` CSS custom properties compatible with scoped `<style>` blocks), `vue/tokens.ts` (camelCase ES module exports), and `vue/README.md`. Registered in `OutputFormat`, `ALL_FORMATS`, the generator registry, `DEFAULT_NAMING`, and the `"all"` format expansion.
+
 ## [1.1.0] — 2026-07-26
 
 ### Added
