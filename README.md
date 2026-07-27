@@ -21,6 +21,8 @@ Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates 
 - **Watch mode** — `toki watch` rebuilds on file change with 200ms debounce
 - **Diff tooling** — `toki diff` reports added, removed, and changed tokens (terminal or JSON output)
 - **Ecosystem imports** — convert Style Dictionary or Figma Tokens Studio formats to W3C DTCG
+- **MCP server** — `toki mcp` exposes the full pipeline to AI tools (Claude, Cursor, Windsurf) via Model Context Protocol
+- **Token extraction** — scan CSS/SCSS files to extract design token candidates and generate W3C DTCG output
 - **Deterministic output** — same input produces byte-identical artifacts
 - **Zero runtime dependencies** in generated files
 
@@ -77,6 +79,7 @@ Run `toki` with no arguments for an interactive menu. Run `toki init` to scaffol
 | Guide                                | Description                                                                                 |
 | ------------------------------------ | ------------------------------------------------------------------------------------------- |
 | [Usage Guide](docs/usage.md)         | Detailed CLI commands, config file, multi-theme, naming, plugins, verbose mode, error codes |
+| [MCP Guide](docs/mcp.md)             | AI agent integration — `toki mcp` setup, tools, examples                                   |
 | [Output Guide](docs/output.md)       | Input format (W3C DTCG), output conventions, code examples for all 8 platforms              |
 | [Architecture](docs/architecture.md) | Pipeline design, source tree, key design decisions                                          |
 | [Changelog](CHANGELOG.md)            | Release history following Keep a Changelog                                                  |
@@ -90,7 +93,7 @@ Run `toki` with no arguments for an interactive menu. Run `toki init` to scaffol
 | Language        | TypeScript 7.0+ (native Go compiler, strict mode) |
 | CLI             | Commander.js                                      |
 | Bundler         | tsup                                              |
-| Testing         | Vitest (294 tests, 90%+ coverage)                 |
+| Testing         | Vitest (357 tests, 90%+ coverage)                 |
 | Linting         | oxlint                                            |
 | Formatting      | Prettier                                          |
 | Package manager | pnpm 10.32.1                                      |

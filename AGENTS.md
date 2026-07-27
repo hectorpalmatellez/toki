@@ -132,6 +132,15 @@ src/
 │   ├── stencil.ts
 │   ├── readme.ts          # Per-platform README artifacts
 │   └── index.ts           # Generator registry
+├── extractors/
+│   ├── infer-type.ts      # Value → TokenType inference (reuses transformer patterns)
+│   ├── css-properties.ts  # CSS custom property extraction (--var: value)
+│   ├── scss-variables.ts  # SCSS variable extraction ($var: value)
+│   ├── scanner.ts         # Recursive directory walk + file filtering
+│   └── index.ts           # Barrel export
+├── mcp/
+│   ├── server.ts          # MCP server — 7 tools over stdio transport
+│   └── __tests__/         # MCP tool tests
 └── utils/
     ├── naming.ts          # camelCase, kebab-case, etc.
     ├── grouping.ts        # Category grouping + JS object-literal serialization

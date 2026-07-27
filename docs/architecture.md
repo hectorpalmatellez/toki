@@ -43,9 +43,18 @@ src/
 │   ├── react.ts
 │   ├── stencil.ts
 │   └── readme.ts          # Per-platform README artifacts
+├── extractors/
+│   ├── index.ts           # Barrel export
+│   ├── infer-type.ts      # Value → TokenType inference
+│   ├── css-properties.ts  # CSS custom property extraction
+│   ├── scss-variables.ts  # SCSS variable extraction
+│   └── scanner.ts         # Recursive file scanner
 ├── importers/
 │   ├── style-dictionary.ts
 │   └── figma-tokens.ts
+├── mcp/
+│   ├── server.ts          # MCP server — 7 tools over stdio transport
+│   └── __tests__/         # MCP tool tests (InMemoryTransport + Client)
 └── utils/
     ├── naming.ts          # camelCase, kebab-case, CONSTANT_CASE, etc.
     ├── grouping.ts        # Category grouping + JS object-literal serialization

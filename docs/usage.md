@@ -71,6 +71,18 @@ toki import --from figma-tokens --input figma-tokens.json
 | `-i, --input <path>`  | Path to input token file                            |
 | `-o, --output <path>` | Output path for generated `tokens.json`             |
 
+### `toki mcp`
+
+Start the Model Context Protocol (MCP) server for AI tool integration. Uses stdio transport — no ports or network needed.
+
+```bash
+toki mcp
+```
+
+The MCP server exposes 7 tools that AI agents (Claude, Cursor, Windsurf) can call: `parse_tokens`, `resolve_tokens`, `preview_format`, `build_tokens`, `diff_tokens`, `list_formats`, and `extract_tokens`.
+
+See the [MCP Guide](mcp.md) for full documentation, configuration examples, and workflows.
+
 ## Configuration file
 
 Toki can be configured via a `toki.config.ts` (or `.js` / `.mjs`) file in your project root. When present, `toki build` auto-discovers the config and uses it as the default for all options.
