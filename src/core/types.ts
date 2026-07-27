@@ -127,7 +127,7 @@ export interface ResolvedToken {
 }
 
 /** Output formats Toki can generate. Phase 1 ships `css` and `js`. */
-export type OutputFormat = 'css' | 'js' | 'react-native' | 'angular' | 'angular-11' | 'svelte' | 'react';
+export type OutputFormat = 'css' | 'js' | 'react-native' | 'angular' | 'angular-11' | 'svelte' | 'react' | 'stencil';
 
 /** All output formats supported by the generator registry. */
 export const ALL_FORMATS: readonly OutputFormat[] = [
@@ -138,6 +138,7 @@ export const ALL_FORMATS: readonly OutputFormat[] = [
   'angular-11',
   'svelte',
   'react',
+  'stencil',
 ];
 
 /** A generated artifact ready to be written to disk. */

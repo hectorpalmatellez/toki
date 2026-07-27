@@ -188,6 +188,7 @@ export const DEFAULT_NAMING: Readonly<Record<OutputFormat, NamingConvention>> = 
   'angular-11': 'CONSTANT_CASE',
   svelte: 'kebab-case',
   react: 'camelCase',
+  stencil: 'camelCase',
 };
 
 /**

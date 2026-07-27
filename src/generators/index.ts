@@ -12,6 +12,7 @@ import { angularGenerator } from './angular.js';
 import { angular11Generator } from './angular-11.js';
 import { svelteGenerator } from './svelte.js';
 import { reactGenerator } from './react.js';
+import { stencilGenerator } from './stencil.js';
 
 const REGISTRY: ReadonlyMap<OutputFormat, Generator> = new Map<OutputFormat, Generator>([
   ['css', cssGenerator],
@@ -21,6 +22,7 @@ const REGISTRY: ReadonlyMap<OutputFormat, Generator> = new Map<OutputFormat, Gen
   ['angular-11', angular11Generator],
   ['svelte', svelteGenerator],
   ['react', reactGenerator],
+  ['stencil', stencilGenerator],
 ]);
 
 const KNOWN: readonly OutputFormat[] = [...REGISTRY.keys()];
