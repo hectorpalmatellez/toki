@@ -1,7 +1,7 @@
 {
   "name": "@hectorpalmatellez/toki",
-  "version": "1.1.0",
-  "description": "Design token pipeline CLI — W3C DTCG in, framework-specific code out",
+  "version": "1.2.0",
+  "description": "Design token pipeline CLI \u2014 W3C DTCG in, framework-specific code out",
   "type": "module",
   "bin": {
     "toki": "dist/cli.js"
@@ -78,6 +78,6 @@
     "url": "https://github.com/hectorpalmatellez/toki/issues"
   },
   "sideEffects": false,
-  "author": "Héctor Palma Téllez",
+  "author": "H\u00e9ctor Palma T\u00e9llez",
   "license": "MIT"
 }
