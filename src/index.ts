@@ -68,3 +68,12 @@ export { svelteGenerator } from './generators/svelte.js';
 export { reactGenerator } from './generators/react.js';
 
 export { TokiError } from './utils/errors.js';
+
+export {
+  extractCssProperties,
+  extractScssVariables,
+  inferTokenType,
+  TOKEN_TYPE_PATTERNS,
+  scanFiles,
+} from './extractors/index.js';
+export type { ExtractedToken, ScanOptions, ScanResult, TokenTypePatternInfo } from './extractors/index.js';

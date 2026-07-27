@@ -385,6 +385,24 @@ program
     }
   });
 
+program
+  .command('mcp')
+  .description('Start the MCP server for AI tool integration (stdio transport)')
+  .action(async () => {
+    try {
+      const { startMcpServer } = await import('./mcp/server.js');
+      await startMcpServer();
+    } catch (error) {
+      if (error instanceof TokiError) {
+        console.error(`error [${error.code}]: ${error.message}`);
+        process.exitCode = 1;
+        return;
+      }
+      console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
+      process.exitCode = 1;
+    }
+  });
+
 export { program };
 export { buildCommand };
 export { parseFormats };
