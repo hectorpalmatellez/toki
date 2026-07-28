@@ -5,6 +5,16 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] — 2026-07-27
+
+### Added
+
+- **MCP dynamic resource** — `toki://tokens/{+input}` exposes the fully resolved token list for any W3C DTCG file as a parameterized MCP resource. AI editors can read tokens as context without a tool call.
+
+### Changed
+
+- **Parallel write pipeline** — `writeArtifacts()` now writes all output files concurrently via `Promise.all` instead of sequentially. The `generate()` function uses `.map().flat()` instead of a `for...of` loop, expressing per-format independence explicitly.
+
 ## [1.4.0] — 2026-07-27
 
 ### Added

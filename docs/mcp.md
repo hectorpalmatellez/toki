@@ -61,7 +61,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ## Available tools
 
-Toki exposes 7 tools, 3 resources, and 3 prompts to AI agents:
+Toki exposes 7 tools, 3 resources, 1 dynamic resource, and 3 prompts to AI agents:
 
 | Tool | Description |
 |---|---|
@@ -379,6 +379,35 @@ Returns all 13 W3C DTCG token types with value patterns and examples:
 ### `toki://w3c-dtcg-spec`
 
 Returns a Markdown quick reference for the W3C DTCG format covering token structure (`$value`, `$type`, `$description`, `$extensions`), group structure with `$type` inheritance, reference syntax (`{group.token}`), supported composite types, and a complete example input document.
+
+### Dynamic resources
+
+Dynamic resources accept parameters via URI templates. The client supplies the parameter values when reading the resource.
+
+#### `toki://tokens/{input}`
+
+Returns the fully resolved token list for a W3C DTCG token file. References are expanded and `$type` inheritance is applied. AI editors can read this resource as context without making a tool call.
+
+**URI template:** `toki://tokens/{+input}`
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `input` | `string` | Path to the token file (W3C DTCG JSON) |
+
+**Example:**
+
+```
+AI reads resource: toki://tokens/./tokens.json
+← { tokenCount: 42, tokens: [{ id: "color.primary", value: "#1a73e8", type: "color", ... }, ...] }
+```
+
+Errors are returned as JSON content (not thrown), so the client always gets a readable response:
+
+```json
+{ "error": "[MISSING_REFERENCE] Token \"color.bad\" references unknown token \"{color.nope}\"." }
+```
 
 ## Available prompts
 
