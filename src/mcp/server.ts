@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { readTokenFile, parseTokenDocument } from '../core/parser.js';
 import { resolveDocument } from '../core/resolver.js';
 import { generate } from '../core/pipeline.js';
-import { runDiff } from '../core/diff.js';
+import { runDiff, formatDiffMarkdown } from '../core/diff.js';
 import { writeArtifacts } from '../utils/writer.js';
 import { parseFormats, implementedFormats } from '../generators/index.js';
 import { scanFiles, TOKEN_TYPE_PATTERNS } from '../extractors/index.js';
@@ -206,10 +206,14 @@ export const createMcpServer = (): McpServer => {
     {
       old: z.string().describe('Path to the old token file'),
       new: z.string().describe('Path to the new token file'),
+      output: z.enum(['json', 'markdown']).optional().default('json').describe('Output format: "json" (default) or "markdown" for GitHub-compatible tables'),
     },
-    async ({ old: oldPath, new: newPath }) => {
+    async ({ old: oldPath, new: newPath, output }) => {
       try {
         const result = await runDiff(oldPath, newPath);
+        if (output === 'markdown') {
+          return textContent(formatDiffMarkdown(result));
+        }
         return textContent(
           JSON.stringify(
             {

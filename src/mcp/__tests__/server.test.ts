@@ -217,6 +217,37 @@ describe('diff_tokens', () => {
     expect(payload.changed[0].id).toBe('color.primary');
     expect(payload.removed.length).toBe(0);
   });
+
+  it('returns markdown when output is "markdown"', async () => {
+    const dir = await uniqueDir();
+    const oldPath = join(dir, 'old-md.json');
+    const newPath = join(dir, 'new-md.json');
+
+    await writeFile(oldPath, JSON.stringify({ color: { $type: 'color', primary: { $value: '#1a73e8' } } }), 'utf8');
+    await writeFile(
+      newPath,
+      JSON.stringify({
+        color: {
+          $type: 'color',
+          primary: { $value: '#2b8cef' },
+          secondary: { $value: '#5f6368' },
+        },
+      }),
+      'utf8',
+    );
+
+    const result = await client.callTool({
+      name: 'diff_tokens',
+      arguments: { old: oldPath, new: newPath, output: 'markdown' },
+    });
+
+    expect(result.isError).toBeFalsy();
+    const text = result.content[0].text;
+    expect(text).toContain('## Toki Token Diff');
+    expect(text).toContain('### Added');
+    expect(text).toContain('### Changed');
+    expect(text).toContain('color.secondary');
+  });
 });
 
 describe('list_formats', () => {

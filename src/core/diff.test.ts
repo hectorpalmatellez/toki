@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { writeFile, rm } from 'node:fs/promises';
-import { diffTokens, runDiff, formatDiffTerminal, formatDiffJson } from './diff.js';
+import { diffTokens, runDiff, formatDiffTerminal, formatDiffJson, formatDiffMarkdown } from './diff.js';
 import type { ResolvedToken, TokenValue } from './types.js';
 
 const token = (id: string, value: TokenValue, overrides: Partial<ResolvedToken> = {}): ResolvedToken =>
@@ -279,5 +279,79 @@ describe('runDiff (integration)', () => {
     await expect(runDiff(badPath, badPath)).rejects.toThrow();
 
     await cleanupAll();
+  });
+});
+
+describe('formatDiffMarkdown', () => {
+  it('returns "No differences found." for an empty diff', () => {
+    const result = diffTokens(new Map(), new Map());
+    const md = formatDiffMarkdown(result);
+    expect(md).toContain('## Toki Token Diff');
+    expect(md).toContain('No differences found.');
+  });
+
+  it('formats added tokens in a markdown table', () => {
+    const result = diffTokens(
+      new Map(),
+      new Map([
+        ['color.accent', token('color.accent', '#ff6b00')],
+        ['spacing.xl', token('spacing.xl', '48px', { type: 'dimension' })],
+      ]),
+    );
+    const md = formatDiffMarkdown(result);
+    expect(md).toContain('**2 added**');
+    expect(md).toContain('### Added');
+    expect(md).toContain('| `color.accent` | `#ff6b00` |');
+    expect(md).toContain('| `spacing.xl` | `48px` |');
+  });
+
+  it('formats removed tokens in a markdown table', () => {
+    const result = diffTokens(new Map([['color.legacy', token('color.legacy', '#cccccc')]]), new Map());
+    const md = formatDiffMarkdown(result);
+    expect(md).toContain('**1 removed**');
+    expect(md).toContain('### Removed');
+    expect(md).toContain('| `color.legacy` | `#cccccc` |');
+  });
+
+  it('formats changed tokens with old and new columns', () => {
+    const result = diffTokens(
+      new Map([['spacing.md', token('spacing.md', '16px', { type: 'dimension' })]]),
+      new Map([['spacing.md', token('spacing.md', '12px', { type: 'dimension' })]]),
+    );
+    const md = formatDiffMarkdown(result);
+    expect(md).toContain('**1 changed**');
+    expect(md).toContain('### Changed');
+    expect(md).toContain('| Token | Old | New |');
+    expect(md).toContain('| `spacing.md` | `16px` | `12px` |');
+  });
+
+  it('formats composite values as JSON in markdown table cells', () => {
+    const result = diffTokens(
+      new Map([['t', token('t', { fontSize: '16px' }, { type: 'typography' })]]),
+      new Map([['t', token('t', { fontSize: '18px' }, { type: 'typography' })]]),
+    );
+    const md = formatDiffMarkdown(result);
+    expect(md).toContain('{"fontSize":"16px"}');
+    expect(md).toContain('{"fontSize":"18px"}');
+  });
+
+  it('includes all three sections for a mixed diff', () => {
+    const result = diffTokens(
+      new Map([
+        ['a', token('a', '#fff')],
+        ['b', token('b', '#000')],
+      ]),
+      new Map([
+        ['a', token('a', '#ccc')],
+        ['c', token('c', '#eee')],
+      ]),
+    );
+    const md = formatDiffMarkdown(result);
+    expect(md).toContain('### Added');
+    expect(md).toContain('### Removed');
+    expect(md).toContain('### Changed');
+    expect(md).toContain('**1 added**');
+    expect(md).toContain('**1 removed**');
+    expect(md).toContain('**1 changed**');
   });
 });

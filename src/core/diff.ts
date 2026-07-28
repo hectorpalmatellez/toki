@@ -161,3 +161,58 @@ export const formatDiffTerminal = (result: DiffResult): string => {
 export const formatDiffJson = (result: DiffResult): DiffEntry[] => {
   return [...result.added, ...result.removed, ...result.changed];
 };
+
+export const formatDiffMarkdown = (result: DiffResult): string => {
+  const lines: string[] = [];
+  const total = result.added.length + result.removed.length + result.changed.length;
+
+  lines.push('## Toki Token Diff');
+  lines.push('');
+
+  if (total === 0) {
+    lines.push('No differences found.');
+    return lines.join('\n');
+  }
+
+  const parts: string[] = [];
+  if (result.added.length > 0) parts.push(`**${result.added.length} added**`);
+  if (result.removed.length > 0) parts.push(`**${result.removed.length} removed**`);
+  if (result.changed.length > 0) parts.push(`**${result.changed.length} changed**`);
+  lines.push(parts.join(', '));
+  lines.push('');
+
+  if (result.added.length > 0) {
+    lines.push('### Added');
+    lines.push('');
+    lines.push('| Token | Value |');
+    lines.push('|---|---|');
+    for (const entry of result.added) {
+      lines.push(`| \`${entry.id}\` | \`${displayValue(entry.newValue!)}\` |`);
+    }
+    lines.push('');
+  }
+
+  if (result.removed.length > 0) {
+    lines.push('### Removed');
+    lines.push('');
+    lines.push('| Token | Value |');
+    lines.push('|---|---|');
+    for (const entry of result.removed) {
+      lines.push(`| \`${entry.id}\` | \`${displayValue(entry.oldValue!)}\` |`);
+    }
+    lines.push('');
+  }
+
+  if (result.changed.length > 0) {
+    lines.push('### Changed');
+    lines.push('');
+    lines.push('| Token | Old | New |');
+    lines.push('|---|---|---|');
+    for (const entry of result.changed) {
+      lines.push(`| \`${entry.id}\` | \`${displayValue(entry.oldValue!)}\` | \`${displayValue(entry.newValue!)}\` |`);
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+};
