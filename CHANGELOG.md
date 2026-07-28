@@ -5,6 +5,18 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] — 2026-07-27
+
+### Added
+
+- **Tailwind CSS v4 generator** — tenth platform target emitting `tailwind/tokens.css` (`@theme` block with namespace-mapped CSS custom properties) and `tailwind/README.md`. Token types map to Tailwind namespaces: `color` → `--color-*`, `dimension` → `--spacing-*`, `fontWeight` → `--font-weight-*`, etc. Composite types (`typography`, `border`, `transition`, `shadow`) are skipped.
+- **MCP Resources** — three static resources: `toki://formats` (supported formats metadata), `toki://token-types` (W3C DTCG type reference), `toki://w3c-dtcg-spec` (format quick reference). Server now declares `resources` capability.
+- **MCP Prompts** — three prompt templates: `migrate-css-tokens` (CSS-to-Toki migration), `validate-tokens` (quality audit), `preview-all-formats` (cross-platform preview). Server now declares `prompts` capability.
+
+### Fixed
+
+- **MCP documentation** — updated `docs/mcp.md` to include `vue` and `tailwind` in format listings and example output.
+
 ## [1.3.0] — 2026-07-27
 
 ### Added
