@@ -5,6 +5,14 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] — 2026-07-27
+
+### Added
+
+- **Composite type expansion (CSS)** — `typography`, `border`, and `transition` tokens now expand into individual CSS longhand custom properties (e.g., `--typography-heading-h1-font-size: 32px`) instead of being silently skipped. Flows through all CSS-based generators (CSS, Vue, Svelte, Stencil, React companion CSS, Angular SCSS, Tailwind).
+- **`toki validate`** — standalone linter CLI command. Checks structural validity, broken references, circular dependencies, missing descriptions, naming convention violations, and duplicate values. Supports `--json` and `--strict` flags.
+- **`toki diff --markdown`** — GitHub-compatible Markdown diff output. Produces tables for added, removed, and changed tokens, ready for PR comments. Also available via MCP `diff_tokens` tool with `output: "markdown"`.
+
 ## [1.4.1] — 2026-07-27
 
 ### Added
