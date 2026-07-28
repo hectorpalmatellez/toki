@@ -84,13 +84,9 @@ export interface GenerateOptions {
 
 /** Re-run generation from already-resolved tokens. */
 export const generate = (tokens: readonly ResolvedToken[], options: GenerateOptions): BuildResult => {
-  const artifacts: OutputArtifact[] = [];
-  for (const format of options.formats) {
+  const perFormat = options.formats.map((format) => {
     const generator = getGenerator(format);
-    // Transform stage: normalize values for the target platform before
-    // generation (e.g. "8px" → 8 for react-native).
     let transformed = transformTokens(tokens, format);
-    // Apply custom transform plugins after built-in transforms.
     transformed = applyCustomTransforms(transformed, options.transforms ?? [], format);
     const naming = options.naming?.[format];
     const generatorOptions = {
@@ -98,10 +94,9 @@ export const generate = (tokens: readonly ResolvedToken[], options: GenerateOpti
       ...(options.theme !== undefined ? { theme: options.theme } : {}),
       ...(naming !== undefined ? { naming } : {}),
     };
-    artifacts.push(...generator.generate(transformed, generatorOptions));
-  }
-  // Deterministic artifact ordering: sort by relativePath so output
-  // enumeration (and any future manifest) is byte-stable.
+    return generator.generate(transformed, generatorOptions);
+  });
+  const artifacts = perFormat.flat();
   const sortedArtifacts = artifacts.toSorted((a, b) =>
     a.relativePath < b.relativePath ? -1 : a.relativePath > b.relativePath ? 1 : 0,
   );

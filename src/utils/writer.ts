@@ -45,17 +45,26 @@ export const writeArtifacts = async (
     }
   }
 
-  const written: string[] = [];
-  for (const artifact of artifacts) {
+  const mkdirs = new Map<string, Promise<void>>();
+  const ensureDir = (dir: string): Promise<void> => {
+    const existing = mkdirs.get(dir);
+    if (existing !== undefined) return existing;
+    const p = mkdir(dir, { recursive: true }).then(() => {});
+    mkdirs.set(dir, p);
+    return p;
+  };
+
+  const writes = artifacts.map(async (artifact) => {
     const absPath = join(outputDir, normalize(artifact.relativePath));
+    await ensureDir(dirname(absPath));
     try {
-      await mkdir(dirname(absPath), { recursive: true });
       await writeFile(absPath, `${artifact.content}\n`, 'utf8');
     } catch (cause) {
       throw new IoError(`Failed to write ${absPath}`, cause);
     }
-    written.push(absPath);
-  }
+    return absPath;
+  });
 
+  const written = await Promise.all(writes);
   return { written };
 };

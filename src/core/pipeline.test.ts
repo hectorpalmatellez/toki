@@ -190,4 +190,39 @@ describe('pipeline', () => {
     });
     expect(result.tokenCount).toBe(3);
   });
+
+  it('multi-format build produces correct output for every format', () => {
+    const tokens = resolveDocument(parseTokenDocument(sampleDoc));
+    const result = generate(tokens, {
+      formats: ['css', 'js', 'react-native'],
+    });
+
+    const css = result.artifacts.find((a) => a.relativePath === 'css/tokens.css');
+    expect(css).toBeDefined();
+    expect(css?.content).toContain('--color-primary: #1a73e8;');
+    expect(css?.content).toContain('--color-secondary: #1a73e8;');
+    expect(css?.content).toContain('--spacing-small: 8px;');
+
+    const js = result.artifacts.find((a) => a.relativePath === 'js/tokens.js');
+    expect(js).toBeDefined();
+    expect(js?.content).toContain('colorPrimary');
+    expect(js?.content).toContain('colorSecondary');
+
+    const rn = result.artifacts.find((a) => a.relativePath === 'react-native/tokens.js');
+    expect(rn).toBeDefined();
+    expect(rn?.content).toContain('color');
+
+    expect(result.formats).toEqual(['css', 'js', 'react-native']);
+    expect(result.tokenCount).toBe(3);
+  });
+
+  it('generate with all formats returns sorted artifacts', () => {
+    const tokens = resolveDocument(parseTokenDocument(sampleDoc));
+    const result = generate(tokens, {
+      formats: ['css', 'js', 'react-native', 'angular', 'svelte', 'react', 'stencil', 'vue', 'tailwind'],
+    });
+    const paths = result.artifacts.map((a) => a.relativePath);
+    const sorted = [...paths].toSorted();
+    expect(paths).toEqual(sorted);
+  });
 });
