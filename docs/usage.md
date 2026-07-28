@@ -79,7 +79,7 @@ Start the Model Context Protocol (MCP) server for AI tool integration. Uses stdi
 toki mcp
 ```
 
-The MCP server exposes 7 tools that AI agents (Claude, Cursor, Windsurf) can call: `parse_tokens`, `resolve_tokens`, `preview_format`, `build_tokens`, `diff_tokens`, `list_formats`, and `extract_tokens`.
+The MCP server exposes 7 tools, 3 resources, and 3 prompts that AI agents (Claude, Cursor, Windsurf) can call: `parse_tokens`, `resolve_tokens`, `preview_format`, `build_tokens`, `diff_tokens`, `list_formats`, and `extract_tokens`. Resources (`toki://formats`, `toki://token-types`, `toki://w3c-dtcg-spec`) and prompts (`migrate-css-tokens`, `validate-tokens`, `preview-all-formats`) are auto-discovered by MCP clients.
 
 See the [MCP Guide](mcp.md) for full documentation, configuration examples, and workflows.
 

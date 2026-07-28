@@ -237,6 +237,9 @@ describe('list_formats', () => {
     expect(payload.formats).toContain('svelte');
     expect(payload.formats).toContain('react');
     expect(payload.formats).toContain('stencil');
+    expect(payload.formats).toContain('vue');
+    expect(payload.formats).toContain('tailwind');
+    expect(payload.formats.length).toBe(10);
   });
 });
 
@@ -344,5 +347,108 @@ describe('extract_tokens', () => {
     });
 
     expect(result.isError).toBe(true);
+  });
+});
+
+describe('MCP resources', () => {
+  it('lists 3 resources', async () => {
+    const { resources } = await client.listResources();
+    expect(resources.length).toBe(3);
+    const uris = resources.map((r) => r.uri).sort();
+    expect(uris).toEqual(['toki://formats', 'toki://token-types', 'toki://w3c-dtcg-spec']);
+  });
+
+  it('reads toki://formats with all format metadata', async () => {
+    const result = await client.readResource({ uri: 'toki://formats' });
+    expect(result.contents.length).toBe(1);
+    const text = result.contents[0];
+    if (text === undefined || !('text' in text)) throw new Error('expected text content');
+    const payload = JSON.parse(text.text) as {
+      formats: Array<{ id: string; description: string; namingDefault: string; artifacts: string[] }>;
+    };
+    expect(payload.formats.length).toBe(10);
+    const css = payload.formats.find((f) => f.id === 'css');
+    expect(css).toBeDefined();
+    expect(css?.namingDefault).toBe('kebab-case');
+    expect(css?.artifacts).toContain('css/tokens.css');
+    const tailwind = payload.formats.find((f) => f.id === 'tailwind');
+    expect(tailwind).toBeDefined();
+    expect(tailwind?.artifacts).toContain('tailwind/tokens.css');
+  });
+
+  it('reads toki://token-types with all 13 token types', async () => {
+    const result = await client.readResource({ uri: 'toki://token-types' });
+    const text = result.contents[0];
+    if (text === undefined || !('text' in text)) throw new Error('expected text content');
+    const payload = JSON.parse(text.text) as {
+      types: Array<{ type: string; patterns: string[]; examples: string[] }>;
+    };
+    expect(payload.types.length).toBe(13);
+    const color = payload.types.find((t) => t.type === 'color');
+    expect(color).toBeDefined();
+    expect(color?.examples).toContain('#1a73e8');
+  });
+
+  it('reads toki://w3c-dtcg-spec as markdown', async () => {
+    const result = await client.readResource({ uri: 'toki://w3c-dtcg-spec' });
+    const text = result.contents[0];
+    if (text === undefined || !('text' in text)) throw new Error('expected text content');
+    expect(text.text).toContain('# W3C DTCG Format Reference');
+    expect(text.text).toContain('$value');
+    expect(text.text).toContain('{group.token}');
+  });
+});
+
+describe('MCP prompts', () => {
+  it('lists 3 prompts', async () => {
+    const { prompts } = await client.listPrompts();
+    expect(prompts.length).toBe(3);
+    const names = prompts.map((p) => p.name).sort();
+    expect(names).toEqual(['migrate-css-tokens', 'preview-all-formats', 'validate-tokens']);
+  });
+
+  it('gets migrate-css-tokens prompt with interpolated path', async () => {
+    const result = await client.getPrompt({
+      name: 'migrate-css-tokens',
+      arguments: { path: './src', formats: 'css,js,react' },
+    });
+    expect(result.messages.length).toBe(1);
+    const msg = result.messages[0];
+    if (msg === undefined) throw new Error('expected message');
+    expect(msg.role).toBe('user');
+    if (msg.content.type !== 'text') throw new Error('expected text content');
+    expect(msg.content.text).toContain('./src');
+    expect(msg.content.text).toContain('css,js,react');
+    expect(msg.content.text).toContain('extract_tokens');
+  });
+
+  it('gets validate-tokens prompt with interpolated input', async () => {
+    const result = await client.getPrompt({
+      name: 'validate-tokens',
+      arguments: { input: './tokens.json' },
+    });
+    expect(result.messages.length).toBe(1);
+    const msg = result.messages[0];
+    if (msg === undefined) throw new Error('expected message');
+    expect(msg.role).toBe('user');
+    if (msg.content.type !== 'text') throw new Error('expected text content');
+    expect(msg.content.text).toContain('./tokens.json');
+    expect(msg.content.text).toContain('parse_tokens');
+    expect(msg.content.text).toContain('resolve_tokens');
+  });
+
+  it('gets preview-all-formats prompt with interpolated arguments', async () => {
+    const result = await client.getPrompt({
+      name: 'preview-all-formats',
+      arguments: { input: './tokens.json', formats: 'css,js' },
+    });
+    expect(result.messages.length).toBe(1);
+    const msg = result.messages[0];
+    if (msg === undefined) throw new Error('expected message');
+    expect(msg.role).toBe('user');
+    if (msg.content.type !== 'text') throw new Error('expected text content');
+    expect(msg.content.text).toContain('./tokens.json');
+    expect(msg.content.text).toContain('css,js');
+    expect(msg.content.text).toContain('preview_format');
   });
 });

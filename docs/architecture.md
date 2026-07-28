@@ -55,8 +55,10 @@ src/
 │   ├── style-dictionary.ts
 │   └── figma-tokens.ts
 ├── mcp/
-│   ├── server.ts          # MCP server — 7 tools over stdio transport
-│   └── __tests__/         # MCP tool tests (InMemoryTransport + Client)
+│   ├── server.ts          # MCP server — 7 tools, 3 resources, 3 prompts over stdio transport
+│   ├── resources.ts       # Static resource registration (toki://formats, toki://token-types, toki://w3c-dtcg-spec)
+│   ├── prompts.ts         # Prompt template registration (migrate-css-tokens, validate-tokens, preview-all-formats)
+│   └── __tests__/         # MCP tool, resource, and prompt tests (InMemoryTransport + Client)
 └── utils/
     ├── naming.ts          # camelCase, kebab-case, CONSTANT_CASE, etc.
     ├── grouping.ts        # Category grouping + JS object-literal serialization

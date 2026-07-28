@@ -12,6 +12,8 @@ import type { ExtractedToken, ScanResult } from '../extractors/index.js';
 import { TOKI_VERSION } from '../version.js';
 import { TokiError } from '../utils/errors.js';
 import type { OutputFormat, NamingConvention, ResolvedToken, TokenType } from '../core/types.js';
+import { registerResources } from './resources.js';
+import { registerPrompts } from './prompts.js';
 
 const textContent = (text: string): { content: Array<{ type: 'text'; text: string }> } => ({
   content: [{ type: 'text', text }],
@@ -51,8 +53,17 @@ const extractedToResolved = (token: ExtractedToken): ResolvedToken => ({
 export const createMcpServer = (): McpServer => {
   const server = new McpServer(
     { name: 'toki', version: TOKI_VERSION },
-    { capabilities: { tools: {} } },
+    {
+      capabilities: {
+        tools: {},
+        resources: {},
+        prompts: {},
+      },
+    },
   );
+
+  registerResources(server);
+  registerPrompts(server);
 
   server.tool(
     'parse_tokens',

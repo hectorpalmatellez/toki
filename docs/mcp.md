@@ -61,7 +61,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ## Available tools
 
-Toki exposes 7 tools to AI agents:
+Toki exposes 7 tools, 3 resources, and 3 prompts to AI agents:
 
 | Tool | Description |
 |---|---|
@@ -72,6 +72,8 @@ Toki exposes 7 tools to AI agents:
 | [`diff_tokens`](#diff_tokens) | Compare two token files |
 | [`list_formats`](#list_formats) | List all supported output formats |
 | [`extract_tokens`](#extract_tokens) | Scan CSS/SCSS files to extract token candidates |
+
+Resources and prompts are auto-discovered by MCP clients — no configuration changes needed.
 
 ---
 
@@ -329,6 +331,93 @@ AI:
 2. Analyzes added/removed/changed tokens
 3. Reports which downstream consumers might break
 4. Suggests a migration strategy
+```
+
+## Available resources
+
+Resources are read-only data endpoints that AI agents can query for context.
+
+| Resource URI | Title | Mime type |
+|---|---|---|
+| `toki://formats` | Supported Output Formats | `application/json` |
+| `toki://token-types` | Token Type Reference | `application/json` |
+| `toki://w3c-dtcg-spec` | W3C DTCG Format Reference | `text/markdown` |
+
+### `toki://formats`
+
+Returns metadata for all 10 supported output formats:
+
+```json
+{
+  "formats": [
+    {
+      "id": "css",
+      "description": "CSS custom properties (:root block)",
+      "namingDefault": "kebab-case",
+      "artifacts": ["css/tokens.css", "css/README.md"]
+    }
+  ]
+}
+```
+
+### `toki://token-types`
+
+Returns all 13 W3C DTCG token types with value patterns and examples:
+
+```json
+{
+  "types": [
+    {
+      "type": "color",
+      "patterns": ["#hex (3/4/6/8 digit)", "rgb()", "rgba()", "hsl()", "hsla()", "named CSS colors"],
+      "examples": ["#1a73e8", "rgb(26, 115, 232)"]
+    }
+  ]
+}
+```
+
+### `toki://w3c-dtcg-spec`
+
+Returns a Markdown quick reference for the W3C DTCG format covering token structure (`$value`, `$type`, `$description`, `$extensions`), group structure with `$type` inheritance, reference syntax (`{group.token}`), supported composite types, and a complete example input document.
+
+## Available prompts
+
+Prompts are reusable message templates that AI agents can invoke with arguments.
+
+| Prompt | Title | Arguments |
+|---|---|---|
+| `migrate-css-tokens` | Migrate CSS Variables to Toki | `path` (required), `formats` (optional, default: `css,js`) |
+| `validate-tokens` | Validate & Audit Token File | `input` (required) |
+| `preview-all-formats` | Preview Token Output for All Platforms | `input` (required), `formats` (optional, default: `css,js,react`) |
+
+### `migrate-css-tokens`
+
+Guides the AI agent through extracting design tokens from existing CSS/SCSS files and generating a W3C DTCG token file:
+
+```
+AI: calls getPrompt("migrate-css-tokens", { path: "./src/styles", formats: "css,js,react" })
+→ receives step-by-step migration instructions
+→ follows: extract_tokens → organize → write tokens.json → parse_tokens → build_tokens
+```
+
+### `validate-tokens`
+
+Guides the AI agent through a comprehensive token file audit:
+
+```
+AI: calls getPrompt("validate-tokens", { input: "./tokens.json" })
+→ receives audit steps: parse, resolve, count by type, check naming, find duplicates
+→ reports issues and suggests fixes
+```
+
+### `preview-all-formats`
+
+Guides the AI agent through generating and comparing token output across platforms:
+
+```
+AI: calls getPrompt("preview-all-formats", { input: "./tokens.json", formats: "css,js,react" })
+→ receives preview instructions
+→ calls preview_format for each format, presents code blocks, highlights differences
 ```
 
 ## Programmatic usage
