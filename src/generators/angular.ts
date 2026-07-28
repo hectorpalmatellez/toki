@@ -16,7 +16,7 @@ import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken } from 
 import { GeneratorError } from '../utils/errors.js';
 import { headerComment, themePath } from '../utils/format.js';
 import { toKebabCase, getNamingFunction } from '../utils/naming.js';
-import { formatCssValue } from './css.js';
+import { expandCompositeToken, formatCssValue, isCompositeType } from './css.js';
 import { formatJsLiteral, inferJsType, makeIdentifier } from './js.js';
 import { platformReadme } from './readme.js';
 
@@ -75,10 +75,18 @@ export const renderScssVariables = (names: readonly AngularNames[], options: Gen
   const lines: string[] = [headerComment(options.version), ''];
   let emitted = 0;
   for (const { token, scss } of names) {
-    const value = formatCssValue(token);
-    if (value === undefined) continue; // multi-property composites
-    lines.push(`$${scss}: ${value};`);
-    emitted += 1;
+    if (isCompositeType(token.type)) {
+      const expanded = expandCompositeToken(token);
+      for (const decl of expanded) {
+        lines.push(`$${decl.property}: ${decl.value};`);
+        emitted += 1;
+      }
+    } else {
+      const value = formatCssValue(token);
+      if (value === undefined) continue;
+      lines.push(`$${scss}: ${value};`);
+      emitted += 1;
+    }
   }
   if (emitted === 0) lines.push('// No SCSS-representable tokens in this set.');
   lines.push('');
@@ -89,8 +97,14 @@ export const renderScssVariables = (names: readonly AngularNames[], options: Gen
 export const renderScssEntry = (names: readonly AngularNames[], options: GeneratorOptions): string => {
   const lines: string[] = [headerComment(options.version), '', '@use "./tokens" as tokens;', '', ':root {'];
   for (const { token, scss } of names) {
-    if (formatCssValue(token) === undefined) continue;
-    lines.push(`  --${scss}: #{tokens.$${scss}};`);
+    if (isCompositeType(token.type)) {
+      const expanded = expandCompositeToken(token);
+      for (const decl of expanded) {
+        lines.push(`  --${decl.property}: #{tokens.$${decl.property}};`);
+      }
+    } else if (formatCssValue(token) !== undefined) {
+      lines.push(`  --${scss}: #{tokens.$${scss}};`);
+    }
   }
   lines.push('}', '');
   return lines.join('\n');

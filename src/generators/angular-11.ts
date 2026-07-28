@@ -14,15 +14,21 @@
 import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken } from '../core/types.js';
 import { headerComment, themePath } from '../utils/format.js';
 import { deriveAngularNames, renderScssVariables, renderTokensTs, type AngularNames } from './angular.js';
-import { formatCssValue } from './css.js';
+import { formatCssValue, expandCompositeToken, isCompositeType } from './css.js';
 import { platformReadme } from './readme.js';
 
 /** Entry stylesheet: `@import` the partial (variables land in scope unprefixed). */
 export const renderScssEntryLegacy = (names: readonly AngularNames[], options: GeneratorOptions): string => {
   const lines: string[] = [headerComment(options.version), '', '@import "tokens";', '', ':root {'];
   for (const { token, scss } of names) {
-    if (formatCssValue(token) === undefined) continue;
-    lines.push(`  --${scss}: #{$${scss}};`);
+    if (isCompositeType(token.type)) {
+      const expanded = expandCompositeToken(token);
+      for (const decl of expanded) {
+        lines.push(`  --${decl.property}: #{$${decl.property}};`);
+      }
+    } else if (formatCssValue(token) !== undefined) {
+      lines.push(`  --${scss}: #{$${scss}};`);
+    }
   }
   lines.push('}', '');
   return lines.join('\n');

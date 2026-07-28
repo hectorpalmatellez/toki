@@ -79,7 +79,8 @@ describe('react generator — tokens.css companion', () => {
     const { css } = generate(FIXTURE);
     expect(css).toContain(':root {');
     expect(css).toContain('--color-primary: #1a73e8;');
-    expect(css).not.toContain('--type-body');
+    expect(css).toContain('--type-body-font-size: 16px;');
+    expect(css).toContain('--type-body-line-height: 1.5;');
   });
 });
 

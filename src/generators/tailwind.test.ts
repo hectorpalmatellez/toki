@@ -49,7 +49,7 @@ describe('tailwind generator', () => {
     expect(css).toContain('--radius-full: 9999px;');
   });
 
-  it('skips composite types (typography, border, transition)', () => {
+  it('expands composite types into namespace-mapped CSS variables', () => {
     const { css } = generate({
       type: {
         $type: 'typography',
@@ -61,14 +61,16 @@ describe('tailwind generator', () => {
       },
       transition: {
         $type: 'transition',
-        fade: { $value: { property: 'opacity', duration: '300ms', timing: 'ease-in-out' } },
+        fade: { $value: { duration: '300ms', timingFunction: 'ease-in-out', delay: '0ms' } },
       },
     });
-    expect(css).toContain('@theme {');
-    expect(css).toContain('}');
-    expect(css).not.toContain('--type-body');
-    expect(css).not.toContain('--border-default');
-    expect(css).not.toContain('--transition-fade');
+    expect(css).toContain('--font-family-body: Inter;');
+    expect(css).toContain('--font-size-body: 16px;');
+    expect(css).toContain('--border-width-default: 1px;');
+    expect(css).toContain('--border-style-default: solid;');
+    expect(css).toContain('--color-default: #e0e0e0;');
+    expect(css).toContain('--duration-fade: 300ms;');
+    expect(css).toContain('--ease-fade: ease-in-out;');
   });
 
   it('skips shadow tokens', () => {
@@ -90,16 +92,16 @@ describe('tailwind generator', () => {
     expect(paths).toEqual(['tailwind/README.md', 'tailwind/tokens.light.css']);
   });
 
-  it('produces valid empty @theme {} block for empty token set', () => {
+  it('produces valid empty @theme {} block for shadow-only token set', () => {
     const { css } = generate({
-      type: {
-        $type: 'typography',
-        body: { $value: { fontFamily: 'Inter', fontSize: '16px' } },
+      shadow: {
+        $type: 'shadow',
+        lg: { $value: { x: 0, y: 4, blur: 6, color: 'rgba(0,0,0,0.1)' } },
       },
     });
     expect(css).toContain('@theme {');
     expect(css).toContain('}');
-    expect(css).not.toContain('--');
+    expect(css).not.toContain('--shadow-lg');
   });
 
   it('supports naming convention override', () => {

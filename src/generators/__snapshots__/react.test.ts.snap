@@ -35,6 +35,8 @@ exports[`react generator — artifacts > matches the artifact snapshots 2`] = `
   --color-brand-accent: #ff8800;
   --spacing-small: 8px;
   --spacing-medium: 16px;
+  --type-body-font-size: 16px;
+  --type-body-line-height: 1.5;
 }
 "
 `;

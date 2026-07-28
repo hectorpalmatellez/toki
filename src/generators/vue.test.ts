@@ -35,7 +35,8 @@ describe('vue generator', () => {
     expect(css).toContain('--color-primary: #1a73e8;');
     expect(css).toContain('--color-secondary: #1a73e8;');
     expect(css).toContain('--spacing-small: 8px;');
-    expect(css).not.toContain('--type-body');
+    expect(css).toContain('--type-body-font-size: 16px;');
+    expect(css).toContain('--type-body-line-height: 1.5;');
   });
 
   it('emits a camelCase ES module with every token', () => {

@@ -6,6 +6,8 @@ exports[`angular-11 generator > matches the artifact snapshots 1`] = `
 $color-primary: #1a73e8;
 $color-brand-accent: #ff8800;
 $spacing-small: 8px;
+$type-body-font-size: 16px;
+$type-body-line-height: 1.5;
 "
 `;
 
@@ -18,6 +20,8 @@ exports[`angular-11 generator > matches the artifact snapshots 2`] = `
   --color-primary: #{$color-primary};
   --color-brand-accent: #{$color-brand-accent};
   --spacing-small: #{$spacing-small};
+  --type-body-font-size: #{$type-body-font-size};
+  --type-body-line-height: #{$type-body-line-height};
 }
 "
 `;

@@ -44,16 +44,17 @@ describe('angular generator — _tokens.scss', () => {
     expect(scssVars).toContain('$motion-ease: cubic-bezier(0.4, 0, 0.2, 1);');
   });
 
-  it('skips multi-property composites (typography)', () => {
+  it('expands multi-property composites into longhand SCSS variables', () => {
     const { scssVars } = generate(FIXTURE);
-    expect(scssVars).not.toContain('$type-body');
+    expect(scssVars).toContain('$type-body-font-size: 16px;');
+    expect(scssVars).toContain('$type-body-line-height: 1.5;');
   });
 
-  it('emits a placeholder comment when no token is SCSS-representable', () => {
+  it('emits SCSS variables even for only-composite token sets', () => {
     const { scssVars } = generate({
       type: { $type: 'typography', body: { $value: { fontSize: '16px' } } },
     });
-    expect(scssVars).toContain('// No SCSS-representable tokens in this set.');
+    expect(scssVars).toContain('$type-body-font-size: 16px;');
   });
 });
 
@@ -62,7 +63,7 @@ describe('angular generator — tokens.scss (@use)', () => {
     const { scssEntry } = generate(FIXTURE);
     expect(scssEntry).toContain('@use "./tokens" as tokens;');
     expect(scssEntry).toContain('--color-primary: #{tokens.$color-primary};');
-    expect(scssEntry).not.toContain('--type-body');
+    expect(scssEntry).toContain('--type-body-font-size: #{tokens.$type-body-font-size};');
   });
 });
 

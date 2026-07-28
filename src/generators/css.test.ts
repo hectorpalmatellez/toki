@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cssGenerator, formatCssValue } from './css.js';
+import { cssGenerator, formatCssValue, expandCompositeToken } from './css.js';
 import { resolveDocument } from '../core/resolver.js';
 import { parseTokenDocument } from '../core/parser.js';
 import type { ResolvedToken } from '../core/types.js';
@@ -84,24 +84,62 @@ describe('css generator', () => {
     expect(css).toContain('--shadow-lg: 0 4 8 rgba(0,0,0,0.25), 0 12 24 0 rgba(0,0,0,0.15);');
   });
 
-  it('skips multi-property composite types (typography/border/transition)', () => {
+  it('expands typography tokens into longhand CSS custom properties', () => {
     const css = generate({
       type: {
         $type: 'typography',
-        body: { $value: { fontSize: '16px', lineHeight: '1.5' } },
+        body: { $value: { fontSize: '16px', lineHeight: '1.5', fontFamily: 'Inter', fontWeight: '400' } },
       },
       color: { $type: 'color', primary: { $value: '#fff' } },
     });
-    expect(css).not.toContain('--type-body');
+    expect(css).toContain('--type-body-font-family: Inter;');
+    expect(css).toContain('--type-body-font-size: 16px;');
+    expect(css).toContain('--type-body-font-weight: 400;');
+    expect(css).toContain('--type-body-line-height: 1.5;');
     expect(css).toContain('--color-primary: #fff;');
   });
 
-  it('emits an empty (but valid) :root block when nothing is CSS-eligible', () => {
+  it('expands partial typography tokens (only defined fields)', () => {
     const css = generate({
-      type: { $type: 'typography', body: { $value: { fontSize: '16px' } } },
+      type: {
+        $type: 'typography',
+        body: { $value: { fontSize: '16px', fontWeight: '400' } },
+      },
     });
-    expect(css).toContain(':root {');
-    expect(css).toContain('}');
+    expect(css).toContain('--type-body-font-size: 16px;');
+    expect(css).toContain('--type-body-font-weight: 400;');
+    expect(css).not.toContain('--type-body-font-family');
+    expect(css).not.toContain('--type-body-line-height');
+  });
+
+  it('expands border tokens into longhand CSS custom properties', () => {
+    const css = generate({
+      border: {
+        $type: 'border',
+        default: { $value: { width: '1px', style: 'solid', color: '#e0e0e0' } },
+      },
+    });
+    expect(css).toContain('--border-default-color: #e0e0e0;');
+    expect(css).toContain('--border-default-style: solid;');
+    expect(css).toContain('--border-default-width: 1px;');
+  });
+
+  it('expands transition tokens into longhand CSS custom properties', () => {
+    const css = generate({
+      transition: {
+        $type: 'transition',
+        fast: { $value: { duration: '200ms', timingFunction: 'ease-in-out', delay: '0ms' } },
+      },
+    });
+    expect(css).toContain('--transition-fast-delay: 0ms;');
+    expect(css).toContain('--transition-fast-duration: 200ms;');
+    expect(css).toContain('--transition-fast-timing-function: ease-in-out;');
+  });
+
+  it('skips composite tokens with non-object values gracefully', () => {
+    const t = token(['type', 'body'], 'typography', 'not-an-object' as unknown as ResolvedToken['value']);
+    const expanded = expandCompositeToken(t);
+    expect(expanded).toEqual([]);
   });
 
   it('formatCssValue returns undefined for unsupported composite types', () => {

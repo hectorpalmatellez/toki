@@ -13,10 +13,14 @@
  *   work and skipped here to keep output valid CSS.
  */
 
-import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken, TokenValue } from '../core/types.js';
-import { getNamingFunction } from '../utils/naming.js';
+import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken, TokenType, TokenValue } from '../core/types.js';
+import { getNamingFunction, toKebabCase } from '../utils/naming.js';
 import { headerComment, themePath } from '../utils/format.js';
 import { platformReadme } from './readme.js';
+
+/** Returns `true` for multi-property composite types that need expansion. */
+export const isCompositeType = (type: TokenType): boolean =>
+  type === 'typography' || type === 'border' || type === 'transition';
 
 /** Format a resolved token value as a CSS custom-property value. */
 export const formatCssValue = (token: ResolvedToken): string | undefined => {
@@ -36,12 +40,11 @@ export const formatCssValue = (token: ResolvedToken): string | undefined => {
     case 'shadow':
       return formatShadow(value);
     default:
-      // typography / border / transition — handled by Phase 2 transformers.
       return undefined;
   }
 };
 
-const formatPrimitive = (value: TokenValue): string => {
+export const formatPrimitive = (value: TokenValue): string => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number') return Number.isFinite(value) ? String(value) : '0';
   if (typeof value === 'boolean') return value ? '1' : '0';
@@ -92,6 +95,55 @@ const sortKeys = (value: unknown): unknown => {
   return value;
 };
 
+/** A single expanded CSS declaration from a composite token. */
+export interface CompositeDeclaration {
+  readonly property: string;
+  readonly value: string;
+}
+
+/**
+ * Expand a composite token (typography, border, transition) into individual
+ * CSS longhand declarations. Returns an empty array for non-object values or
+ * unknown composite types.
+ */
+export const expandCompositeToken = (
+  token: ResolvedToken,
+  namingFn?: (path: readonly string[]) => string,
+): readonly CompositeDeclaration[] => {
+  const { type, value, path } = token;
+  if (!isCompositeType(type)) return [];
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return [];
+
+  const obj = value as Record<string, unknown>;
+  const baseName = namingFn !== undefined ? namingFn(path) : toKebabCase(path);
+  const declarations: CompositeDeclaration[] = [];
+
+  const fields = Object.keys(obj).toSorted();
+  for (const field of fields) {
+    const fieldValue = obj[field];
+    if (fieldValue === undefined || fieldValue === null) continue;
+    const fieldKebab = field
+      .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+      .toLowerCase();
+    const formatted =
+      typeof fieldValue === 'string'
+        ? fieldValue
+        : typeof fieldValue === 'number'
+          ? Number.isFinite(fieldValue)
+            ? String(fieldValue)
+            : '0'
+          : typeof fieldValue === 'boolean'
+            ? fieldValue
+              ? '1'
+              : '0'
+            : JSON.stringify(fieldValue);
+    declarations.push({ property: `${baseName}-${fieldKebab}`, value: formatted });
+  }
+
+  return declarations;
+};
+
 export const cssGenerator: Generator = {
   format: 'css',
   generate: (_tokens: readonly ResolvedToken[], _options: GeneratorOptions): readonly OutputArtifact[] => {
@@ -119,10 +171,17 @@ export const renderCssCustomProperties = (tokens: readonly ResolvedToken[], opti
 
   const declarations: string[] = [];
   for (const token of tokens) {
-    const value = formatCssValue(token);
-    if (value === undefined) continue;
-    const name = `--${namingFn(token.path)}`;
-    declarations.push(`  ${name}: ${value};`);
+    if (isCompositeType(token.type)) {
+      const expanded = expandCompositeToken(token, namingFn);
+      for (const decl of expanded) {
+        declarations.push(`  --${decl.property}: ${decl.value};`);
+      }
+    } else {
+      const value = formatCssValue(token);
+      if (value === undefined) continue;
+      const name = `--${namingFn(token.path)}`;
+      declarations.push(`  ${name}: ${value};`);
+    }
   }
 
   if (declarations.length === 0) {

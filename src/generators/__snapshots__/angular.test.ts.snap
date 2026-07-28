@@ -6,6 +6,8 @@ exports[`angular generator — collisions, determinism, artifacts > matches the 
 $color-primary: #1a73e8;
 $color-brand-accent: #ff8800;
 $spacing-small: 8px;
+$type-body-font-size: 16px;
+$type-body-line-height: 1.5;
 $motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
 "
 `;
@@ -19,6 +21,8 @@ exports[`angular generator — collisions, determinism, artifacts > matches the 
   --color-primary: #{tokens.$color-primary};
   --color-brand-accent: #{tokens.$color-brand-accent};
   --spacing-small: #{tokens.$spacing-small};
+  --type-body-font-size: #{tokens.$type-body-font-size};
+  --type-body-line-height: #{tokens.$type-body-line-height};
   --motion-ease: #{tokens.$motion-ease};
 }
 "

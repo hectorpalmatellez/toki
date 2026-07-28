@@ -37,7 +37,8 @@ describe('angular-11 generator', () => {
     const { scssVars } = generate(FIXTURE);
     expect(scssVars).toContain('$color-primary: #1a73e8;');
     expect(scssVars).toContain('$color-brand-accent: #ff8800;');
-    expect(scssVars).not.toContain('$type-body');
+    expect(scssVars).toContain('$type-body-font-size: 16px;');
+    expect(scssVars).toContain('$type-body-line-height: 1.5;');
   });
 
   it('uses @import only in the entry stylesheet (no @use/@forward)', () => {

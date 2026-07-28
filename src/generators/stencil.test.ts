@@ -44,7 +44,8 @@ describe('stencil generator', () => {
     expect(css).toContain('--spacing-small: 8px;');
     expect(css).toContain('--spacing-medium: 16px;');
     expect(css).toContain('--motion-ease: cubic-bezier(0.4, 0, 0.2, 1);');
-    expect(css).not.toContain('--type-body');
+    expect(css).toContain('--type-body-font-size: 16px;');
+    expect(css).toContain('--type-body-line-height: 1.5;');
   });
 
   it('emits camelCase exports for every token in tokens.ts', () => {
