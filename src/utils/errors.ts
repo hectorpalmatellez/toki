@@ -15,7 +15,8 @@ export type TokiErrorCode =
   | 'GENERATOR_ERROR'
   | 'IO_ERROR'
   | 'CONFIG_ERROR'
-  | 'IMPORT_ERROR';
+  | 'IMPORT_ERROR'
+  | 'VALIDATE_ERROR';
 
 export class TokiError extends Error {
   readonly code: TokiErrorCode;
@@ -91,5 +92,12 @@ export class ImportError extends TokiError {
   constructor(message: string, cause?: unknown) {
     super(message, 'IMPORT_ERROR', cause);
     this.name = 'ImportError';
+  }
+}
+
+export class ValidateError extends TokiError {
+  constructor(message: string, cause?: unknown) {
+    super(message, 'VALIDATE_ERROR', cause);
+    this.name = 'ValidateError';
   }
 }

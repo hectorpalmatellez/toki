@@ -19,10 +19,11 @@ import { TokiError } from './utils/errors.js';
 import { loadConfig, mergeConfig } from './core/config.js';
 import { writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { runDiff, formatDiffTerminal, formatDiffJson } from './core/diff.js';
+import { runDiff, formatDiffTerminal, formatDiffJson, formatDiffMarkdown } from './core/diff.js';
 import { startWatch } from './core/watch.js';
 import { importStyleDictionary } from './importers/style-dictionary.js';
 import { importFigmaTokens } from './importers/figma-tokens.js';
+import { validateTokens, formatValidateTerminal } from './core/validate.js';
 
 const buildCommand = async (options: {
   input?: string;
@@ -290,10 +291,13 @@ program
   .argument('<old>', 'Path to the old token file (W3C DTCG JSON)')
   .argument('<new>', 'Path to the new token file (W3C DTCG JSON)')
   .option('--json', 'Output as JSON instead of human-readable text', false)
-  .action(async (oldPath: string, newPath: string, options: { json: boolean }) => {
+  .option('--markdown', 'Output as GitHub-compatible Markdown', false)
+  .action(async (oldPath: string, newPath: string, options: { json: boolean; markdown: boolean }) => {
     try {
       const result = await runDiff(oldPath, newPath);
-      if (options.json) {
+      if (options.markdown) {
+        console.log(formatDiffMarkdown(result));
+      } else if (options.json) {
         console.log(JSON.stringify(formatDiffJson(result), null, 2));
       } else {
         const output = formatDiffTerminal(result);
@@ -302,6 +306,37 @@ program
         if (total > 0) {
           console.log(`\n  ${total} difference${total === 1 ? '' : 's'} found.`);
         }
+      }
+    } catch (error) {
+      if (error instanceof TokiError) {
+        console.error(`error [${error.code}]: ${error.message}`);
+        process.exitCode = 1;
+        return;
+      }
+      console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command('validate')
+  .description('Validate a token file for structural correctness and quality')
+  .requiredOption('-i, --input <path>', 'Path to the token file (W3C DTCG JSON)')
+  .option('--json', 'Output as JSON instead of human-readable text', false)
+  .option('--strict', 'Treat warnings as errors (non-zero exit)', false)
+  .option('-c, --config <path>', 'Path to toki config file')
+  .action(async (options: { input: string; json: boolean; strict: boolean }) => {
+    try {
+      const report = await validateTokens(options.input);
+      if (options.json) {
+        console.log(JSON.stringify(report, null, 2));
+      } else {
+        console.log(formatValidateTerminal(report, options.input));
+      }
+      const hasErrors = report.issues.some((i) => i.severity === 'error');
+      const hasWarnings = report.issues.some((i) => i.severity === 'warning');
+      if (hasErrors || (options.strict && hasWarnings)) {
+        process.exitCode = 1;
       }
     } catch (error) {
       if (error instanceof TokiError) {
