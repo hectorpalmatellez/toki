@@ -9,7 +9,6 @@ See [`done.md`](./done.md) for completed phases 1–5.
 | #    | Task                                                                                                                                      | Type     | Est. |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---- |
 | P1   | **Composite Type Generator Support** — typography, border, transition composites currently skipped in CSS/SCSS; generate CSS longhands     | Gen      | 6h   |
-| P2   | **Tailwind CSS v4 Plugin Output** — `tailwind.config.ts` with `theme.extend` + CSS custom properties, compatible with tailwindcss v4      | Gen      | 4h   |
 | P3   | **PR-First Diff Integration** — emit GitHub-compatible markdown diff summary from `toki diff` for posting as PR comment                    | CLI      | 3h   |
 | P4   | **`toki validate` (Standalone Linter)** — structural validity, broken refs, circular deps, naming violations without generating output     | CLI      | 4h   |
 | P5   | **Parallel Generator Execution** — run selected generators concurrently via `Promise.all` after Transform stage                          | Perf     | 1h   |

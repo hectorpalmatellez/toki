@@ -33,7 +33,7 @@ src/
 │   ├── diff.ts            # Token diffing for `toki diff`
 │   └── watch.ts           # File system watcher for `toki watch`
 ├── generators/
-│   ├── index.ts           # Generator registry (9 platforms)
+│   ├── index.ts           # Generator registry (10 platforms)
 │   ├── css.ts
 │   ├── js.ts
 │   ├── react-native.ts
@@ -43,6 +43,7 @@ src/
 │   ├── react.ts
 │   ├── stencil.ts
 │   ├── vue.ts
+│   ├── tailwind.ts
 │   └── readme.ts          # Per-platform README artifacts
 ├── extractors/
 │   ├── index.ts           # Barrel export

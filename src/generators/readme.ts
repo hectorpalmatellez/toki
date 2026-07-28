@@ -373,4 +373,52 @@ ${MULTI_THEME_NOTE}
 - Multi-property composite tokens (\`typography\`, \`border\`, \`transition\`)
   are skipped in \`tokens.css\`; import them from \`tokens.ts\` instead.
 `,
+
+  tailwind: `
+# Design tokens — Tailwind CSS v4
+
+## Quick start
+
+Import the generated tokens CSS in your main stylesheet:
+
+\`\`\`css
+@import "tailwindcss";
+@import "./tokens.css";
+\`\`\`
+
+Tokens are now available as Tailwind utilities:
+
+\`\`\`html
+<div class="bg-primary text-secondary p-md font-bold">
+  Themed with design tokens
+</div>
+\`\`\`
+
+## Naming convention
+
+Token types map to Tailwind's \`@theme\` namespace:
+
+| Toki type | Tailwind namespace |
+|---|---|
+| \`color\` | \`--color-*\` |
+| \`dimension\` | \`--spacing-*\` |
+| \`fontWeight\` | \`--font-weight-*\` |
+| \`fontFamily\` | \`--font-family-*\` |
+| \`lineHeight\` | \`--line-height-*\` |
+| \`letterSpacing\` | \`--letter-spacing-*\` |
+| \`duration\` | \`--duration-*\` |
+| \`cubicBezier\` | \`--ease-*\` |
+| \`number\` | \`--*\` (path-derived) |
+
+Path prefixes override type-based inference: a token at \`radius.lg\` maps to \`--radius-lg\` regardless of its \`$type\`.
+
+## Multi-theme usage
+
+${MULTI_THEME_NOTE} The \`@theme\` block is theme-ready: emit separate \`tokens.light.css\` and \`tokens.dark.css\` files, each with its own \`@theme\` block.
+
+## Known limitations
+
+- Composite tokens (\`typography\`, \`border\`, \`transition\`) are skipped — not representable in \`@theme\`.
+- \`shadow\` tokens are skipped — Tailwind v4 shadows use a different syntax.
+`,
 };

@@ -93,7 +93,7 @@ describe('pipeline', () => {
   });
 
   it('resolveFormats expands "all" to every implemented format', () => {
-    expect(resolveFormats(['all'])).toEqual(['css', 'js', 'react-native', 'angular', 'angular-11', 'svelte', 'react', 'stencil', 'vue']);
+    expect(resolveFormats(['all'])).toEqual(['css', 'js', 'react-native', 'angular', 'angular-11', 'svelte', 'react', 'stencil', 'vue', 'tailwind']);
   });
 
   it('generate accepts GenerateOptions with theme and naming', () => {

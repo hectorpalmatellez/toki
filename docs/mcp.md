@@ -126,7 +126,7 @@ Generate output for a specific platform format and return the artifact content �
 | Name | Type | Required | Description |
 |---|---|---|---|
 | `input` | `string` | yes | Path to the token file |
-| `format` | `OutputFormat` | yes | Target format: `css`, `js`, `react-native`, `angular`, `angular-11`, `svelte`, `react`, `stencil`, `vue` |
+| `format` | `OutputFormat` | yes | Target format: `css`, `js`, `react-native`, `angular`, `angular-11`, `svelte`, `react`, `stencil`, `vue`, `tailwind` |
 | `naming` | `NamingConvention` | no | Override naming convention |
 
 **Example — AI previews CSS output:**
@@ -198,7 +198,7 @@ List all output formats supported by Toki.
 
 ```
 → calls list_formats({})
-← { formats: ["css", "js", "react-native", "angular", "angular-11", "svelte", "react", "stencil", "vue"] }
+← { formats: ["css", "js", "react-native", "angular", "angular-11", "svelte", "react", "stencil", "vue", "tailwind"] }
 ```
 
 ---
@@ -230,7 +230,7 @@ This is the **reverse pipeline** — going from existing code to tokens.
   "summary": { "totalExtracted": 42, "byType": { "color": 15, "dimension": 20 }, "untyped": 7, "sources": ["styles/vars.css"] },
   "tokiReference": {
     "tokenTypes": [{ "type": "color", "patterns": ["#hex", "rgb()", "hsl()"], "examples": ["#1a73e8"] }],
-    "outputFormats": ["css", "js", "react-native", "angular", "angular-11", "svelte", "react", "stencil", "vue"],
+    "outputFormats": ["css", "js", "react-native", "angular", "angular-11", "svelte", "react", "stencil", "vue", "tailwind"],
     "hint": "Use the extracted tokens and type reference to organize tokens into a W3C DTCG structure."
   }
 }

@@ -190,6 +190,7 @@ export const DEFAULT_NAMING: Readonly<Record<OutputFormat, NamingConvention>> = 
   react: 'camelCase',
   stencil: 'camelCase',
   vue: 'kebab-case',
+  tailwind: 'kebab-case',
 };
 
 /**
