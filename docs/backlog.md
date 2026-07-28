@@ -8,9 +8,6 @@ See [`done.md`](./done.md) for completed phases 1–5.
 
 | #    | Task                                                                                                                                      | Type     | Est. |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---- |
-| P1   | **Composite Type Generator Support** — typography, border, transition composites currently skipped in CSS/SCSS; generate CSS longhands     | Gen      | 6h   |
-| P3   | **PR-First Diff Integration** — emit GitHub-compatible markdown diff summary from `toki diff` for posting as PR comment                    | CLI      | 3h   |
-| P4   | **`toki validate` (Standalone Linter)** — structural validity, broken refs, circular deps, naming violations without generating output     | CLI      | 4h   |
 | P5   | **Parallel Generator Execution** — run selected generators concurrently via `Promise.all` after Transform stage                          | Perf     | 1h   |
 | P6   | **Full Generator Plugin API** — extend `TransformPlugin` to a full `GeneratorPlugin` letting users register custom output platforms      | API      | 8h   |
 | P7   | **Incremental Builds (Cache Layer)** — SHA-256 cache of resolved token trees, skip re-generation on unchanged input                        | Perf     | 6h   |

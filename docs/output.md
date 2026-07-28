@@ -95,6 +95,36 @@ Given this input (`tokens.json`):
 }
 ```
 
+#### Composite type expansion
+
+Composite token types (`typography`, `border`, `transition`) expand into individual CSS longhand custom properties instead of being serialized as a single value:
+
+```css
+/* typography.heading.h1 expands into: */
+:root {
+  --typography-heading-h1-font-size: 32px;
+  --typography-heading-h1-font-family: Inter, sans-serif;
+  --typography-heading-h1-font-weight: 700;
+  --typography-heading-h1-line-height: 1.2;
+  --typography-heading-h1-letter-spacing: -0.02em;
+}
+
+/* border.default expands into: */
+:root {
+  --border-default-width: 1px;
+  --border-default-style: solid;
+  --border-default-color: #e0e0e0;
+}
+
+/* transition.fast expands into: */
+:root {
+  --transition-fast-duration: 150ms;
+  --transition-fast-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+```
+
+This expansion flows through all CSS-based generators: CSS, Vue, Svelte, Stencil, React companion CSS, Angular SCSS, and Tailwind.
+
 ### JavaScript
 
 `dist/js/tokens.js` — `export const` camelCase named exports:

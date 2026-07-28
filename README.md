@@ -19,7 +19,9 @@ Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates 
 - **Naming transforms** — `camelCase`, `kebab-case`, `CONSTANT_CASE`, `SCREAMING_SNAKE_CASE`
 - **Custom transform plugins** — register functions in config that modify token values before generation
 - **Watch mode** — `toki watch` rebuilds on file change with 200ms debounce
-- **Diff tooling** — `toki diff` reports added, removed, and changed tokens (terminal or JSON output)
+- **Composite type expansion** — typography, border, and transition tokens expand into individual CSS longhand custom properties across all CSS-based generators
+- **Diff tooling** — `toki diff` reports added, removed, and changed tokens (terminal, JSON, or Markdown output)
+- **Token linting** — `toki validate` checks structural validity, broken references, circular dependencies, naming violations, and more
 - **Ecosystem imports** — convert Style Dictionary or Figma Tokens Studio formats to W3C DTCG
 - **MCP server** — `toki mcp` exposes the full pipeline to AI tools (Claude, Cursor, Windsurf) via 7 tools, 3 resources, 1 dynamic resource, and 3 prompts over Model Context Protocol
 - **Token extraction** — scan CSS/SCSS files to extract design token candidates and generate W3C DTCG output

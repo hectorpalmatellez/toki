@@ -31,6 +31,7 @@ src/
 │   ├── transformer.ts     # Value transformation registry
 │   ├── pipeline.ts        # Orchestrates parse → resolve → transform → generate
 │   ├── diff.ts            # Token diffing for `toki diff`
+│   ├── validate.ts        # Token linting for `toki validate`
 │   └── watch.ts           # File system watcher for `toki watch`
 ├── generators/
 │   ├── index.ts           # Generator registry (10 platforms)

@@ -173,10 +173,11 @@ Compare two token files and report added, removed, and changed tokens.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|---|---|---|---|
-| `old` | `string` | yes | Path to the old token file |
-| `new` | `string` | yes | Path to the new token file |
+| Name     | Type                        | Required | Description                                            |
+| -------- | --------------------------- | -------- | ------------------------------------------------------ |
+| `old`    | `string`                    | yes      | Path to the old token file                             |
+| `new`    | `string`                    | yes      | Path to the new token file                             |
+| `output` | `"json" \| "markdown"`      | no       | Output format: `json` for structured data, `markdown` for GitHub-compatible tables |
 
 **Example — AI explains token changes:**
 
@@ -186,6 +187,16 @@ AI:
 → calls diff_tokens({ old: "./tokens-old.json", new: "./tokens.json" })
 ← { added: [{ id: "color.accent" }], removed: [], changed: [{ id: "spacing.md", oldValue: "16px", newValue: "12px" }] }
 AI: "You added color.accent and changed spacing.md from 16px to 12px."
+```
+
+**Example — AI produces a Markdown diff for a PR comment:**
+
+```
+User: "Generate a diff I can paste into a PR."
+AI:
+→ calls diff_tokens({ old: "./tokens-old.json", new: "./tokens.json", output: "markdown" })
+← { markdown: "## Token diff\n\n### Added\n| Token | Type | Value |\n|..." }
+AI: "Here's the Markdown diff for your PR:\n\n..."
 ```
 
 ---

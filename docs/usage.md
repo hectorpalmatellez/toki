@@ -40,11 +40,29 @@ toki diff tokens-old.json tokens-new.json
 toki diff tokens-old.json tokens-new.json --json
 ```
 
-| Flag     | Description                                   | Default |
-| -------- | --------------------------------------------- | ------- |
-| `--json` | Output as JSON instead of human-readable text | `false` |
+| Flag         | Description                                        | Default |
+| ------------ | -------------------------------------------------- | ------- |
+| `--json`     | Output as JSON instead of human-readable text      | `false` |
+| `--markdown` | Output as GitHub-compatible Markdown tables        | `false` |
 
 Each difference includes the token's dotted path, its type, and the before/after values.
+
+### `toki validate`
+
+Lint token files for structural validity, broken references, circular dependencies, missing descriptions, naming convention violations, and duplicate values.
+
+```bash
+toki validate --input tokens.json
+toki validate --input tokens.json --strict
+toki validate --input tokens.json --json
+```
+
+| Flag                     | Description                                                         | Default         |
+| ------------------------ | ------------------------------------------------------------------- | --------------- |
+| `-i, --input <path>`     | Path to input token file (W3C DTCG JSON)                            | —               |
+| `-c, --config <path>`    | Path to toki config file                                            | auto-discovered |
+| `--json`                 | Output as JSON instead of human-readable text                       | `false`         |
+| `--strict`               | Treat warnings (missing descriptions, naming violations) as errors  | `false`         |
 
 ### `toki watch`
 
