@@ -351,11 +351,17 @@ describe('extract_tokens', () => {
 });
 
 describe('MCP resources', () => {
-  it('lists 3 resources', async () => {
+  it('lists 3 static resources', async () => {
     const { resources } = await client.listResources();
     expect(resources.length).toBe(3);
     const uris = resources.map((r) => r.uri).sort();
     expect(uris).toEqual(['toki://formats', 'toki://token-types', 'toki://w3c-dtcg-spec']);
+  });
+
+  it('lists the resolved-tokens resource template', async () => {
+    const { resourceTemplates } = await client.listResourceTemplates();
+    const templates = resourceTemplates.map((t) => t.uriTemplate);
+    expect(templates).toContain('toki://tokens/{+input}');
   });
 
   it('reads toki://formats with all format metadata', async () => {
@@ -396,6 +402,61 @@ describe('MCP resources', () => {
     expect(text.text).toContain('# W3C DTCG Format Reference');
     expect(text.text).toContain('$value');
     expect(text.text).toContain('{group.token}');
+  });
+
+  it('reads resolved-tokens resource with valid input', async () => {
+    const dir = await uniqueDir();
+    const inputPath = join(dir, 'tokens.json');
+    await writeFile(inputPath, JSON.stringify(sampleTokens), 'utf8');
+
+    const result = await client.readResource({ uri: `toki://tokens/${inputPath}` });
+    expect(result.contents.length).toBe(1);
+    const text = result.contents[0];
+    if (text === undefined || !('text' in text)) throw new Error('expected text content');
+    const payload = JSON.parse(text.text) as {
+      tokenCount: number;
+      tokens: Array<{ id: string; value: unknown; type: string }>;
+    };
+    expect(payload.tokenCount).toBe(4);
+    expect(payload.tokens.length).toBe(4);
+    const secondary = payload.tokens.find((t) => t.id === 'color.secondary');
+    expect(secondary?.value).toBe('#1a73e8');
+    expect(secondary?.type).toBe('color');
+  });
+
+  it('resolves references in the dynamic resource', async () => {
+    const dir = await uniqueDir();
+    const inputPath = join(dir, 'tokens.json');
+    const tokensWithRefs = {
+      color: {
+        $type: 'color',
+        base: { $value: '#ff0000' },
+        alias: { $value: '{color.base}' },
+        deep: { $value: '{color.alias}' },
+      },
+    };
+    await writeFile(inputPath, JSON.stringify(tokensWithRefs), 'utf8');
+
+    const result = await client.readResource({ uri: `toki://tokens/${inputPath}` });
+    const text = result.contents[0];
+    if (text === undefined || !('text' in text)) throw new Error('expected text content');
+    const payload = JSON.parse(text.text) as {
+      tokens: Array<{ id: string; value: unknown }>;
+    };
+    const alias = payload.tokens.find((t) => t.id === 'color.alias');
+    expect(alias?.value).toBe('#ff0000');
+    const deep = payload.tokens.find((t) => t.id === 'color.deep');
+    expect(deep?.value).toBe('#ff0000');
+  });
+
+  it('returns error JSON for non-existent file', async () => {
+    const result = await client.readResource({ uri: 'toki://tokens//nonexistent/tokens.json' });
+    expect(result.contents.length).toBe(1);
+    const text = result.contents[0];
+    if (text === undefined || !('text' in text)) throw new Error('expected text content');
+    const payload = JSON.parse(text.text) as { error: string };
+    expect(payload.error).toBeDefined();
+    expect(typeof payload.error).toBe('string');
   });
 });
 

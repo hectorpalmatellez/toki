@@ -1,6 +1,10 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { implementedFormats } from '../generators/index.js';
 import { TOKEN_TYPE_PATTERNS } from '../extractors/index.js';
+import { readTokenFile, parseTokenDocument } from '../core/parser.js';
+import { resolveDocument } from '../core/resolver.js';
+import { TokiError } from '../utils/errors.js';
 import type { OutputFormat, NamingConvention } from '../core/types.js';
 
 const FORMAT_DESCRIPTIONS: Readonly<Record<OutputFormat, string>> = {
@@ -185,6 +189,66 @@ export const registerResources = (server: McpServer): void => {
       return {
         contents: [{ uri: uri.href, text: W3C_DTCG_SPEC }],
       };
+    },
+  );
+
+  server.resource(
+    'resolved-tokens',
+    new ResourceTemplate('toki://tokens/{+input}', { list: undefined }),
+    {
+      title: 'Resolved Design Tokens',
+      description:
+        'Fully resolved token list (references expanded, $type inherited) for a W3C DTCG token file. Returns JSON with tokenCount and a flat array of resolved tokens.',
+      mimeType: 'application/json',
+    },
+    async (uri, params) => {
+      try {
+        const input = params['input'] as string;
+        const raw = await readTokenFile(input);
+        const doc = parseTokenDocument(raw, input);
+        const tokens = resolveDocument(doc);
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: 'application/json',
+              text: JSON.stringify({ tokenCount: tokens.length, tokens }, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        if (error instanceof TokiError) {
+          return {
+            contents: [
+              {
+                uri: uri.href,
+                mimeType: 'application/json',
+                text: JSON.stringify({ error: `[${error.code}] ${error.message}` }, null, 2),
+              },
+            ],
+          };
+        }
+        if (error instanceof Error) {
+          return {
+            contents: [
+              {
+                uri: uri.href,
+                mimeType: 'application/json',
+                text: JSON.stringify({ error: error.message }, null, 2),
+              },
+            ],
+          };
+        }
+        return {
+          contents: [
+            {
+              uri: uri.href,
+              mimeType: 'application/json',
+              text: JSON.stringify({ error: String(error) }, null, 2),
+            },
+          ],
+        };
+      }
     },
   );
 };
