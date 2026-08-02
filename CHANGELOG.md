@@ -5,6 +5,13 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] — 2026-08-01
+
+### Added
+
+- **`toki schema`** — publishes a draft-07 JSON Schema per platform output format describing the JSON view of the generated artifacts for the resolved token set (custom-property maps for CSS/Tailwind, named exports for JS/Angular/Svelte/Vue, grouped categories for React Native/React/Stencil). Properties mirror each generator's naming (`--color-primary`, `colorPrimary`, `COLOR_PRIMARY`, `colors.brand.primary`) with typed values and `additionalProperties: false` — wire into VS Code `json.schemas` for autocomplete and validation.
+- **`toki completions`** — generates editor completion specs from resolved tokens: an editor-agnostic `spec.json`, a VS Code `tokens.code-snippets` file, and an LSP `tokens.lsp.json` (`CompletionItem[]`). Every entry includes the dotted token id, type, resolved value, description, `--kebab-case` CSS variable, and camelCase identifier, inserting the canonical `var(--color-primary)` reference.
+
 ## [1.6.0] — 2026-08-01
 
 ### Added
