@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { createMcpServer } from '../server.js';
@@ -292,11 +292,7 @@ describe('list_formats', () => {
 describe('extract_tokens', () => {
   it('returns raw extracted data with type reference', async () => {
     const dir = await uniqueDir();
-    await writeFile(
-      join(dir, 'vars.css'),
-      ':root {\n  --color-primary: #1a73e8;\n  --spacing-md: 16px;\n}\n',
-      'utf8',
-    );
+    await writeFile(join(dir, 'vars.css'), ':root {\n  --color-primary: #1a73e8;\n  --spacing-md: 16px;\n}\n', 'utf8');
 
     const result = await client.callTool({
       name: 'extract_tokens',
@@ -318,11 +314,7 @@ describe('extract_tokens', () => {
 
   it('returns flat JSON when output is "json"', async () => {
     const dir = await uniqueDir();
-    await writeFile(
-      join(dir, 'vars.css'),
-      ':root {\n  --color-primary: #1a73e8;\n  --spacing-md: 16px;\n}\n',
-      'utf8',
-    );
+    await writeFile(join(dir, 'vars.css'), ':root {\n  --color-primary: #1a73e8;\n  --spacing-md: 16px;\n}\n', 'utf8');
 
     const result = await client.callTool({
       name: 'extract_tokens',
@@ -342,11 +334,7 @@ describe('extract_tokens', () => {
 
   it('generates CSS output when output is a format name', async () => {
     const dir = await uniqueDir();
-    await writeFile(
-      join(dir, 'vars.css'),
-      ':root {\n  --color-primary: #1a73e8;\n  --spacing-md: 16px;\n}\n',
-      'utf8',
-    );
+    await writeFile(join(dir, 'vars.css'), ':root {\n  --color-primary: #1a73e8;\n  --spacing-md: 16px;\n}\n', 'utf8');
 
     const result = await client.callTool({
       name: 'extract_tokens',
@@ -366,11 +354,7 @@ describe('extract_tokens', () => {
 
   it('scans SCSS files', async () => {
     const dir = await uniqueDir();
-    await writeFile(
-      join(dir, '_theme.scss'),
-      '$color-primary: #1a73e8;\n$spacing-md: 16px;\n',
-      'utf8',
-    );
+    await writeFile(join(dir, '_theme.scss'), '$color-primary: #1a73e8;\n$spacing-md: 16px;\n', 'utf8');
 
     const result = await client.callTool({
       name: 'extract_tokens',
@@ -503,6 +487,32 @@ describe('MCP resources', () => {
     const payload = JSON.parse(text.text) as { error: string };
     expect(payload.error).toBeDefined();
     expect(typeof payload.error).toBe('string');
+  });
+
+  it('returns the message for non-TokiError failures', async () => {
+    const parser = await import('../../core/parser.js');
+    const spy = vi.spyOn(parser, 'readTokenFile').mockRejectedValue(new Error('plain boom'));
+
+    const result = await client.readResource({ uri: 'toki://tokens/some/path.json' });
+    const text = result.contents[0];
+    if (text === undefined || !('text' in text)) throw new Error('expected text content');
+    const payload = JSON.parse(text.text) as { error: string };
+    expect(payload.error).toBe('plain boom');
+
+    spy.mockRestore();
+  });
+
+  it('stringifies non-Error throws', async () => {
+    const parser = await import('../../core/parser.js');
+    const spy = vi.spyOn(parser, 'readTokenFile').mockRejectedValue('string-boom' as never);
+
+    const result = await client.readResource({ uri: 'toki://tokens/some/path.json' });
+    const text = result.contents[0];
+    if (text === undefined || !('text' in text)) throw new Error('expected text content');
+    const payload = JSON.parse(text.text) as { error: string };
+    expect(payload.error).toBe('string-boom');
+
+    spy.mockRestore();
   });
 });
 

@@ -115,7 +115,7 @@ toki ui
 | Language        | TypeScript 7.0+ (native Go compiler, strict mode) |
 | CLI             | Commander.js                                      |
 | Bundler         | tsup                                              |
-| Testing         | Vitest (560 tests, 90%+ coverage)                 |
+| Testing         | Vitest (632 tests, 90%+ coverage) |
 | Linting         | oxlint                                            |
 | Formatting      | Prettier                                          |
 | Package manager | pnpm 10.32.1                                      |
