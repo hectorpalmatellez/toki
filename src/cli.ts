@@ -11,14 +11,15 @@
  */
 
 import { Command } from 'commander';
-import { runPipeline } from './core/pipeline.js';
+import { runPipeline, type BuildCacheOptions } from './core/pipeline.js';
 import { writeArtifacts } from './utils/writer.js';
 import { parseFormats } from './generators/index.js';
 import { TOKI_VERSION } from './version.js';
 import { TokiError } from './utils/errors.js';
-import { loadConfig, mergeConfig } from './core/config.js';
-import { writeFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { loadConfig, mergeConfig, discoverConfig } from './core/config.js';
+import { writeFileSync, existsSync, readFileSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { sha256 } from './utils/hashing.js';
 import { runDiff, formatDiffTerminal, formatDiffJson, formatDiffMarkdown } from './core/diff.js';
 import { startWatch } from './core/watch.js';
 import { importStyleDictionary } from './importers/style-dictionary.js';
@@ -30,19 +31,38 @@ const buildCommand = async (options: {
   output?: string;
   format: string[];
   clean: boolean;
+  cache: boolean;
   verbose: boolean;
   config?: string;
   theme?: string;
 }): Promise<void> => {
   const config = loadConfig(options.config);
-  const cliOpts: { input?: string; output?: string; format?: readonly string[]; clean?: boolean } = {};
+  const cliOpts: {
+    input?: string;
+    output?: string;
+    format?: readonly string[];
+    clean?: boolean;
+    cache?: boolean;
+  } = {};
   if (options.input !== undefined) cliOpts.input = options.input;
   if (options.output !== undefined) cliOpts.output = options.output;
   cliOpts.format = options.format;
   cliOpts.clean = options.clean;
+  if (options.cache === false) cliOpts.cache = false;
   const resolved = mergeConfig(config, cliOpts);
 
   const formats = parseFormats(resolved.formats as string[]);
+
+  // The config file bytes stand in for `transforms` (functions can't be
+  // hashed): editing the config invalidates the build cache.
+  const configPath = options.config ?? discoverConfig(process.cwd());
+  const configHash = configPath !== undefined ? sha256(readFileSync(configPath, 'utf8')) : undefined;
+  const buildCache = (output: string): BuildCacheOptions | undefined => {
+    if (!resolved.cache) return undefined;
+    const base: BuildCacheOptions = { dir: join(process.cwd(), '.toki'), output };
+    if (configHash !== undefined) return { ...base, configHash };
+    return base;
+  };
 
   if (options.verbose) {
     console.log(`toki v${TOKI_VERSION}`);
@@ -76,6 +96,7 @@ const buildCommand = async (options: {
       }
 
       const start = performance.now();
+      const cache = buildCache(resolved.output);
       const result = await runPipeline({
         input: tokenFile,
         formats,
@@ -83,13 +104,22 @@ const buildCommand = async (options: {
         theme: themeName,
         ...(resolved.naming !== undefined ? { naming: resolved.naming } : {}),
         ...(resolved.transforms !== undefined ? { transforms: resolved.transforms } : {}),
+        ...(cache !== undefined ? { cache } : {}),
       });
       const elapsed = performance.now() - start;
 
       if (options.verbose) {
         console.log(
-          `  resolved ${result.tokenCount} token${result.tokenCount === 1 ? '' : 's'} in ${elapsed.toFixed(1)}ms`,
+          `  resolved ${result.tokenCount} token${result.tokenCount === 1 ? '' : 's'} in ${elapsed.toFixed(1)}ms${result.cached ? ' (cached)' : ''}`,
         );
+      }
+
+      if (result.cached) {
+        console.log(
+          `No changes — ${result.tokenCount} token${result.tokenCount === 1 ? '' : 's'} up to date (cached)` +
+            ` [theme: ${themeName}] → ${resolved.output}`,
+        );
+        continue;
       }
 
       const writeResult = await writeArtifacts(resolved.output, result.artifacts, {
@@ -108,19 +138,28 @@ const buildCommand = async (options: {
   } else {
     // Single-theme build (no themes in config).
     const start = performance.now();
+    const cache = buildCache(resolved.output);
     const result = await runPipeline({
       input: resolved.input,
       formats,
       verbose: options.verbose,
       ...(resolved.naming !== undefined ? { naming: resolved.naming } : {}),
       ...(resolved.transforms !== undefined ? { transforms: resolved.transforms } : {}),
+      ...(cache !== undefined ? { cache } : {}),
     });
     const elapsed = performance.now() - start;
 
     if (options.verbose) {
       console.log(
-        `  resolved ${result.tokenCount} token${result.tokenCount === 1 ? '' : 's'} in ${elapsed.toFixed(1)}ms`,
+        `  resolved ${result.tokenCount} token${result.tokenCount === 1 ? '' : 's'} in ${elapsed.toFixed(1)}ms${result.cached ? ' (cached)' : ''}`,
       );
+    }
+
+    if (result.cached) {
+      console.log(
+        `No changes — ${result.tokenCount} token${result.tokenCount === 1 ? '' : 's'} up to date (cached) → ${resolved.output}`,
+      );
+      return;
     }
 
     const writeResult = await writeArtifacts(resolved.output, result.artifacts, {
@@ -242,6 +281,7 @@ program
     ['css', 'js'],
   )
   .option('--no-clean', 'Do not clean output subdirectories before writing')
+  .option('--no-cache', 'Disable the incremental build cache')
   .option('--verbose', 'Enable verbose output with resolution trace and timing', false)
   .option('-c, --config <path>', 'Path to toki config file')
   .option('-t, --theme <name>', 'Build a single theme from multi-theme config')
@@ -252,6 +292,7 @@ program
         output: options.output,
         format: options.format as string[],
         clean: options.clean,
+        cache: options.cache !== false,
         verbose: options.verbose,
         config: options.config,
         theme: options.theme,
@@ -360,6 +401,7 @@ program
     ['css', 'js'],
   )
   .option('--no-clean', 'Do not clean output subdirectories before writing')
+  .option('--no-cache', 'Disable the incremental build cache')
   .option('--verbose', 'Enable verbose output with resolution trace and timing', false)
   .option('-c, --config <path>', 'Path to toki config file')
   .option('-t, --theme <name>', 'Build a single theme from multi-theme config')
@@ -370,6 +412,7 @@ program
         output: options.output,
         format: options.format as string[],
         clean: options.clean,
+        cache: options.cache !== false,
         verbose: options.verbose,
         config: options.config,
         theme: options.theme,

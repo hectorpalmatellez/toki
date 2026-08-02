@@ -179,6 +179,7 @@ describe('tui — runTui', () => {
     expect(mockStartWatch).toHaveBeenCalledWith({
       format: ['css', 'js'],
       clean: true,
+      cache: true,
       verbose: false,
     });
   });
@@ -191,6 +192,7 @@ describe('tui — runTui', () => {
     expect(mockStartWatch).toHaveBeenCalledWith({
       format: ['css'],
       clean: true,
+      cache: true,
       verbose: true,
     });
   });
@@ -241,6 +243,7 @@ describe('tui — runTui', () => {
       output: './dist',
       format: ['css', 'js'],
       clean: true,
+      cache: true,
       verbose: false,
     });
   });
@@ -255,6 +258,7 @@ describe('tui — runTui', () => {
       output: './dist',
       format: ['css'],
       clean: true,
+      cache: true,
       verbose: true,
     });
   });

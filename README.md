@@ -76,6 +76,7 @@ Run `toki` with no arguments for an interactive menu. Run `toki init` to scaffol
 | `-c, --config <path>`       | Path to toki config file                                            | auto-discovered |
 | `-t, --theme <name>`        | Build a single theme from multi-theme config                        | all themes      |
 | `--clean` / `--no-clean`    | Clean subdirectories before writing                                 | `true`          |
+| `--no-cache`                | Disable the incremental build cache                                | enabled         |
 | `--verbose`                 | Print resolution trace, values, and timing                          | `false`         |
 
 ## Documentation

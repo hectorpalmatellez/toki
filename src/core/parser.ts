@@ -49,14 +49,18 @@ const isTokenValue = (value: unknown): value is TokenValue => {
   return false;
 };
 
-/** Read and parse a JSON file from disk into a raw object. */
-export const readTokenFile = async (filePath: string): Promise<unknown> => {
-  let raw: string;
+/** Read a token file's raw UTF-8 contents (used by the incremental cache). */
+export const readTokenFileRaw = async (filePath: string): Promise<string> => {
   try {
-    raw = await readFile(filePath, 'utf8');
+    return await readFile(filePath, 'utf8');
   } catch (cause) {
     throw new ParseError(`Failed to read token file: ${filePath}`, cause);
   }
+};
+
+/** Read and parse a JSON file from disk into a raw object. */
+export const readTokenFile = async (filePath: string): Promise<unknown> => {
+  const raw = await readTokenFileRaw(filePath);
   return parseTokenJson(raw, filePath);
 };
 

@@ -150,6 +150,11 @@ export const validateConfig = (raw: unknown, source?: string): TokiConfig => {
     throw new ConfigError(`"${sourceLabel}.clean" must be a boolean.`);
   }
 
+  // cache (optional)
+  if (obj['cache'] !== undefined && obj['cache'] !== null && typeof obj['cache'] !== 'boolean') {
+    throw new ConfigError(`"${sourceLabel}.cache" must be a boolean.`);
+  }
+
   // Build result with only defined optional fields to satisfy exactOptionalPropertyTypes.
   // We validate types above, so the casts here are safe.
   const result: TokiConfig = {
@@ -164,6 +169,7 @@ export const validateConfig = (raw: unknown, source?: string): TokiConfig => {
   if (obj['naming'] !== undefined) mutable['naming'] = obj['naming'];
   if (obj['transforms'] !== undefined) mutable['transforms'] = obj['transforms'];
   if (obj['clean'] !== undefined) mutable['clean'] = obj['clean'];
+  if (obj['cache'] !== undefined) mutable['cache'] = obj['cache'];
 
   return result;
 };
@@ -202,6 +208,8 @@ export interface ResolvedBuildConfig {
   readonly output: string;
   readonly formats: readonly OutputFormat[];
   readonly clean: boolean;
+  /** Incremental build cache enabled. Defaults to `true`. */
+  readonly cache: boolean;
   readonly themes: Readonly<Record<string, string>> | undefined;
   readonly naming: Partial<Record<OutputFormat, NamingConvention>> | undefined;
   readonly transforms: readonly TransformPlugin[];
@@ -214,6 +222,7 @@ export const mergeConfig = (
     readonly output?: string;
     readonly format?: readonly string[];
     readonly clean?: boolean;
+    readonly cache?: boolean;
   },
 ): ResolvedBuildConfig => {
   const input = cli.input ?? (typeof config?.input === 'string' ? config.input : config?.input?.[0]);
@@ -232,12 +241,14 @@ export const mergeConfig = (
       : (config?.formats ?? ['css', 'js']);
 
   const clean = cli.clean ?? config?.clean ?? true;
+  const cache = cli.cache ?? config?.cache ?? true;
 
   return {
     input,
     output,
     formats,
     clean,
+    cache,
     themes: config?.themes,
     naming: config?.naming,
     transforms: config?.transforms ?? [],

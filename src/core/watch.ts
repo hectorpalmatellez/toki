@@ -13,18 +13,22 @@
  */
 
 import { watch as chokidarWatch, type FSWatcher } from 'chokidar';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { OutputFormat } from './types.js';
-import { runPipeline } from './pipeline.js';
+import { runPipeline, type BuildCacheOptions } from './pipeline.js';
 import { writeArtifacts } from '../utils/writer.js';
 import { TokiError } from '../utils/errors.js';
-import { loadConfig, mergeConfig } from './config.js';
+import { loadConfig, mergeConfig, discoverConfig } from './config.js';
 import { parseFormats } from '../generators/index.js';
+import { sha256 } from '../utils/hashing.js';
 
 export interface WatchOptions {
   readonly input?: string;
   readonly output?: string;
   readonly format: string[];
   readonly clean: boolean;
+  readonly cache: boolean;
   readonly verbose: boolean;
   readonly config?: string;
   readonly theme?: string;
@@ -57,10 +61,12 @@ const executeBuild = async (
   resolved: ReturnType<typeof resolveConfig>,
   formats: readonly OutputFormat[],
   options: WatchOptions,
-): Promise<{ artifacts: number; tokens: number }> => {
+  cache: BuildCacheOptions | undefined,
+): Promise<{ artifacts: number; tokens: number; cached: number }> => {
   const themes = resolved.themes;
   let totalArtifacts = 0;
   let totalTokens = 0;
+  let totalCached = 0;
 
   if (themes !== undefined && Object.keys(themes).length > 0) {
     const themeNames = options.theme ? [options.theme] : Object.keys(themes);
@@ -79,7 +85,13 @@ const executeBuild = async (
         theme: themeName,
         ...(resolved.naming !== undefined ? { naming: resolved.naming } : {}),
         ...(resolved.transforms !== undefined ? { transforms: resolved.transforms } : {}),
+        ...(cache !== undefined ? { cache } : {}),
       });
+      if (result.cached) {
+        totalCached += 1;
+        totalTokens += result.tokenCount;
+        continue;
+      }
       const writeResult = await writeArtifacts(resolved.output, result.artifacts, {
         clean: resolved.clean,
       });
@@ -93,15 +105,21 @@ const executeBuild = async (
       verbose: false,
       ...(resolved.naming !== undefined ? { naming: resolved.naming } : {}),
       ...(resolved.transforms !== undefined ? { transforms: resolved.transforms } : {}),
+      ...(cache !== undefined ? { cache } : {}),
     });
-    const writeResult = await writeArtifacts(resolved.output, result.artifacts, {
-      clean: resolved.clean,
-    });
-    totalArtifacts = writeResult.written.length;
-    totalTokens = result.tokenCount;
+    if (result.cached) {
+      totalCached = 1;
+      totalTokens = result.tokenCount;
+    } else {
+      const writeResult = await writeArtifacts(resolved.output, result.artifacts, {
+        clean: resolved.clean,
+      });
+      totalArtifacts = writeResult.written.length;
+      totalTokens = result.tokenCount;
+    }
   }
 
-  return { artifacts: totalArtifacts, tokens: totalTokens };
+  return { artifacts: totalArtifacts, tokens: totalTokens, cached: totalCached };
 };
 
 /** Gather all file paths to watch (input file(s) + config file). */
@@ -128,6 +146,17 @@ export const startWatch = async (options: WatchOptions): Promise<() => void> => 
   const formats = parseFormats(resolved.formats as string[]);
   const watchPaths = getWatchPaths(resolved, options.config);
 
+  // Config file bytes stand in for `transforms` in the cache key.
+  const configPath = options.config ?? discoverConfig(process.cwd());
+  const configHash = configPath !== undefined ? sha256(readFileSync(configPath, 'utf8')) : undefined;
+  const cache: BuildCacheOptions | undefined = options.cache
+    ? {
+        dir: join(process.cwd(), '.toki'),
+        output: resolved.output,
+        ...(configHash !== undefined ? { configHash } : {}),
+      }
+    : undefined;
+
   if (options.verbose) {
     console.log(`toki watch v${TOKI_VERSION}`);
     console.log(`  watching: ${watchPaths.join(', ')}`);
@@ -137,13 +166,17 @@ export const startWatch = async (options: WatchOptions): Promise<() => void> => 
 
   // Initial build
   const start = performance.now();
-  const initial = await executeBuild(resolved, formats, options);
+  const initial = await executeBuild(resolved, formats, options, cache);
   const elapsed = performance.now() - start;
-  console.log(
-    `${timestamp()} Initial build: ${initial.artifacts} artifact${initial.artifacts === 1 ? '' : 's'}` +
-      ` from ${initial.tokens} token${initial.tokens === 1 ? '' : 's'}` +
-      ` (${elapsed.toFixed(1)}ms)`,
-  );
+  if (initial.cached > 0) {
+    console.log(`${timestamp()} Initial build: up to date — ${initial.tokens} token${initial.tokens === 1 ? '' : 's'} cached, no changes`);
+  } else {
+    console.log(
+      `${timestamp()} Initial build: ${initial.artifacts} artifact${initial.artifacts === 1 ? '' : 's'}` +
+        ` from ${initial.tokens} token${initial.tokens === 1 ? '' : 's'}` +
+        ` (${elapsed.toFixed(1)}ms)`,
+    );
+  }
 
   // Set up debounced watcher
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -156,13 +189,20 @@ export const startWatch = async (options: WatchOptions): Promise<() => void> => 
       building = true;
       try {
         const buildStart = performance.now();
-        const result = await executeBuild(resolved, formats, options);
+        const result = await executeBuild(resolved, formats, options, cache);
         const buildElapsed = performance.now() - buildStart;
-        console.log(
-          `${timestamp()} Rebuilt ${result.artifacts} artifact${result.artifacts === 1 ? '' : 's'}` +
-            ` from ${result.tokens} token${result.tokens === 1 ? '' : 's'}` +
-            ` (${buildElapsed.toFixed(1)}ms) — ${changedPath}`,
-        );
+        if (result.cached > 0) {
+          console.log(
+            `${timestamp()} Up to date — ${result.tokens} token${result.tokens === 1 ? '' : 's'} cached, no changes` +
+              ` (${buildElapsed.toFixed(1)}ms) — ${changedPath}`,
+          );
+        } else {
+          console.log(
+            `${timestamp()} Rebuilt ${result.artifacts} artifact${result.artifacts === 1 ? '' : 's'}` +
+              ` from ${result.tokens} token${result.tokens === 1 ? '' : 's'}` +
+              ` (${buildElapsed.toFixed(1)}ms) — ${changedPath}`,
+          );
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.error(`${timestamp()} Build failed: ${message}`);

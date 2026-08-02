@@ -18,6 +18,7 @@ toki build --input tokens.json --output ./dist --format css,js,react
 | `-c, --config <path>`       | Path to toki config file                                                                                   | auto-discovered |
 | `-t, --theme <name>`        | Build a single theme from multi-theme config                                                               | all themes      |
 | `--clean` / `--no-clean`    | Clean the target platform subdirectories before writing                                                    | `true`          |
+| `--no-cache`                | Disable the incremental build cache                                                                        | enabled         |
 | `--verbose`                 | Print resolution trace, per-token values, and timing                                                       | `false`         |
 
 ### `toki init`
@@ -134,6 +135,18 @@ export default config;
 | `naming`     | `Record<OutputFormat, NamingConvention>` | per-platform defaults | Per-format naming convention overrides                       |
 | `transforms` | `TransformPlugin[]`                      | `[]`                  | Custom transform functions applied after built-in transforms |
 | `clean`      | `boolean`                                | `true`                | Clean output subdirectories before writing                   |
+| `cache`      | `boolean`                                | `true`                | Use the incremental build cache (see below)                  |
+
+## Incremental builds
+
+`toki build` and `toki watch` cache generated output in `.toki/cache.json` (in the project directory) and skip re-generation when nothing changed:
+
+- **Unchanged input bytes** — the whole pipeline is skipped (~0ms rebuilds).
+- **Unchanged resolved token tree** — parse + resolve still run, but transform, generate, and write are skipped (handles cosmetic input differences like whitespace or JSON key order).
+- **Changed options** (formats, naming, theme, toki version, or the config file itself) always invalidate the cache and trigger a full rebuild.
+- If previously generated output files are missing from disk, the cache treats the build as changed and regenerates them.
+
+A cached run prints `No changes — N tokens up to date (cached)`. Disable the cache per-run with `--no-cache`, per-project with `cache: false` in `toki.config.ts`, or by deleting `.toki/`. The cache file is safe to commit or ignore — it is rebuilt on demand.
 
 ## Multi-theme support
 

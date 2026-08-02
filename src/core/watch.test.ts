@@ -53,6 +53,7 @@ describe('watch module', () => {
       output: outputDir,
       format: ['css', 'js'],
       clean: true,
+      cache: false,
       verbose: false,
     });
 
@@ -77,6 +78,7 @@ describe('watch module', () => {
       output: outputDir,
       format: ['css'],
       clean: true,
+      cache: false,
       verbose: false,
     });
 
@@ -125,6 +127,7 @@ describe('watch module', () => {
       output: outputDir,
       format: ['css'],
       clean: false,
+      cache: false,
       verbose: false,
       config: configPath,
     });

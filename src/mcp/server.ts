@@ -3,7 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import { readTokenFile, parseTokenDocument } from '../core/parser.js';
 import { resolveDocument } from '../core/resolver.js';
-import { generate } from '../core/pipeline.js';
+import { generate, runPipeline } from '../core/pipeline.js';
 import { runDiff, formatDiffMarkdown } from '../core/diff.js';
 import { writeArtifacts } from '../utils/writer.js';
 import { parseFormats, implementedFormats } from '../generators/index.js';
@@ -14,6 +14,7 @@ import { TokiError } from '../utils/errors.js';
 import type { OutputFormat, NamingConvention, ResolvedToken, TokenType } from '../core/types.js';
 import { registerResources } from './resources.js';
 import { registerPrompts } from './prompts.js';
+import { join } from 'node:path';
 
 const textContent = (text: string): { content: Array<{ type: 'text'; text: string }> } => ({
   content: [{ type: 'text', text }],
@@ -172,15 +173,24 @@ export const createMcpServer = (): McpServer => {
       try {
         const formats = parseFormats(rawFormats as string[]);
         const start = performance.now();
-        const raw = await readTokenFile(input);
-        const doc = parseTokenDocument(raw, input);
-        const tokens = resolveDocument(doc);
-        const result = await generate(tokens, { formats });
+        const result = await runPipeline({
+          input,
+          formats,
+          verbose,
+          cache: { dir: join(process.cwd(), '.toki'), output },
+        });
         const elapsed = performance.now() - start;
-        const writeResult = await writeArtifacts(output, result.artifacts, { clean });
+        let writeResult: Awaited<ReturnType<typeof writeArtifacts>>;
+        if (result.cached) {
+          writeResult = { written: [] };
+        } else {
+          writeResult = await writeArtifacts(output, result.artifacts, { clean });
+        }
 
         if (verbose) {
-          console.error(`toki mcp: built ${writeResult.written.length} artifacts in ${elapsed.toFixed(1)}ms`);
+          console.error(
+            `toki mcp: ${result.cached ? 'cached' : `built ${writeResult.written.length} artifacts`} in ${elapsed.toFixed(1)}ms`,
+          );
         }
 
         return textContent(
@@ -188,6 +198,7 @@ export const createMcpServer = (): McpServer => {
             {
               written: writeResult.written,
               tokenCount: result.tokenCount,
+              cached: result.cached,
               elapsed: Math.round(elapsed),
             },
             null,

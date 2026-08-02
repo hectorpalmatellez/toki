@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { createMcpServer } from '../server.js';
@@ -153,6 +153,21 @@ describe('preview_format', () => {
 });
 
 describe('build_tokens', () => {
+  let originalCwd: string;
+  let isolatedCwd: string;
+
+  beforeEach(async () => {
+    // build_tokens persists the incremental cache under process.cwd()/.toki —
+    // isolate it so tests never write into the repo checkout.
+    originalCwd = process.cwd();
+    isolatedCwd = await uniqueDir();
+    process.chdir(isolatedCwd);
+  });
+
+  afterEach(() => {
+    process.chdir(originalCwd);
+  });
+
   it('runs the full pipeline and writes artifacts to disk', async () => {
     const inputDir = await uniqueDir();
     const inputPath = join(inputDir, 'tokens.json');

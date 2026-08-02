@@ -178,6 +178,7 @@ export const runTui = async (): Promise<void> => {
         const cleanup = await startWatch({
           format: formatList,
           clean: true,
+          cache: true,
           verbose: verbose as boolean,
         });
         process.on('SIGINT', () => {
@@ -261,6 +262,7 @@ export const runTui = async (): Promise<void> => {
           output: output as string,
           format: formats as string[],
           clean: true,
+          cache: true,
           verbose: verbose as boolean,
         });
       } catch (error) {

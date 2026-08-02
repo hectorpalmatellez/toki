@@ -212,4 +212,6 @@ export interface TokiConfig {
   readonly transforms?: readonly TransformPlugin[];
   /** Whether to clean output subdirectories before writing. Defaults to `true`. */
   readonly clean?: boolean;
+  /** Whether to use the incremental build cache. Defaults to `true`. */
+  readonly cache?: boolean;
 }
