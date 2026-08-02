@@ -498,6 +498,7 @@ const renderBuildResult = (build: BuildInfo | undefined): void => {
     panel.replaceChildren();
     return;
   }
+  panel.className = 'results';
   panel.replaceChildren();
   const head = el('div', 'results-head');
   const title = el('h2');

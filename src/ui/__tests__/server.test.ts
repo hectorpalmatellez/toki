@@ -28,9 +28,9 @@ interface ServerHandle {
 
 const tempDirs: string[] = [];
 
-const startServer = async (cwd: string): Promise<ServerHandle> => {
+const startServer = async (cwd: string, uiDir = UI_DIR): Promise<ServerHandle> => {
   const ctx: UiContext = { cwd, verbose: false };
-  const server = createUiServer(ctx, UI_DIR);
+  const server = createUiServer(ctx, uiDir);
   await new Promise<void>((resolveListen, rejectListen) => {
     server.once('error', rejectListen);
     server.listen(0, '127.0.0.1', () => {
@@ -95,6 +95,103 @@ describe('toki ui server', () => {
     const res = await fetch(`${handle.base}/styles.css`);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/css');
+  });
+
+  it('serves app.js as JavaScript from a built uiDir', async () => {
+    const uiDir = mkdtempSync(join(tmpdir(), 'toki-ui-assets-'));
+    tempDirs.push(uiDir);
+    writeFileSync(join(uiDir, 'index.html'), '<html></html>');
+    writeFileSync(join(uiDir, 'app.js'), 'console.log(1)');
+    cwd = mkdtempSync(join(tmpdir(), 'toki-ui-'));
+    tempDirs.push(cwd);
+    handle = await startServer(cwd, uiDir);
+    const res = await fetch(`${handle.base}/app.js`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/javascript');
+  });
+
+  it('serves the editor at /index.html too', async () => {
+    cwd = mkdtempSync(join(tmpdir(), 'toki-ui-'));
+    tempDirs.push(cwd);
+    handle = await startServer(cwd);
+    const res = await fetch(`${handle.base}/index.html`);
+    expect(res.status).toBe(200);
+  });
+
+  it('returns 404 for unknown static files', async () => {
+    cwd = mkdtempSync(join(tmpdir(), 'toki-ui-'));
+    tempDirs.push(cwd);
+    handle = await startServer(cwd);
+    const status = await fetchStatus(handle.base, '/not-a-file.txt');
+    expect(status).toBe(404);
+  });
+
+  it('rejects path traversal in static routes', async () => {
+    cwd = mkdtempSync(join(tmpdir(), 'toki-ui-'));
+    tempDirs.push(cwd);
+    handle = await startServer(cwd);
+    const status = await fetchStatus(handle.base, '/ui/../secret');
+    expect(status).toBe(404);
+    const encoded = await fetchStatus(handle.base, '/ui/%2e%2e/secret');
+    expect(encoded).toBe(404);
+  });
+
+  it('answers HEAD requests', async () => {
+    cwd = mkdtempSync(join(tmpdir(), 'toki-ui-'));
+    tempDirs.push(cwd);
+    handle = await startServer(cwd);
+    const res = await fetch(`${handle.base}/`, { method: 'HEAD' });
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects non-GET/HEAD methods with 405', async () => {
+    cwd = mkdtempSync(join(tmpdir(), 'toki-ui-'));
+    tempDirs.push(cwd);
+    handle = await startServer(cwd);
+    const res = await fetch(`${handle.base}/`, { method: 'DELETE' });
+    expect(res.status).toBe(405);
+    const res2 = await fetch(`${handle.base}/app.js`, { method: 'POST' });
+    expect(res2.status).toBe(405);
+  });
+
+  it('rejects malformed JSON bodies with a 400', async () => {
+    cwd = mkdtempSync(join(tmpdir(), 'toki-ui-'));
+    tempDirs.push(cwd);
+    handle = await startServer(cwd);
+    const { status, body } = await fetchJson<{ status: number; body: { ok: boolean; error: string } }>(
+      handle.base,
+      '/api/tokens',
+      { method: 'PUT', headers: { 'content-type': 'application/json' }, body: '{not json' },
+    );
+    expect(status).toBe(400);
+    expect(body.ok).toBe(false);
+  });
+
+  it('rejects non-object JSON bodies with a 400', async () => {
+    cwd = mkdtempSync(join(tmpdir(), 'toki-ui-'));
+    tempDirs.push(cwd);
+    handle = await startServer(cwd);
+    const { status, body } = await fetchJson<{ status: number; body: { ok: boolean; error: string } }>(
+      handle.base,
+      '/api/tokens',
+      { method: 'PUT', headers: { 'content-type': 'application/json' }, body: '[1,2,3]' },
+    );
+    expect(status).toBe(400);
+    expect(body.error).toContain('JSON object');
+  });
+
+  it('rejects oversized request bodies with a 400', async () => {
+    cwd = mkdtempSync(join(tmpdir(), 'toki-ui-'));
+    tempDirs.push(cwd);
+    handle = await startServer(cwd);
+    const huge = JSON.stringify({ tokens: 'x'.repeat(21 * 1024 * 1024) });
+    const { status, body } = await fetchJson<{ status: number; body: { ok: boolean; error: string } }>(
+      handle.base,
+      '/api/tokens',
+      { method: 'PUT', headers: { 'content-type': 'application/json' }, body: huge },
+    );
+    expect(status).toBe(400);
+    expect(body.error).toContain('too large');
   });
 
   it('reports project state with no tokens', async () => {
