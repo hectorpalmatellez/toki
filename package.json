@@ -37,7 +37,7 @@
     "lint:fix": "oxlint src/ --fix",
     "format": "prettier --write 'src/**/*.ts' '*.md' 'docs/*.md'",
     "format:check": "prettier --check 'src/**/*.ts' '*.md' 'docs/*.md'",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.ui.json --noEmit",
     "clean": "rm -rf dist",
     "prepublishOnly": "pnpm clean && pnpm typecheck && pnpm lint && pnpm test && pnpm build"
   },
