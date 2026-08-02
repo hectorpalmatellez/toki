@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>toki — design token editor</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">toki</span>
+        <span class="tagline">design token editor</span>
+      </div>
+      <div class="cwd" id="cwd" title="Working directory"></div>
+      <div class="actions">
+        <button id="btn-reset" class="btn btn-ghost" type="button">Reset to sample</button>
+        <button id="btn-build" class="btn btn-ghost" type="button">Build only</button>
+        <button id="btn-save" class="btn btn-primary" type="button">Save &amp; Build</button>
+      </div>
+    </header>
+
+    <section class="settings">
+      <div class="formats" id="formats" aria-label="Output frameworks"></div>
+      <label class="output-field">
+        Output directory
+        <input id="output" type="text" placeholder="./dist" spellcheck="false" />
+      </label>
+    </section>
+
+    <section id="status" class="status hidden"></section>
+    <section id="validation" class="validation hidden"></section>
+
+    <main id="editor" class="editor"></main>
+
+    <section id="results" class="results hidden"></section>
+
+    <div id="toast" class="toast hidden" role="status"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
