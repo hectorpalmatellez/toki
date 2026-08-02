@@ -54,6 +54,16 @@ describe('ui app boot', () => {
     expect(document.getElementById('editor')?.children.length).toBeGreaterThan(0);
   });
 
+  it('renders singular "Add" buttons for each group', async () => {
+    await mountApp();
+    const groups = [...document.querySelectorAll('section.group')];
+    const labels = groups.map((g) => g.querySelector('button.add-btn')?.textContent);
+    expect(labels).toContain('Add font family');
+    expect(labels).toContain('Add color');
+    expect(labels).toContain('Add shadow');
+    expect(labels.some((l) => l === 'Add font familie')).toBe(false);
+  });
+
   it('surfaces token read errors through the status bar', async () => {
     const fetchMock = vi.fn((path: string) => {
       if (path === '/api/state') {

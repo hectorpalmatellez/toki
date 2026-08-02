@@ -382,6 +382,11 @@ const renderTokenRow = (spec: TypeSpec, token: Token, index: number): HTMLElemen
   return row;
 };
 
+const singularize = (word: string): string => {
+  if (word.endsWith('ies') && word.length > 3) return `${word.slice(0, -3)}y`;
+  return word.replace(/s$/, '');
+};
+
 const renderGroup = (spec: TypeSpec, tokens: readonly Token[]): HTMLElement => {
   const section = el('section', 'group');
   const head = el('div', 'group-head');
@@ -392,7 +397,7 @@ const renderGroup = (spec: TypeSpec, tokens: readonly Token[]): HTMLElement => {
   typeTag.textContent = spec.type;
   head.append(typeTag);
 
-  const addBtn = button(`Add ${spec.label.toLowerCase().replace(/s$/, '')}`, 'btn btn-ghost add-btn');
+  const addBtn = button(`Add ${singularize(spec.label.toLowerCase())}`, 'btn btn-ghost add-btn');
   addBtn.addEventListener('click', () => {
     const base = 'new-token';
     let name = base;
