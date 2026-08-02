@@ -5,6 +5,13 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] — 2026-08-01
+
+### Added
+
+- **Parallel generator execution** — `Generator.generate` is now async; selected formats run concurrently via `Promise.all` after the Transform stage, with deterministic artifact ordering. Future plugin generators slot into the same path.
+- **Incremental build cache** — SHA-256 two-tier cache (raw input bytes + resolved token tree) persisted at `.toki/cache.json`. Unchanged builds skip parse/generate/write entirely (~0 ms rebuilds in `toki watch`); changed options (formats, naming, theme, config file) always invalidate. Disable with `--no-cache` or `cache: false` in `toki.config.ts`. MCP `build_tokens` reports `cached`.
+
 ## [1.5.0] — 2026-07-27
 
 ### Added
