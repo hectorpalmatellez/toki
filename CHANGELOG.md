@@ -5,11 +5,16 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.1] — 2026-08-02
+## [1.8.2] — 2026-08-02
 
 ### Fixed
 
 - **`toki ui` crash on boot** — the DOM helper used `getElementById()` on selectors like `#status`, which always returned `null` and crashed the editor with `Missing element ##status`. The helper now strips the leading `#`. Added happy-dom boot tests that load the real `index.html` and drive `init()` against stubbed API responses.
+
+## [1.8.1] — 2026-08-02
+
+### Fixed
+
 - **Installability of the published package** — `package.json` pinned `@clack/prompts` to `^1.8.0`, a version that was never published (latest is `1.7.0`), causing `ETARGET` errors for every downstream install. The range is now `^1.7.0`.
 
 ## [1.8.0] — 2026-08-01

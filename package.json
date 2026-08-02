@@ -1,6 +1,6 @@
 {
   "name": "@hectorpalmatellez/toki",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "Design token pipeline CLI — W3C DTCG in, framework-specific code out",
   "type": "module",
   "bin": {
