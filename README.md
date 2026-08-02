@@ -24,6 +24,7 @@ Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates 
 - **Token linting** — `toki validate` checks structural validity, broken references, circular dependencies, naming violations, and more
 - **Ecosystem imports** — convert Style Dictionary or Figma Tokens Studio formats to W3C DTCG
 - **MCP server** — `toki mcp` exposes the full pipeline to AI tools (Claude, Cursor, Windsurf) via 7 tools, 3 resources, 1 dynamic resource, and 3 prompts over Model Context Protocol
+- **Web editor** — `toki ui` starts a local web app for non-technical users to create base tokens with friendly forms (color pickers, unit dropdowns, typography styles) and generate code for any supported framework
 - **Token extraction** — scan CSS/SCSS files to extract design token candidates and generate W3C DTCG output
 - **Output schemas** — `toki schema` publishes a JSON Schema per platform output format for IDE autocomplete on generated files
 - **Editor completions** — `toki completions` generates editor-agnostic, VS Code snippet, and LSP completion specs from resolved tokens
@@ -68,6 +69,20 @@ dist/
 
 Run `toki` with no arguments for an interactive menu. Run `toki init` to scaffold a starter project.
 
+### Web editor (`toki ui`)
+
+Start a local web app that lets anyone — no CLI or JSON experience needed — create base tokens and generate them for any supported framework:
+
+```bash
+toki ui
+```
+
+- Opens `http://127.0.0.1:4173` in your browser automatically (use `--no-open` to skip).
+- Friendly forms per token type: color pickers, unit dropdowns (`px`/`rem`/`em`/`%`), typography styles, shadows, borders, and transitions. References like `{color.primary}` are supported.
+- Edits `tokens.json` in the current directory; every save validates and rebuilds automatically.
+- Picks up formats and the output directory from `toki.config.ts` when present; your UI choices are remembered in `.toki/ui.json`.
+- Flags: `--port <n>`, `--host <ip>`, `--no-open`, `--verbose`.
+
 ## CLI flags
 
 | Flag                        | Description                                                         | Default         |
@@ -100,7 +115,7 @@ Run `toki` with no arguments for an interactive menu. Run `toki init` to scaffol
 | Language        | TypeScript 7.0+ (native Go compiler, strict mode) |
 | CLI             | Commander.js                                      |
 | Bundler         | tsup                                              |
-| Testing         | Vitest (533 tests, 90%+ coverage)                 |
+| Testing         | Vitest (560 tests, 90%+ coverage)                 |
 | Linting         | oxlint                                            |
 | Formatting      | Prettier                                          |
 | Package manager | pnpm 10.32.1                                      |
