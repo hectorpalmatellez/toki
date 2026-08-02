@@ -80,3 +80,12 @@ export type { ExtractedToken, ScanOptions, ScanResult, TokenTypePatternInfo } fr
 
 export { buildOutputSchema, buildOutputSchemas, generateOutputSchemas, toCssVariable } from './schemas/output.js';
 export type { OutputSchema, OutputSchemaOptions, GenerateOutputSchemasOptions } from './schemas/output.js';
+
+export { buildCompletionSpec, COMPLETION_SPEC_URL } from './intellisense/spec.js';
+export type { CompletionEntry, CompletionSpec } from './intellisense/spec.js';
+export { buildVsCodeSnippets } from './intellisense/vscode.js';
+export type { VsCodeSnippet } from './intellisense/vscode.js';
+export { buildLspCompletions, LSP_KIND_VALUE, LSP_INSERT_TEXT_FORMAT_PLAIN } from './intellisense/lsp.js';
+export type { LspCompletionItem, LspMarkupContent } from './intellisense/lsp.js';
+export { writeCompletionFiles, EDITOR_TARGETS } from './intellisense/generate.js';
+export type { EditorTarget, CompletionWriteOptions } from './intellisense/generate.js';

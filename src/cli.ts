@@ -27,6 +27,7 @@ import { importStyleDictionary } from './importers/style-dictionary.js';
 import { importFigmaTokens } from './importers/figma-tokens.js';
 import { validateTokens, formatValidateTerminal } from './core/validate.js';
 import { generateOutputSchemas } from './schemas/output.js';
+import { writeCompletionFiles, EDITOR_TARGETS, type EditorTarget } from './intellisense/generate.js';
 
 const buildCommand = async (options: {
   input?: string;
@@ -334,6 +335,89 @@ const schemaCommand = async (options: {
   await run(resolveInput(config, options.input));
 };
 
+const completionsCommand = async (options: {
+  input?: string;
+  output: string;
+  editors: string[];
+  config?: string;
+  theme?: string;
+  verbose: boolean;
+}): Promise<void> => {
+  const config = loadConfig(options.config);
+
+  const editors: EditorTarget[] = [];
+  const seen = new Set<string>();
+  for (const raw of options.editors) {
+    for (const part of raw.split(',')) {
+      const target = part.trim();
+      if (target.length === 0 || seen.has(target)) continue;
+      if (target === 'all') {
+        for (const editor of EDITOR_TARGETS) {
+          if (!seen.has(editor)) {
+            seen.add(editor);
+            editors.push(editor);
+          }
+        }
+        continue;
+      }
+      if (!EDITOR_TARGETS.includes(target as EditorTarget)) {
+        throw new TokiError(
+          `Unknown editor target "${target}". Supported: ${EDITOR_TARGETS.join(', ')}.`,
+          'CONFIG_ERROR',
+        );
+      }
+      seen.add(target);
+      editors.push(target as EditorTarget);
+    }
+  }
+
+  const run = async (input: string, theme?: string): Promise<void> => {
+    const written = await writeCompletionFiles({
+      input,
+      output: options.output,
+      editors,
+      ...(theme !== undefined ? { theme } : {}),
+    });
+    const suffix = theme !== undefined ? ` [theme: ${theme}]` : '';
+    console.log(
+      `Wrote ${written.length} completion file${written.length === 1 ? '' : 's'}` +
+        ` (${editors.join(', ')})${suffix} → ${options.output}`,
+    );
+    if (options.verbose) {
+      for (const path of written) {
+        console.log(`  ${path}`);
+      }
+    }
+  };
+
+  if (options.verbose) {
+    console.log(`toki v${TOKI_VERSION}`);
+    console.log(`  output: ${options.output}`);
+    console.log(`  editors: ${editors.join(', ')}`);
+  }
+
+  const themes = config?.themes;
+  if (themes !== undefined && Object.keys(themes).length > 0) {
+    const themeNames = options.theme ? [options.theme] : Object.keys(themes);
+    for (const themeName of themeNames) {
+      const tokenFile = themes[themeName];
+      if (tokenFile === undefined) {
+        throw new TokiError(
+          `Unknown theme "${themeName}". Available: ${Object.keys(themes).join(', ')}`,
+          'CONFIG_ERROR',
+        );
+      }
+      if (options.verbose) {
+        console.log(`\n  theme "${themeName}": ${tokenFile}`);
+      }
+      await run(tokenFile, themeName);
+    }
+    return;
+  }
+
+  await run(resolveInput(config, options.input));
+};
+
 const program = new Command();
 
 program
@@ -496,6 +580,40 @@ program
   });
 
 program
+  .command('completions')
+  .description('Generate editor completion specs (editor-agnostic, VS Code, LSP) from resolved tokens')
+  .option('-i, --input <path>', 'Path to input token file (W3C DTCG JSON)')
+  .option('-o, --output <path>', 'Output directory for completion files', './completions')
+  .option(
+    '--editor <editors...>',
+    'Editor targets: spec, vscode, lsp (use "all" for every target; comma- or space-separated)',
+    ['spec', 'vscode', 'lsp'],
+  )
+  .option('-c, --config <path>', 'Path to toki config file')
+  .option('-t, --theme <name>', 'Build a single theme from multi-theme config')
+  .option('--verbose', 'Enable verbose output with written file paths', false)
+  .action(async (options) => {
+    try {
+      await completionsCommand({
+        input: options.input,
+        output: options.output,
+        editors: options.editor as string[],
+        config: options.config,
+        theme: options.theme,
+        verbose: options.verbose,
+      });
+    } catch (error) {
+      if (error instanceof TokiError) {
+        console.error(`error [${error.code}]: ${error.message}`);
+        process.exitCode = 1;
+        return;
+      }
+      console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
+      process.exitCode = 1;
+    }
+  });
+
+program
   .command('watch')
   .description('Watch token files for changes and rebuild automatically')
   .option('-i, --input <path>', 'Path to input token file (W3C DTCG JSON)')
@@ -589,6 +707,7 @@ program
 export { program };
 export { buildCommand };
 export { schemaCommand };
+export { completionsCommand };
 export { parseFormats };
 
 export const run = async (): Promise<void> => {
