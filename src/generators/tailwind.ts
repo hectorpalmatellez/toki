@@ -56,7 +56,11 @@ export const resolveNamespace = (token: ResolvedToken): string | undefined => {
   return TYPE_TO_NAMESPACE[token.type];
 };
 
-const buildVarName = (token: ResolvedToken, namespace: string, namingFn: (path: readonly string[]) => string): string => {
+export const buildVarName = (
+  token: ResolvedToken,
+  namespace: string,
+  namingFn: (path: readonly string[]) => string,
+): string => {
   const firstSegment = token.path[0];
   if (firstSegment === namespace) {
     const remaining = token.path.slice(1);
@@ -73,6 +77,42 @@ const formatTwValue = (value: unknown): string => {
   return JSON.stringify(value);
 };
 
+/** A single Tailwind `@theme` declaration derived from a token. */
+export interface TailwindThemeDeclaration {
+  readonly varName: string;
+  readonly value: string;
+}
+
+/**
+ * Expand a composite token (typography, border, transition) into Tailwind
+ * `--namespace-*` theme declarations. Returns an empty array for non-object
+ * values or fields without a known namespace mapping.
+ */
+export const tailwindCompositeDeclarations = (
+  token: ResolvedToken,
+  namingFn: (path: readonly string[]) => string,
+): readonly TailwindThemeDeclaration[] => {
+  if (!isCompositeType(token.type)) return [];
+  if (token.value === null || typeof token.value !== 'object' || Array.isArray(token.value)) return [];
+  const expanded = expandCompositeToken(token, namingFn);
+  const declarations: TailwindThemeDeclaration[] = [];
+  for (const decl of expanded) {
+    const field = decl.property.split('-').slice(token.path.length).join('-');
+    const originalField = Object.keys(token.value as Record<string, unknown>).find((k) => {
+      const kebab = k.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+      return kebab === field;
+    });
+    const namespace = originalField !== undefined ? COMPOSITE_FIELD_TO_NAMESPACE[originalField] : undefined;
+    if (namespace === undefined) continue;
+    const remaining = token.path.slice(1);
+    const suffix = remaining.length > 0 ? namingFn(remaining) : '';
+    const varName = suffix.length > 0 ? `--${namespace}-${suffix}` : `--${namespace}`;
+    const objValue = (token.value as Record<string, unknown>)[originalField ?? ''];
+    declarations.push({ varName, value: formatTwValue(objValue) });
+  }
+  return declarations;
+};
+
 export const renderThemeBlock = (tokens: readonly ResolvedToken[], options: GeneratorOptions): string => {
   const lines: string[] = [headerComment(options.version), ''];
   const namingFn = getNamingFunction(options.naming ?? 'kebab-case');
@@ -80,22 +120,8 @@ export const renderThemeBlock = (tokens: readonly ResolvedToken[], options: Gene
   const declarations: string[] = [];
   for (const token of tokens) {
     if (isCompositeType(token.type)) {
-      const expanded = expandCompositeToken(token, namingFn);
-      for (const decl of expanded) {
-        const field = decl.property.split('-').slice(token.path.length).join('-');
-        const originalField = Object.keys(token.value as Record<string, unknown>).find((k) => {
-          const kebab = k
-            .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-            .toLowerCase();
-          return kebab === field;
-        });
-        const namespace = originalField !== undefined ? COMPOSITE_FIELD_TO_NAMESPACE[originalField] : undefined;
-        if (namespace === undefined) continue;
-        const remaining = token.path.slice(1);
-        const suffix = remaining.length > 0 ? namingFn(remaining) : '';
-        const varName = suffix.length > 0 ? `--${namespace}-${suffix}` : `--${namespace}`;
-        const objValue = (token.value as Record<string, unknown>)[originalField ?? ''];
-        declarations.push(`  ${varName}: ${formatTwValue(objValue)};`);
+      for (const decl of tailwindCompositeDeclarations(token, namingFn)) {
+        declarations.push(`  ${decl.varName}: ${decl.value};`);
       }
       continue;
     }

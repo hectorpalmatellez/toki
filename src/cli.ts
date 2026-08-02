@@ -15,8 +15,9 @@ import { runPipeline, type BuildCacheOptions } from './core/pipeline.js';
 import { writeArtifacts } from './utils/writer.js';
 import { parseFormats } from './generators/index.js';
 import { TOKI_VERSION } from './version.js';
-import { TokiError } from './utils/errors.js';
+import { TokiError, ConfigError } from './utils/errors.js';
 import { loadConfig, mergeConfig, discoverConfig } from './core/config.js';
+import type { TokiConfig } from './core/types.js';
 import { writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { sha256 } from './utils/hashing.js';
@@ -25,6 +26,7 @@ import { startWatch } from './core/watch.js';
 import { importStyleDictionary } from './importers/style-dictionary.js';
 import { importFigmaTokens } from './importers/figma-tokens.js';
 import { validateTokens, formatValidateTerminal } from './core/validate.js';
+import { generateOutputSchemas } from './schemas/output.js';
 
 const buildCommand = async (options: {
   input?: string;
@@ -263,6 +265,75 @@ const initCommand = async (options: { readonly dir?: string }): Promise<void> =>
   console.log('    npx toki build');
 };
 
+/** Resolve the input token file from CLI flags or config (themes excluded). */
+const resolveInput = (config: TokiConfig | undefined, cliInput: string | undefined): string => {
+  const input = cliInput ?? (typeof config?.input === 'string' ? config.input : config?.input?.[0]);
+  if (input === undefined) {
+    throw new ConfigError('No input file specified. Provide --input or set "input" in toki.config.ts.');
+  }
+  return input;
+};
+
+const schemaCommand = async (options: {
+  input?: string;
+  output: string;
+  format: string[];
+  config?: string;
+  theme?: string;
+  verbose: boolean;
+}): Promise<void> => {
+  const config = loadConfig(options.config);
+  const formats = parseFormats(options.format);
+  const naming = config?.naming;
+
+  const run = async (input: string, theme?: string): Promise<void> => {
+    const written = await generateOutputSchemas({
+      input,
+      output: options.output,
+      formats,
+      ...(naming !== undefined ? { naming } : {}),
+      ...(theme !== undefined ? { theme } : {}),
+    });
+    const suffix = theme !== undefined ? ` [theme: ${theme}]` : '';
+    console.log(
+      `Published ${written.length} schema${written.length === 1 ? '' : 's'}` +
+        ` for ${formats.join(', ')}${suffix} → ${options.output}`,
+    );
+    if (options.verbose) {
+      for (const path of written) {
+        console.log(`  ${path}`);
+      }
+    }
+  };
+
+  if (options.verbose) {
+    console.log(`toki v${TOKI_VERSION}`);
+    console.log(`  output: ${options.output}`);
+    console.log(`  formats: ${formats.join(', ')}`);
+  }
+
+  const themes = config?.themes;
+  if (themes !== undefined && Object.keys(themes).length > 0) {
+    const themeNames = options.theme ? [options.theme] : Object.keys(themes);
+    for (const themeName of themeNames) {
+      const tokenFile = themes[themeName];
+      if (tokenFile === undefined) {
+        throw new TokiError(
+          `Unknown theme "${themeName}". Available: ${Object.keys(themes).join(', ')}`,
+          'CONFIG_ERROR',
+        );
+      }
+      if (options.verbose) {
+        console.log(`\n  theme "${themeName}": ${tokenFile}`);
+      }
+      await run(tokenFile, themeName);
+    }
+    return;
+  }
+
+  await run(resolveInput(config, options.input));
+};
+
 const program = new Command();
 
 program
@@ -391,6 +462,40 @@ program
   });
 
 program
+  .command('schema')
+  .description('Publish JSON Schema per platform output format for IDE autocomplete')
+  .option('-i, --input <path>', 'Path to input token file (W3C DTCG JSON)')
+  .option('-o, --output <path>', 'Output directory for schema files', './schema/output')
+  .option(
+    '-f, --format <formats...>',
+    'Output formats: css, js, react-native, angular, angular-11, svelte, react, stencil, vue, tailwind (use "all" for every platform; comma- or space-separated)',
+    ['all'],
+  )
+  .option('-c, --config <path>', 'Path to toki config file')
+  .option('-t, --theme <name>', 'Build a single theme from multi-theme config')
+  .option('--verbose', 'Enable verbose output with published file paths', false)
+  .action(async (options) => {
+    try {
+      await schemaCommand({
+        input: options.input,
+        output: options.output,
+        format: options.format as string[],
+        config: options.config,
+        theme: options.theme,
+        verbose: options.verbose,
+      });
+    } catch (error) {
+      if (error instanceof TokiError) {
+        console.error(`error [${error.code}]: ${error.message}`);
+        process.exitCode = 1;
+        return;
+      }
+      console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
+      process.exitCode = 1;
+    }
+  });
+
+program
   .command('watch')
   .description('Watch token files for changes and rebuild automatically')
   .option('-i, --input <path>', 'Path to input token file (W3C DTCG JSON)')
@@ -483,6 +588,7 @@ program
 
 export { program };
 export { buildCommand };
+export { schemaCommand };
 export { parseFormats };
 
 export const run = async (): Promise<void> => {

@@ -77,3 +77,6 @@ export {
   scanFiles,
 } from './extractors/index.js';
 export type { ExtractedToken, ScanOptions, ScanResult, TokenTypePatternInfo } from './extractors/index.js';
+
+export { buildOutputSchema, buildOutputSchemas, generateOutputSchemas, toCssVariable } from './schemas/output.js';
+export type { OutputSchema, OutputSchemaOptions, GenerateOutputSchemasOptions } from './schemas/output.js';
