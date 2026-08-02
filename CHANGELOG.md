@@ -5,6 +5,17 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] — 2026-08-01
+
+### Added
+
+- **`toki ui`** — friendly web editor mode for non-technical users. Starts a local server (default `http://127.0.0.1:4173`, browser auto-open, zero new runtime dependencies) with a zero-framework web app that:
+  - Edits `tokens.json` through per-type structured forms — color pickers, unit dropdowns (`px`/`rem`/`em`/`%`), typography/font/duration/line-height/letter-spacing fields, cubic Béziers, and simplified forms for composite `shadow`, `border`, and `transition` tokens (raw editors for references like `{color.primary}`).
+  - Loads an existing `tokens.json` or scaffolds the sample set, validates on save (parser + `toki validate` rules), auto-builds every save, and previews the generated artifacts per framework with a manual "Build only" button.
+  - Resolves formats and the output directory from `toki.config.ts` when present; UI choices persist to `.toki/ui.json`.
+  - Ships as `dist/ui/` static assets (bundled `app.js` + `index.html` + `styles.css`), type-checked with a dedicated DOM-lib tsconfig.
+- **`toki ui --port <n> / --host <ip> / --no-open / --verbose`** CLI flags; `ui` entry in the interactive menu.
+
 ## [1.7.0] — 2026-08-01
 
 ### Added

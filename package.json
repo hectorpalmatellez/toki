@@ -1,6 +1,6 @@
 {
   "name": "@hectorpalmatellez/toki",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Design token pipeline CLI \u2014 W3C DTCG in, framework-specific code out",
   "type": "module",
   "bin": {
@@ -42,7 +42,7 @@
     "prepublishOnly": "pnpm clean && pnpm typecheck && pnpm lint && pnpm test && pnpm build"
   },
   "dependencies": {
-    "@clack/prompts": "^1.7.0",
+    "@clack/prompts": "^1.8.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "chokidar": "^5.0.0",
     "commander": "^13.1.0",
