@@ -18,9 +18,9 @@ const FIXTURE = {
   motion: { $type: 'cubicBezier', ease: { $value: [0.4, 0, 0.2, 1] } },
 };
 
-const generate = (raw: unknown) => {
+const generate = async (raw: unknown) => {
   const tokens = resolveDocument(parseTokenDocument(raw));
-  const artifacts = angularGenerator.generate(tokens, { version: '0.1.0' });
+  const artifacts = await angularGenerator.generate(tokens, { version: '0.1.0' });
   const byPath = (suffix: string): string => {
     const artifact = artifacts.find((a) => a.relativePath === `angular/${suffix}`);
     if (artifact === undefined) throw new Error(`missing artifact angular/${suffix}`);
@@ -36,22 +36,22 @@ const generate = (raw: unknown) => {
 };
 
 describe('angular generator — _tokens.scss', () => {
-  it('emits $kebab-case SCSS variables', () => {
-    const { scssVars } = generate(FIXTURE);
+  it('emits $kebab-case SCSS variables', async () => {
+    const { scssVars } = await generate(FIXTURE);
     expect(scssVars).toContain('$color-primary: #1a73e8;');
     expect(scssVars).toContain('$color-brand-accent: #ff8800;');
     expect(scssVars).toContain('$spacing-small: 8px;');
     expect(scssVars).toContain('$motion-ease: cubic-bezier(0.4, 0, 0.2, 1);');
   });
 
-  it('expands multi-property composites into longhand SCSS variables', () => {
-    const { scssVars } = generate(FIXTURE);
+  it('expands multi-property composites into longhand SCSS variables', async () => {
+    const { scssVars } = await generate(FIXTURE);
     expect(scssVars).toContain('$type-body-font-size: 16px;');
     expect(scssVars).toContain('$type-body-line-height: 1.5;');
   });
 
-  it('emits SCSS variables even for only-composite token sets', () => {
-    const { scssVars } = generate({
+  it('emits SCSS variables even for only-composite token sets', async () => {
+    const { scssVars } = await generate({
       type: { $type: 'typography', body: { $value: { fontSize: '16px' } } },
     });
     expect(scssVars).toContain('$type-body-font-size: 16px;');
@@ -59,8 +59,8 @@ describe('angular generator — _tokens.scss', () => {
 });
 
 describe('angular generator — tokens.scss (@use)', () => {
-  it('uses @use to load the partial and re-exposes tokens as CSS variables', () => {
-    const { scssEntry } = generate(FIXTURE);
+  it('uses @use to load the partial and re-exposes tokens as CSS variables', async () => {
+    const { scssEntry } = await generate(FIXTURE);
     expect(scssEntry).toContain('@use "./tokens" as tokens;');
     expect(scssEntry).toContain('--color-primary: #{tokens.$color-primary};');
     expect(scssEntry).toContain('--type-body-font-size: #{tokens.$type-body-font-size};');
@@ -68,16 +68,16 @@ describe('angular generator — tokens.scss (@use)', () => {
 });
 
 describe('angular generator — tokens.ts', () => {
-  it('emits CONSTANT_CASE exports for every token, including composites', () => {
-    const { ts } = generate(FIXTURE);
+  it('emits CONSTANT_CASE exports for every token, including composites', async () => {
+    const { ts } = await generate(FIXTURE);
     expect(ts).toContain('export const COLOR_PRIMARY = "#1a73e8";');
     expect(ts).toContain('export const COLOR_BRAND_ACCENT = "#ff8800";');
     expect(ts).toContain('export const TYPE_BODY = {"fontSize":"16px","lineHeight":"1.5"};');
     expect(ts).toContain('export const MOTION_EASE = [0.4,0,0.2,1];');
   });
 
-  it('prefixes CONSTANT_CASE names that would start with a digit', () => {
-    const { ts } = generate({
+  it('prefixes CONSTANT_CASE names that would start with a digit', async () => {
+    const { ts } = await generate({
       '500': { $type: 'color', value: { $value: '#fff' } },
     });
     expect(ts).toContain('export const _500_VALUE = ');
@@ -85,8 +85,8 @@ describe('angular generator — tokens.ts', () => {
 });
 
 describe('angular generator — tokens.module.ts', () => {
-  it('declares an InjectionToken<DesignTokens> with value + provider', () => {
-    const { module } = generate(FIXTURE);
+  it('declares an InjectionToken<DesignTokens> with value + provider', async () => {
+    const { module } = await generate(FIXTURE);
     expect(module).toContain('import { InjectionToken } from "@angular/core";');
     expect(module).toContain('import * as tokens from "./tokens";');
     expect(module).toContain('export interface DesignTokens {');
@@ -100,8 +100,8 @@ describe('angular generator — tokens.module.ts', () => {
 });
 
 describe('angular generator — collisions, determinism, artifacts', () => {
-  it('throws GeneratorError on SCSS name collisions', () => {
-    expect(() =>
+  it('throws GeneratorError on SCSS name collisions', async () => {
+    await expect(() =>
       generate({
         color: {
           $type: 'color',
@@ -109,29 +109,29 @@ describe('angular generator — collisions, determinism, artifacts', () => {
           brandPrimary: { $value: '#000' },
         },
       }),
-    ).toThrow(GeneratorError);
+    ).rejects.toThrow(GeneratorError);
   });
 
-  it('throws GeneratorError on TypeScript name collisions', () => {
-    expect(() =>
+  it('throws GeneratorError on TypeScript name collisions', async () => {
+    await expect(() =>
       generate({
         color: { $type: 'color', primary: { $value: '#fff' } },
         'color-primary': { $type: 'color', $value: '#000' },
       }),
-    ).toThrow(GeneratorError);
+    ).rejects.toThrow(GeneratorError);
   });
 
-  it('includes the header comment and is deterministic', () => {
-    const a = generate(FIXTURE);
+  it('includes the header comment and is deterministic', async () => {
+    const a = await generate(FIXTURE);
     for (const artifact of a.artifacts) {
       expect(artifact.content).toContain('Generated by toki v0.1.0');
     }
-    expect(a.ts).toBe(generate(FIXTURE).ts);
-    expect(a.module).toBe(generate(FIXTURE).module);
+    expect(a.ts).toBe((await generate(FIXTURE)).ts);
+    expect(a.module).toBe((await generate(FIXTURE)).module);
   });
 
-  it('writes _tokens.scss, tokens.scss, tokens.ts, tokens.module.ts and README.md', () => {
-    const { artifacts } = generate(FIXTURE);
+  it('writes _tokens.scss, tokens.scss, tokens.ts, tokens.module.ts and README.md', async () => {
+    const { artifacts } = await generate(FIXTURE);
     expect(artifacts.map((a) => a.relativePath).sort()).toEqual([
       'angular/README.md',
       'angular/_tokens.scss',
@@ -142,8 +142,8 @@ describe('angular generator — collisions, determinism, artifacts', () => {
     expect(artifacts.every((a) => a.format === 'angular')).toBe(true);
   });
 
-  it('matches the artifact snapshots', () => {
-    const { scssVars, scssEntry, ts, module } = generate(FIXTURE);
+  it('matches the artifact snapshots', async () => {
+    const { scssVars, scssEntry, ts, module } = await generate(FIXTURE);
     expect(scssVars).toMatchSnapshot();
     expect(scssEntry).toMatchSnapshot();
     expect(ts).toMatchSnapshot();

@@ -195,7 +195,7 @@ export const renderUnionTypes = (tokens: readonly ResolvedToken[], options: Gene
 
 export const stencilGenerator: Generator = {
   format: 'stencil',
-  generate: (tokens: readonly ResolvedToken[], options: GeneratorOptions): readonly OutputArtifact[] => {
+  generate: async (tokens: readonly ResolvedToken[], options: GeneratorOptions): Promise<readonly OutputArtifact[]> => {
     const t = (p: string) => (options.theme ? themePath(p, options.theme) : p);
     return [
       {

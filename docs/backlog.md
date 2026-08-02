@@ -8,7 +8,6 @@ See [`done.md`](./done.md) for completed phases 1–5.
 
 | #    | Task                                                                                                                                      | Type     | Est. |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---- |
-| P5   | **Parallel Generator Execution** — run selected generators concurrently via `Promise.all` after Transform stage                          | Perf     | 1h   |
 | P6   | **Full Generator Plugin API** — extend `TransformPlugin` to a full `GeneratorPlugin` letting users register custom output platforms      | API      | 8h   |
 | P7   | **Incremental Builds (Cache Layer)** — SHA-256 cache of resolved token trees, skip re-generation on unchanged input                        | Perf     | 6h   |
 | P8   | **Component-Scoped Token Subsets** — given a component manifest, output per-component token files to prevent full-import bloat            | Core     | 8h   |

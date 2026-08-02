@@ -146,7 +146,7 @@ export const expandCompositeToken = (
 
 export const cssGenerator: Generator = {
   format: 'css',
-  generate: (_tokens: readonly ResolvedToken[], _options: GeneratorOptions): readonly OutputArtifact[] => {
+  generate: async (_tokens: readonly ResolvedToken[], _options: GeneratorOptions): Promise<readonly OutputArtifact[]> => {
     // Unused parameter names prefixed with `_` to satisfy no-unused-vars.
     const cssPath = _options.theme ? themePath('css/tokens.css', _options.theme) : 'css/tokens.css';
     return [

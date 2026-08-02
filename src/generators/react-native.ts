@@ -142,7 +142,7 @@ const generateStylesJs = (tokens: readonly ResolvedToken[], options: GeneratorOp
 
 export const reactNativeGenerator: Generator = {
   format: 'react-native',
-  generate: (tokens: readonly ResolvedToken[], options: GeneratorOptions): readonly OutputArtifact[] => {
+  generate: async (tokens: readonly ResolvedToken[], options: GeneratorOptions): Promise<readonly OutputArtifact[]> => {
     const jsPath = options.theme ? themePath('react-native/tokens.js', options.theme) : 'react-native/tokens.js';
     const stylesPath = options.theme ? themePath('react-native/styles.js', options.theme) : 'react-native/styles.js';
     return [

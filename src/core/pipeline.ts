@@ -57,8 +57,10 @@ export const runPipeline = async (options: BuildOptions): Promise<BuildResult> =
 };
 
 /** Re-run generation from an already-parsed document (used by tests). */
-export const generateFromDocument = (doc: DesignTokenDocument, formats: readonly OutputFormat[]): BuildResult =>
-  generate(resolveDocument(doc), { formats });
+export const generateFromDocument = async (
+  doc: DesignTokenDocument,
+  formats: readonly OutputFormat[],
+): Promise<BuildResult> => generate(resolveDocument(doc), { formats });
 
 /** Apply custom transform plugins after built-in platform transforms. */
 const applyCustomTransforms = (
@@ -82,20 +84,28 @@ export interface GenerateOptions {
   readonly transforms?: readonly TransformPlugin[];
 }
 
-/** Re-run generation from already-resolved tokens. */
-export const generate = (tokens: readonly ResolvedToken[], options: GenerateOptions): BuildResult => {
-  const perFormat = options.formats.map((format) => {
-    const generator = getGenerator(format);
-    let transformed = transformTokens(tokens, format);
-    transformed = applyCustomTransforms(transformed, options.transforms ?? [], format);
-    const naming = options.naming?.[format];
-    const generatorOptions = {
-      version: TOKI_VERSION,
-      ...(options.theme !== undefined ? { theme: options.theme } : {}),
-      ...(naming !== undefined ? { naming } : {}),
-    };
-    return generator.generate(transformed, generatorOptions);
-  });
+/**
+ * Re-run generation from already-resolved tokens.
+ *
+ * Each selected format's Transform → Generate work runs concurrently via
+ * `Promise.all`; artifact order is normalized by sorting on `relativePath`
+ * so output stays deterministic regardless of completion order.
+ */
+export const generate = async (tokens: readonly ResolvedToken[], options: GenerateOptions): Promise<BuildResult> => {
+  const perFormat = await Promise.all(
+    options.formats.map(async (format) => {
+      const generator = getGenerator(format);
+      let transformed = transformTokens(tokens, format);
+      transformed = applyCustomTransforms(transformed, options.transforms ?? [], format);
+      const naming = options.naming?.[format];
+      const generatorOptions = {
+        version: TOKI_VERSION,
+        ...(options.theme !== undefined ? { theme: options.theme } : {}),
+        ...(naming !== undefined ? { naming } : {}),
+      };
+      return generator.generate(transformed, generatorOptions);
+    }),
+  );
   const artifacts = perFormat.flat();
   const sortedArtifacts = artifacts.toSorted((a, b) =>
     a.relativePath < b.relativePath ? -1 : a.relativePath > b.relativePath ? 1 : 0,

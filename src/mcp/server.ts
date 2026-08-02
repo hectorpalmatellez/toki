@@ -133,7 +133,7 @@ export const createMcpServer = (): McpServer => {
           naming !== undefined
             ? { [format as OutputFormat]: naming as NamingConvention }
             : undefined;
-        const result = generate(tokens, {
+        const result = await generate(tokens, {
           formats,
           ...(namingOverride !== undefined ? { naming: namingOverride } : {}),
         });
@@ -175,7 +175,7 @@ export const createMcpServer = (): McpServer => {
         const raw = await readTokenFile(input);
         const doc = parseTokenDocument(raw, input);
         const tokens = resolveDocument(doc);
-        const result = generate(tokens, { formats });
+        const result = await generate(tokens, { formats });
         const elapsed = performance.now() - start;
         const writeResult = await writeArtifacts(output, result.artifacts, { clean });
 
@@ -337,7 +337,7 @@ export const createMcpServer = (): McpServer => {
         const resolvedTokens = result.tokens
           .filter((t) => t.inferredType !== undefined)
           .map(extractedToResolved);
-        const genResult = generate(resolvedTokens, { formats: [format] });
+        const genResult = await generate(resolvedTokens, { formats: [format] });
         return textContent(
           JSON.stringify(
             {

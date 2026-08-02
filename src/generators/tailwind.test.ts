@@ -4,17 +4,17 @@ import { resolveDocument } from '../core/resolver.js';
 import { parseTokenDocument } from '../core/parser.js';
 import type { ResolvedToken } from '../core/types.js';
 
-const generate = (raw: unknown, theme?: string) => {
+const generate = async (raw: unknown, theme?: string) => {
   const tokens = resolveDocument(parseTokenDocument(raw));
-  const artifacts = tailwindGenerator.generate(tokens, { version: '0.1.0', ...(theme !== undefined ? { theme } : {}) });
+  const artifacts = await tailwindGenerator.generate(tokens, { version: '0.1.0', ...(theme !== undefined ? { theme } : {}) });
   const cssArtifact = artifacts.find((a) => a.relativePath.endsWith('.css'));
   if (cssArtifact === undefined) throw new Error('missing CSS artifact');
   return { artifacts, css: cssArtifact.content };
 };
 
 describe('tailwind generator', () => {
-  it('maps color tokens to --color-* namespace', () => {
-    const { css } = generate({
+  it('maps color tokens to --color-* namespace', async () => {
+    const { css } = await generate({
       color: {
         $type: 'color',
         primary: { $value: '#1a73e8' },
@@ -25,8 +25,8 @@ describe('tailwind generator', () => {
     expect(css).toContain('--color-brand-secondary: #6c757d;');
   });
 
-  it('maps dimension tokens to --spacing-* namespace', () => {
-    const { css } = generate({
+  it('maps dimension tokens to --spacing-* namespace', async () => {
+    const { css } = await generate({
       spacing: {
         $type: 'dimension',
         small: { $value: '8px' },
@@ -37,8 +37,8 @@ describe('tailwind generator', () => {
     expect(css).toContain('--spacing-medium: 16px;');
   });
 
-  it('uses path prefix as namespace when it matches a Tailwind keyword', () => {
-    const { css } = generate({
+  it('uses path prefix as namespace when it matches a Tailwind keyword', async () => {
+    const { css } = await generate({
       radius: {
         $type: 'dimension',
         lg: { $value: '8px' },
@@ -49,8 +49,8 @@ describe('tailwind generator', () => {
     expect(css).toContain('--radius-full: 9999px;');
   });
 
-  it('expands composite types into namespace-mapped CSS variables', () => {
-    const { css } = generate({
+  it('expands composite types into namespace-mapped CSS variables', async () => {
+    const { css } = await generate({
       type: {
         $type: 'typography',
         body: { $value: { fontFamily: 'Inter', fontSize: '16px' } },
@@ -73,8 +73,8 @@ describe('tailwind generator', () => {
     expect(css).toContain('--ease-fade: ease-in-out;');
   });
 
-  it('skips shadow tokens', () => {
-    const { css } = generate({
+  it('skips shadow tokens', async () => {
+    const { css } = await generate({
       shadow: {
         $type: 'shadow',
         lg: { $value: { x: 0, y: 4, blur: 6, color: 'rgba(0,0,0,0.1)' } },
@@ -83,8 +83,8 @@ describe('tailwind generator', () => {
     expect(css).not.toContain('--shadow-lg');
   });
 
-  it('produces themed output paths', () => {
-    const { artifacts } = generate(
+  it('produces themed output paths', async () => {
+    const { artifacts } = await generate(
       { color: { $type: 'color', primary: { $value: '#fff' } } },
       'light',
     );
@@ -92,8 +92,8 @@ describe('tailwind generator', () => {
     expect(paths).toEqual(['tailwind/README.md', 'tailwind/tokens.light.css']);
   });
 
-  it('produces valid empty @theme {} block for shadow-only token set', () => {
-    const { css } = generate({
+  it('produces valid empty @theme {} block for shadow-only token set', async () => {
+    const { css } = await generate({
       shadow: {
         $type: 'shadow',
         lg: { $value: { x: 0, y: 4, blur: 6, color: 'rgba(0,0,0,0.1)' } },
@@ -117,18 +117,18 @@ describe('tailwind generator', () => {
     expect(css).toContain('--color-brandPrimary: #1a73e8;');
   });
 
-  it('produces deterministic output', () => {
+  it('produces deterministic output', async () => {
     const fixture = {
       color: { $type: 'color', primary: { $value: '#1a73e8' } },
       spacing: { $type: 'dimension', small: { $value: '8px' } },
     };
-    const { css: first } = generate(fixture);
-    const { css: second } = generate(fixture);
+    const { css: first } = await generate(fixture);
+    const { css: second } = await generate(fixture);
     expect(first).toBe(second);
   });
 
-  it('renders cubicBezier values as cubic-bezier() in --ease-* namespace', () => {
-    const { css } = generate({
+  it('renders cubicBezier values as cubic-bezier() in --ease-* namespace', async () => {
+    const { css } = await generate({
       ease: {
         $type: 'cubicBezier',
         'in-out': { $value: [0.4, 0, 0.2, 1] },
@@ -137,8 +137,8 @@ describe('tailwind generator', () => {
     expect(css).toContain('--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);');
   });
 
-  it('emits tokens.css and README.md under tailwind/', () => {
-    const { artifacts } = generate({
+  it('emits tokens.css and README.md under tailwind/', async () => {
+    const { artifacts } = await generate({
       color: { $type: 'color', primary: { $value: '#1a73e8' } },
     });
     expect(artifacts.map((a) => a.relativePath).sort()).toEqual([
@@ -148,15 +148,15 @@ describe('tailwind generator', () => {
     expect(artifacts.every((a) => a.format === 'tailwind')).toBe(true);
   });
 
-  it('includes the header comment', () => {
-    const { css } = generate({
+  it('includes the header comment', async () => {
+    const { css } = await generate({
       color: { $type: 'color', primary: { $value: '#1a73e8' } },
     });
     expect(css.startsWith('/* Generated by toki v0.1.0 — do not edit */')).toBe(true);
   });
 
-  it('does not duplicate namespace when path prefix matches namespace', () => {
-    const { css } = generate({
+  it('does not duplicate namespace when path prefix matches namespace', async () => {
+    const { css } = await generate({
       color: {
         $type: 'color',
         primary: { $value: '#1a73e8' },
@@ -166,8 +166,8 @@ describe('tailwind generator', () => {
     expect(css).not.toContain('--color-color-primary');
   });
 
-  it('maps fontWeight type to --font-weight-* namespace', () => {
-    const { css } = generate({
+  it('maps fontWeight type to --font-weight-* namespace', async () => {
+    const { css } = await generate({
       'font-weight': {
         $type: 'fontWeight',
         bold: { $value: '700' },
@@ -176,8 +176,8 @@ describe('tailwind generator', () => {
     expect(css).toContain('--font-weight-bold: 700;');
   });
 
-  it('maps fontFamily type to --font-family-* namespace', () => {
-    const { css } = generate({
+  it('maps fontFamily type to --font-family-* namespace', async () => {
+    const { css } = await generate({
       'font-family': {
         $type: 'fontFamily',
         sans: { $value: 'Inter, sans-serif' },
@@ -186,8 +186,8 @@ describe('tailwind generator', () => {
     expect(css).toContain('--font-family-sans: Inter, sans-serif;');
   });
 
-  it('maps duration type to --duration-* namespace', () => {
-    const { css } = generate({
+  it('maps duration type to --duration-* namespace', async () => {
+    const { css } = await generate({
       duration: {
         $type: 'duration',
         fast: { $value: '150ms' },
@@ -196,8 +196,8 @@ describe('tailwind generator', () => {
     expect(css).toContain('--duration-fast: 150ms;');
   });
 
-  it('uses full path when namespace comes from type mapping', () => {
-    const { css } = generate({
+  it('uses full path when namespace comes from type mapping', async () => {
+    const { css } = await generate({
       brand: {
         $type: 'color',
         primary: { $value: '#1a73e8' },
@@ -216,8 +216,8 @@ describe('tailwind generator', () => {
     expect(css).toContain('--color: #fff;');
   });
 
-  it('excludes number tokens without a path prefix match', () => {
-    const { css } = generate({
+  it('excludes number tokens without a path prefix match', async () => {
+    const { css } = await generate({
       misc: {
         $type: 'number',
         myValue: { $value: 42 },
@@ -226,8 +226,8 @@ describe('tailwind generator', () => {
     expect(css).not.toContain('--');
   });
 
-  it('includes number tokens with a recognized path prefix', () => {
-    const { css } = generate({
+  it('includes number tokens with a recognized path prefix', async () => {
+    const { css } = await generate({
       opacity: {
         $type: 'number',
         half: { $value: 0.5 },

@@ -37,7 +37,7 @@ export const renderTokensModule = (tokens: readonly ResolvedToken[], options: Ge
 
 export const vueGenerator: Generator = {
   format: 'vue',
-  generate: (tokens: readonly ResolvedToken[], options: GeneratorOptions): readonly OutputArtifact[] => {
+  generate: async (tokens: readonly ResolvedToken[], options: GeneratorOptions): Promise<readonly OutputArtifact[]> => {
     const t = (p: string) => (options.theme ? themePath(p, options.theme) : p);
     return [
       {

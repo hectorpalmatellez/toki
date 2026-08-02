@@ -18,9 +18,9 @@ const FIXTURE = {
   },
 };
 
-const generate = (raw: unknown) => {
+const generate = async (raw: unknown) => {
   const tokens = resolveDocument(parseTokenDocument(raw));
-  const artifacts = reactGenerator.generate(tokens, { version: '0.1.0' });
+  const artifacts = await reactGenerator.generate(tokens, { version: '0.1.0' });
   const byPath = (suffix: string): string => {
     const artifact = artifacts.find((a) => a.relativePath === `react/${suffix}`);
     if (artifact === undefined) throw new Error(`missing artifact react/${suffix}`);
@@ -30,8 +30,8 @@ const generate = (raw: unknown) => {
 };
 
 describe('react generator — theme.ts', () => {
-  it('nests the theme object by category (colors, spacing, typography)', () => {
-    const { theme } = generate(FIXTURE);
+  it('nests the theme object by category (colors, spacing, typography)', async () => {
+    const { theme } = await generate(FIXTURE);
     expect(theme).toContain('export const theme = {');
     expect(theme).toContain('colors: {');
     expect(theme).toContain('primary: "#1a73e8",');
@@ -42,20 +42,20 @@ describe('react generator — theme.ts', () => {
     expect(theme).toContain('types: {');
   });
 
-  it('exports the theme as const with a Theme type and default export', () => {
-    const { theme } = generate(FIXTURE);
+  it('exports the theme as const with a Theme type and default export', async () => {
+    const { theme } = await generate(FIXTURE);
     expect(theme).toContain('} as const;');
     expect(theme).toContain('export type Theme = typeof theme;');
     expect(theme).toContain('export default theme;');
   });
 
-  it('keeps composite values as nested plain objects', () => {
-    const { theme } = generate(FIXTURE);
+  it('keeps composite values as nested plain objects', async () => {
+    const { theme } = await generate(FIXTURE);
     expect(theme).toContain('body: { fontSize: "16px", lineHeight: "1.5" },');
   });
 
-  it('places single-segment tokens at the theme root', () => {
-    const { theme } = generate({
+  it('places single-segment tokens at the theme root', async () => {
+    const { theme } = await generate({
       brand: { $type: 'color', $value: '#ffffff' },
       color: { $type: 'color', primary: { $value: '#000000' } },
     });
@@ -63,20 +63,20 @@ describe('react generator — theme.ts', () => {
     expect(theme).toContain('colors: {');
   });
 
-  it('throws GeneratorError when a scalar collides with a category name', () => {
+  it('throws GeneratorError when a scalar collides with a category name', async () => {
     // `colors` (scalar) and `color.primary` (→ category `colors`) share a key.
-    expect(() =>
+    await expect(() =>
       generate({
         colors: { $type: 'color', $value: '#fff' },
         color: { $type: 'color', primary: { $value: '#000' } },
       }),
-    ).toThrow(GeneratorError);
+    ).rejects.toThrow(GeneratorError);
   });
 });
 
 describe('react generator — tokens.css companion', () => {
-  it('emits :root custom properties for next-themes integration', () => {
-    const { css } = generate(FIXTURE);
+  it('emits :root custom properties for next-themes integration', async () => {
+    const { css } = await generate(FIXTURE);
     expect(css).toContain(':root {');
     expect(css).toContain('--color-primary: #1a73e8;');
     expect(css).toContain('--type-body-font-size: 16px;');
@@ -85,8 +85,8 @@ describe('react generator — tokens.css companion', () => {
 });
 
 describe('react generator — artifacts', () => {
-  it('writes theme.ts, tokens.css and README.md under react/', () => {
-    const { artifacts } = generate(FIXTURE);
+  it('writes theme.ts, tokens.css and README.md under react/', async () => {
+    const { artifacts } = await generate(FIXTURE);
     expect(artifacts.map((a) => a.relativePath).sort()).toEqual([
       'react/README.md',
       'react/theme.ts',
@@ -95,12 +95,12 @@ describe('react generator — artifacts', () => {
     expect(artifacts.every((a) => a.format === 'react')).toBe(true);
   });
 
-  it('is deterministic', () => {
-    expect(generate(FIXTURE).theme).toBe(generate(FIXTURE).theme);
+  it('is deterministic', async () => {
+    expect((await generate(FIXTURE)).theme).toBe((await generate(FIXTURE)).theme);
   });
 
-  it('matches the artifact snapshots', () => {
-    const { theme, css } = generate(FIXTURE);
+  it('matches the artifact snapshots', async () => {
+    const { theme, css } = await generate(FIXTURE);
     expect(theme).toMatchSnapshot();
     expect(css).toMatchSnapshot();
   });

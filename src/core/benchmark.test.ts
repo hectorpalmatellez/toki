@@ -31,12 +31,12 @@ const resolveTokens = (count: number): DesignTokenDocument => {
 
 const formats = ['css', 'js', 'react-native', 'angular', 'angular-11', 'svelte', 'react'];
 
-const runWithTiming = <T>(fn: () => T, iterations = 5): { result: T; times: number[] } => {
+const runWithTiming = async <T>(fn: () => Promise<T>, iterations = 5): Promise<{ result: T; times: number[] }> => {
   const times: number[] = [];
   let result: T = undefined as unknown as T;
   for (let i = 0; i < iterations; i++) {
     const start = performance.now();
-    result = fn();
+    result = await fn();
     times.push(performance.now() - start);
   }
   return { result, times };
@@ -55,29 +55,31 @@ for (const size of tokenSizes) {
     const resolved = resolveDocument(doc);
 
     const parseThreshold = size <= 1000 ? 100 : 200;
-    it(`parses ${size} tokens in <${parseThreshold}ms (p95)`, () => {
-      const { times } = runWithTiming(() => {
-        parseTokenDocument({
-          color: generateTokens(size),
-          spacing: { $type: 'dimension', a: { $value: '1px' } },
-        });
-      });
+    it(`parses ${size} tokens in <${parseThreshold}ms (p95)`, async () => {
+      const { times } = await runWithTiming(() =>
+        Promise.resolve(
+          parseTokenDocument({
+            color: generateTokens(size),
+            spacing: { $type: 'dimension', a: { $value: '1px' } },
+          }),
+        ),
+      );
       const sorted = [...times].sort((a, b) => a - b);
       const p95 = percentile(sorted, 95);
       expect(p95).toBeLessThan(parseThreshold);
     });
 
     const resolveThreshold = size <= 1000 ? 100 : 200;
-    it(`resolves ${size} tokens in <${resolveThreshold}ms (p95)`, () => {
-      const { times } = runWithTiming(() => resolveDocument(doc));
+    it(`resolves ${size} tokens in <${resolveThreshold}ms (p95)`, async () => {
+      const { times } = await runWithTiming(() => Promise.resolve(resolveDocument(doc)));
       const sorted = [...times].sort((a, b) => a - b);
       const p95 = percentile(sorted, 95);
       expect(p95).toBeLessThan(resolveThreshold);
     });
 
     const genThreshold = size <= 1000 ? 500 : 2000;
-    it(`generates all platforms from ${size} tokens in <${genThreshold}ms (p95)`, () => {
-      const { times } = runWithTiming(() => generate(resolved, { formats }));
+    it(`generates all platforms from ${size} tokens in <${genThreshold}ms (p95)`, async () => {
+      const { times } = await runWithTiming(() => generate(resolved, { formats }));
       const sorted = [...times].sort((a, b) => a - b);
       const p95 = percentile(sorted, 95);
       expect(p95).toBeLessThan(genThreshold);

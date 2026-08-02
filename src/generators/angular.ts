@@ -158,7 +158,7 @@ export const renderTokensModule = (names: readonly AngularNames[], options: Gene
 
 export const angularGenerator: Generator = {
   format: 'angular',
-  generate: (tokens: readonly ResolvedToken[], options: GeneratorOptions): readonly OutputArtifact[] => {
+  generate: async (tokens: readonly ResolvedToken[], options: GeneratorOptions): Promise<readonly OutputArtifact[]> => {
     const tsNaming = options.naming === 'SCREAMING_SNAKE_CASE' ? 'SCREAMING_SNAKE_CASE' : 'CONSTANT_CASE';
     const names = deriveAngularNames(tokens, tsNaming);
     const t = (p: string) => (options.theme ? themePath(p, options.theme) : p);

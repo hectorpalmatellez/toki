@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import type { ResolvedToken, TransformPlugin } from './types.js';
+import { GeneratorError } from '../utils/errors.js';
 
 const sampleDoc = {
   color: {
@@ -47,8 +48,8 @@ describe('pipeline', () => {
     expect(css?.content).toContain('--color-secondary: #1a73e8;');
   });
 
-  it('generateFromDocument resolves and generates without disk I/O', () => {
-    const result = generateFromDocument(parseTokenDocument(sampleDoc), ['css']);
+  it('generateFromDocument resolves and generates without disk I/O', async () => {
+    const result = await generateFromDocument(parseTokenDocument(sampleDoc), ['css']);
     expect(result.artifacts.map((a) => a.relativePath)).toEqual(['css/README.md', 'css/tokens.css']);
   });
 
@@ -96,8 +97,8 @@ describe('pipeline', () => {
     expect(resolveFormats(['all'])).toEqual(['css', 'js', 'react-native', 'angular', 'angular-11', 'svelte', 'react', 'stencil', 'vue', 'tailwind']);
   });
 
-  it('generate accepts GenerateOptions with theme and naming', () => {
-    const result = generate(resolveDocument(parseTokenDocument(sampleDoc)), {
+  it('generate accepts GenerateOptions with theme and naming', async () => {
+    const result = await generate(resolveDocument(parseTokenDocument(sampleDoc)), {
       formats: ['css'],
       theme: 'light',
       naming: { css: 'kebab-case' },
@@ -107,14 +108,14 @@ describe('pipeline', () => {
     expect(paths).toContain('css/README.md');
   });
 
-  it('generate applies custom transform plugins', () => {
+  it('generate applies custom transform plugins', async () => {
     const upperCaseColors: TransformPlugin = (token: ResolvedToken) => {
       if (token.type === 'color' && typeof token.value === 'string') {
         return { ...token, value: token.value.toUpperCase() };
       }
       return token;
     };
-    const result = generate(resolveDocument(parseTokenDocument(sampleDoc)), {
+    const result = await generate(resolveDocument(parseTokenDocument(sampleDoc)), {
       formats: ['css'],
       transforms: [upperCaseColors],
     });
@@ -122,7 +123,7 @@ describe('pipeline', () => {
     expect(css?.content).toContain('#1A73E8');
   });
 
-  it('generate applies transforms in registration order', () => {
+  it('generate applies transforms in registration order', async () => {
     const addPrefix: TransformPlugin = (token: ResolvedToken) => {
       if (token.type === 'color' && typeof token.value === 'string') {
         return { ...token, value: `prefix-${token.value}` };
@@ -135,7 +136,7 @@ describe('pipeline', () => {
       }
       return token;
     };
-    const result = generate(resolveDocument(parseTokenDocument(sampleDoc)), {
+    const result = await generate(resolveDocument(parseTokenDocument(sampleDoc)), {
       formats: ['css'],
       transforms: [addPrefix, addSuffix],
     });
@@ -143,8 +144,8 @@ describe('pipeline', () => {
     expect(css?.content).toContain('prefix-#1a73e8-suffix');
   });
 
-  it('generate with empty transforms array is a no-op', () => {
-    const result = generate(resolveDocument(parseTokenDocument(sampleDoc)), {
+  it('generate with empty transforms array is a no-op', async () => {
+    const result = await generate(resolveDocument(parseTokenDocument(sampleDoc)), {
       formats: ['css'],
       transforms: [],
     });
@@ -191,9 +192,9 @@ describe('pipeline', () => {
     expect(result.tokenCount).toBe(3);
   });
 
-  it('multi-format build produces correct output for every format', () => {
+  it('multi-format build produces correct output for every format', async () => {
     const tokens = resolveDocument(parseTokenDocument(sampleDoc));
-    const result = generate(tokens, {
+    const result = await generate(tokens, {
       formats: ['css', 'js', 'react-native'],
     });
 
@@ -216,13 +217,36 @@ describe('pipeline', () => {
     expect(result.tokenCount).toBe(3);
   });
 
-  it('generate with all formats returns sorted artifacts', () => {
+  it('generate with all formats returns sorted artifacts', async () => {
     const tokens = resolveDocument(parseTokenDocument(sampleDoc));
-    const result = generate(tokens, {
+    const result = await generate(tokens, {
       formats: ['css', 'js', 'react-native', 'angular', 'svelte', 'react', 'stencil', 'vue', 'tailwind'],
     });
     const paths = result.artifacts.map((a) => a.relativePath);
     const sorted = [...paths].toSorted();
     expect(paths).toEqual(sorted);
+  });
+
+  it('runs selected generators concurrently (generate is async)', async () => {
+    const tokens = resolveDocument(parseTokenDocument(sampleDoc));
+    const pending = generate(tokens, { formats: ['css', 'js', 'react-native'] });
+    expect(pending).toBeInstanceOf(Promise);
+    const result = await pending;
+    expect(result.artifacts.length).toBeGreaterThan(0);
+    expect(result.formats).toEqual(['css', 'js', 'react-native']);
+  });
+
+  it('a failing generator rejects the whole concurrent run', async () => {
+    // GeneratorError is thrown synchronously inside the async generator, which
+    // surfaces as a rejection from Promise.all rather than a sync throw.
+    const colliding = {
+      color: {
+        $type: 'color',
+        'brand-primary': { $value: '#fff' },
+        brandPrimary: { $value: '#000' },
+      },
+    };
+    const tokens = resolveDocument(parseTokenDocument(colliding));
+    await expect(generate(tokens, { formats: ['css', 'js'] })).rejects.toThrow(GeneratorError);
   });
 });

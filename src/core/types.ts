@@ -161,10 +161,15 @@ export interface GeneratorOptions {
   readonly naming?: NamingConvention;
 }
 
-/** A platform generator module. */
+/**
+ * A platform generator module.
+ *
+ * `generate` is async so the pipeline can run selected generators
+ * concurrently via `Promise.all` after the Transform stage.
+ */
 export interface Generator {
   readonly format: OutputFormat;
-  generate(tokens: readonly ResolvedToken[], options: GeneratorOptions): readonly OutputArtifact[];
+  generate(tokens: readonly ResolvedToken[], options: GeneratorOptions): Promise<readonly OutputArtifact[]>;
 }
 
 // ---------------------------------------------------------------------------

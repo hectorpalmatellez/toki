@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stencilGenerator, renderTokensModule, renderUnionTypes } from './stencil.js';
+import { stencilGenerator } from './stencil.js';
 import { resolveDocument } from '../core/resolver.js';
 import { parseTokenDocument } from '../core/parser.js';
 import { GeneratorError } from '../utils/errors.js';
@@ -18,9 +18,9 @@ const FIXTURE = {
   motion: { $type: 'cubicBezier', ease: { $value: [0.4, 0, 0.2, 1] } },
 };
 
-const generate = (raw: unknown) => {
+const generate = async (raw: unknown) => {
   const tokens = resolveDocument(parseTokenDocument(raw));
-  const artifacts = stencilGenerator.generate(tokens, { version: '0.1.0' });
+  const artifacts = await stencilGenerator.generate(tokens, { version: '0.1.0' });
   const byPath = (suffix: string): string => {
     const artifact = artifacts.find((a) => a.relativePath === `stencil/${suffix}`);
     if (artifact === undefined) throw new Error(`missing artifact stencil/${suffix}`);
@@ -36,8 +36,8 @@ const generate = (raw: unknown) => {
 };
 
 describe('stencil generator', () => {
-  it('emits :root CSS custom properties', () => {
-    const { css } = generate(FIXTURE);
+  it('emits :root CSS custom properties', async () => {
+    const { css } = await generate(FIXTURE);
     expect(css).toContain(':root {');
     expect(css).toContain('--color-primary: #1a73e8;');
     expect(css).toContain('--color-secondary: #1a73e8;');
@@ -48,8 +48,8 @@ describe('stencil generator', () => {
     expect(css).toContain('--type-body-line-height: 1.5;');
   });
 
-  it('emits camelCase exports for every token in tokens.ts', () => {
-    const { ts } = generate(FIXTURE);
+  it('emits camelCase exports for every token in tokens.ts', async () => {
+    const { ts } = await generate(FIXTURE);
     expect(ts).toContain('export const colorPrimary = "#1a73e8";');
     expect(ts).toContain('export const colorSecondary = "#1a73e8";');
     expect(ts).toContain('export const spacingSmall = "8px";');
@@ -58,8 +58,8 @@ describe('stencil generator', () => {
     expect(ts).toContain('export const typeBody = {"fontSize":"16px","lineHeight":"1.5"};');
   });
 
-  it('groups tokens by category using raw first path segment keys', () => {
-    const { ts } = generate(FIXTURE);
+  it('groups tokens by category using raw first path segment keys', async () => {
+    const { ts } = await generate(FIXTURE);
     expect(ts).toContain('export const tokens = {');
     expect(ts).toContain('color: {');
     expect(ts).toContain('spacing: {');
@@ -69,14 +69,14 @@ describe('stencil generator', () => {
     expect(ts).toContain('export type TokenCategory = keyof typeof tokens;');
   });
 
-  it('nests tokens by remaining path segments within each category', () => {
-    const { ts } = generate(FIXTURE);
+  it('nests tokens by remaining path segments within each category', async () => {
+    const { ts } = await generate(FIXTURE);
     expect(ts).toContain('  primary: "#1a73e8",');
     expect(ts).toContain('  small: "8px",');
   });
 
-  it('generates types.ts with per-category union types', () => {
-    const { types } = generate(FIXTURE);
+  it('generates types.ts with per-category union types', async () => {
+    const { types } = await generate(FIXTURE);
     expect(types).toContain('export type ColorToken =');
     expect(types).toContain('"color.primary"');
     expect(types).toContain('"color.secondary"');
@@ -89,8 +89,8 @@ describe('stencil generator', () => {
     expect(types).toContain('"type.body"');
   });
 
-  it('generates types.ts with full TokenName union', () => {
-    const { types } = generate(FIXTURE);
+  it('generates types.ts with full TokenName union', async () => {
+    const { types } = await generate(FIXTURE);
     expect(types).toContain('export type TokenName =');
     expect(types).toContain('ColorToken');
     expect(types).toContain('SpacingToken');
@@ -98,16 +98,16 @@ describe('stencil generator', () => {
     expect(types).toContain('TypeToken');
   });
 
-  it('generates tokens.d.ts with type declarations', () => {
-    const { dts } = generate(FIXTURE);
+  it('generates tokens.d.ts with type declarations', async () => {
+    const { dts } = await generate(FIXTURE);
     expect(dts).toContain('export declare const colorPrimary: string;');
     expect(dts).toContain('export declare const colorSecondary: string;');
     expect(dts).toContain('export declare const spacingSmall: string;');
     expect(dts).toContain('export declare const spacingMedium: string;');
   });
 
-  it('throws GeneratorError on identifier collisions', () => {
-    expect(() =>
+  it('throws GeneratorError on identifier collisions', async () => {
+    await expect(() =>
       generate({
         color: {
           $type: 'color',
@@ -115,11 +115,11 @@ describe('stencil generator', () => {
           brandPrimary: { $value: '#000' },
         },
       }),
-    ).toThrow(GeneratorError);
+    ).rejects.toThrow(GeneratorError);
   });
 
-  it('writes five artifacts under stencil/', () => {
-    const { artifacts } = generate(FIXTURE);
+  it('writes five artifacts under stencil/', async () => {
+    const { artifacts } = await generate(FIXTURE);
     expect(artifacts.map((a) => a.relativePath).sort()).toEqual([
       'stencil/README.md',
       'stencil/tokens.css',
@@ -130,21 +130,21 @@ describe('stencil generator', () => {
     expect(artifacts.every((a) => a.format === 'stencil')).toBe(true);
   });
 
-  it('includes the header comment and is deterministic', () => {
-    const { css, ts, dts, types } = generate(FIXTURE);
+  it('includes the header comment and is deterministic', async () => {
+    const { css, ts, dts, types } = await generate(FIXTURE);
     const expected = '/* Generated by toki v0.1.0 — do not edit */';
     expect(css.startsWith(expected)).toBe(true);
     expect(ts.startsWith(expected)).toBe(true);
     expect(dts.startsWith(expected)).toBe(true);
     expect(types.startsWith(expected)).toBe(true);
-    expect(ts).toBe(generate(FIXTURE).ts);
+    expect(ts).toBe((await generate(FIXTURE)).ts);
   });
 
-  it('reuses themePath for multi-theme naming', () => {
+  it('reuses themePath for multi-theme naming', async () => {
     const tokens = resolveDocument(
       parseTokenDocument({ color: { $type: 'color', primary: { $value: '#1a73e8' } } }),
     );
-    const artifacts = stencilGenerator.generate(tokens, { version: '0.1.0', theme: 'dark' });
+    const artifacts = await stencilGenerator.generate(tokens, { version: '0.1.0', theme: 'dark' });
     const paths = artifacts.map((a) => a.relativePath);
     expect(paths).toContain('stencil/tokens.dark.css');
     expect(paths).toContain('stencil/tokens.dark.ts');
@@ -153,8 +153,8 @@ describe('stencil generator', () => {
     expect(paths).toContain('stencil/README.md');
   });
 
-  it('matches the artifact snapshots', () => {
-    const { css, ts, dts, types } = generate(FIXTURE);
+  it('matches the artifact snapshots', async () => {
+    const { css, ts, dts, types } = await generate(FIXTURE);
     expect(css).toMatchSnapshot();
     expect(ts).toMatchSnapshot();
     expect(dts).toMatchSnapshot();
