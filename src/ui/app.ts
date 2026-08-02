@@ -113,7 +113,7 @@ const expanded = new Set<string>();
 // ---------------------------------------------------------------------------
 
 const $ = <T extends HTMLElement>(id: string): T => {
-  const node = document.getElementById(id);
+  const node = document.getElementById(id.replace(/^#/, ''));
   if (node === null) throw new Error(`Missing element #${id}`);
   return node as T;
 };
