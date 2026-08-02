@@ -275,6 +275,23 @@ const resolveInput = (config: TokiConfig | undefined, cliInput: string | undefin
   return input;
 };
 
+const uiCommand = async (options: {
+  port: string;
+  host: string;
+  open: boolean;
+  verbose: boolean;
+}): Promise<void> => {
+  const port = Number.parseInt(options.port, 10);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new TokiError(
+      `Invalid port "${options.port}". Use a number between 1 and 65535.`,
+      'CONFIG_ERROR',
+    );
+  }
+  const { startUi } = await import('./ui/server.js');
+  await startUi({ port, host: options.host, open: options.open, verbose: options.verbose });
+};
+
 const schemaCommand = async (options: {
   input?: string;
   output: string;
@@ -693,6 +710,32 @@ program
     try {
       const { startMcpServer } = await import('./mcp/server.js');
       await startMcpServer();
+    } catch (error) {
+      if (error instanceof TokiError) {
+        console.error(`error [${error.code}]: ${error.message}`);
+        process.exitCode = 1;
+        return;
+      }
+      console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command('ui')
+  .description('Start the local web editor for creating and building design tokens')
+  .option('--port <port>', 'Port to listen on (default: 4173)', '4173')
+  .option('--host <host>', 'Interface to bind (default: 127.0.0.1)', '127.0.0.1')
+  .option('--no-open', 'Do not auto-open the browser')
+  .option('--verbose', 'Enable verbose request logging', false)
+  .action(async (options) => {
+    try {
+      await uiCommand({
+        port: options.port,
+        host: options.host,
+        open: options.open !== false,
+        verbose: options.verbose,
+      });
     } catch (error) {
       if (error instanceof TokiError) {
         console.error(`error [${error.code}]: ${error.message}`);

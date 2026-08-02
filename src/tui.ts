@@ -9,7 +9,7 @@ import { existsSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { TOKI_VERSION } from './version.js';
 
-type Command = 'build' | 'init' | 'diff' | 'watch' | 'import';
+type Command = 'build' | 'init' | 'diff' | 'watch' | 'import' | 'ui';
 
 const SAMPLE_TOKENS = {
   color: {
@@ -86,6 +86,10 @@ export const runTui = async (): Promise<void> => {
       {
         value: 'import' as const,
         label: 'import  — Import tokens from another format (Style Dictionary / Figma Tokens)',
+      },
+      {
+        value: 'ui' as const,
+        label: 'ui      — Start the local web editor for creating and building tokens',
       },
     ],
   });
@@ -222,6 +226,17 @@ export const runTui = async (): Promise<void> => {
           outputPath = await importFigmaTokens(opts);
         }
         console.log(`  Imported tokens written to ${outputPath}`);
+      } catch (error) {
+        console.error(String(error));
+        process.exitCode = 1;
+      }
+      break;
+    }
+
+    case 'ui': {
+      try {
+        const { startUi } = await import('./ui/server.js');
+        await startUi({ open: true });
       } catch (error) {
         console.error(String(error));
         process.exitCode = 1;
