@@ -25,6 +25,8 @@ Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates 
 - **Ecosystem imports** — convert Style Dictionary or Figma Tokens Studio formats to W3C DTCG
 - **MCP server** — `toki mcp` exposes the full pipeline to AI tools (Claude, Cursor, Windsurf) via 7 tools, 3 resources, 1 dynamic resource, and 3 prompts over Model Context Protocol
 - **Token extraction** — scan CSS/SCSS files to extract design token candidates and generate W3C DTCG output
+- **Output schemas** — `toki schema` publishes a JSON Schema per platform output format for IDE autocomplete on generated files
+- **Editor completions** — `toki completions` generates editor-agnostic, VS Code snippet, and LSP completion specs from resolved tokens
 - **Deterministic output** — same input produces byte-identical artifacts
 - **Zero runtime dependencies** in generated files
 
@@ -76,7 +78,7 @@ Run `toki` with no arguments for an interactive menu. Run `toki init` to scaffol
 | `-c, --config <path>`       | Path to toki config file                                            | auto-discovered |
 | `-t, --theme <name>`        | Build a single theme from multi-theme config                        | all themes      |
 | `--clean` / `--no-clean`    | Clean subdirectories before writing                                 | `true`          |
-| `--no-cache`                | Disable the incremental build cache                                | enabled         |
+| `--no-cache`                | Disable the incremental build cache                                 | enabled         |
 | `--verbose`                 | Print resolution trace, values, and timing                          | `false`         |
 
 ## Documentation
@@ -84,7 +86,7 @@ Run `toki` with no arguments for an interactive menu. Run `toki init` to scaffol
 | Guide                                | Description                                                                                 |
 | ------------------------------------ | ------------------------------------------------------------------------------------------- |
 | [Usage Guide](docs/usage.md)         | Detailed CLI commands, config file, multi-theme, naming, plugins, verbose mode, error codes |
-| [MCP Guide](docs/mcp.md)             | AI agent integration — `toki mcp` setup, tools, examples                                   |
+| [MCP Guide](docs/mcp.md)             | AI agent integration — `toki mcp` setup, tools, examples                                    |
 | [Output Guide](docs/output.md)       | Input format (W3C DTCG), output conventions, code examples for all 10 platforms             |
 | [Architecture](docs/architecture.md) | Pipeline design, source tree, key design decisions                                          |
 | [Changelog](CHANGELOG.md)            | Release history following Keep a Changelog                                                  |
@@ -98,7 +100,7 @@ Run `toki` with no arguments for an interactive menu. Run `toki init` to scaffol
 | Language        | TypeScript 7.0+ (native Go compiler, strict mode) |
 | CLI             | Commander.js                                      |
 | Bundler         | tsup                                              |
-| Testing         | Vitest (357 tests, 90%+ coverage)                 |
+| Testing         | Vitest (533 tests, 90%+ coverage)                 |
 | Linting         | oxlint                                            |
 | Formatting      | Prettier                                          |
 | Package manager | pnpm 10.32.1                                      |

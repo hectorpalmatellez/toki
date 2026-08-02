@@ -10,16 +10,16 @@ Parse tokens and generate framework-specific output artifacts.
 toki build --input tokens.json --output ./dist --format css,js,react
 ```
 
-| Flag                        | Description                                                                                                | Default         |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------- |
-| `-i, --input <path>`        | Path to input token file (W3C DTCG JSON)                                                                   | —               |
-| `-o, --output <path>`       | Output directory for generated artifacts                                                                   | —               |
+| Flag                        | Description                                                                                                                              | Default         |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| `-i, --input <path>`        | Path to input token file (W3C DTCG JSON)                                                                                                 | —               |
+| `-o, --output <path>`       | Output directory for generated artifacts                                                                                                 | —               |
 | `-f, --format <formats...>` | Output formats: `css`, `js`, `react-native`, `angular`, `angular-11`, `svelte`, `react`, `stencil`, `vue`, `tailwind` (or `all` for all) | `css, js`       |
-| `-c, --config <path>`       | Path to toki config file                                                                                   | auto-discovered |
-| `-t, --theme <name>`        | Build a single theme from multi-theme config                                                               | all themes      |
-| `--clean` / `--no-clean`    | Clean the target platform subdirectories before writing                                                    | `true`          |
-| `--no-cache`                | Disable the incremental build cache                                                                        | enabled         |
-| `--verbose`                 | Print resolution trace, per-token values, and timing                                                       | `false`         |
+| `-c, --config <path>`       | Path to toki config file                                                                                                                 | auto-discovered |
+| `-t, --theme <name>`        | Build a single theme from multi-theme config                                                                                             | all themes      |
+| `--clean` / `--no-clean`    | Clean the target platform subdirectories before writing                                                                                  | `true`          |
+| `--no-cache`                | Disable the incremental build cache                                                                                                      | enabled         |
+| `--verbose`                 | Print resolution trace, per-token values, and timing                                                                                     | `false`         |
 
 ### `toki init`
 
@@ -41,10 +41,10 @@ toki diff tokens-old.json tokens-new.json
 toki diff tokens-old.json tokens-new.json --json
 ```
 
-| Flag         | Description                                        | Default |
-| ------------ | -------------------------------------------------- | ------- |
-| `--json`     | Output as JSON instead of human-readable text      | `false` |
-| `--markdown` | Output as GitHub-compatible Markdown tables        | `false` |
+| Flag         | Description                                   | Default |
+| ------------ | --------------------------------------------- | ------- |
+| `--json`     | Output as JSON instead of human-readable text | `false` |
+| `--markdown` | Output as GitHub-compatible Markdown tables   | `false` |
 
 Each difference includes the token's dotted path, its type, and the before/after values.
 
@@ -58,12 +58,72 @@ toki validate --input tokens.json --strict
 toki validate --input tokens.json --json
 ```
 
-| Flag                     | Description                                                         | Default         |
-| ------------------------ | ------------------------------------------------------------------- | --------------- |
-| `-i, --input <path>`     | Path to input token file (W3C DTCG JSON)                            | —               |
-| `-c, --config <path>`    | Path to toki config file                                            | auto-discovered |
-| `--json`                 | Output as JSON instead of human-readable text                       | `false`         |
-| `--strict`               | Treat warnings (missing descriptions, naming violations) as errors  | `false`         |
+| Flag                  | Description                                                        | Default         |
+| --------------------- | ------------------------------------------------------------------ | --------------- |
+| `-i, --input <path>`  | Path to input token file (W3C DTCG JSON)                           | —               |
+| `-c, --config <path>` | Path to toki config file                                           | auto-discovered |
+| `--json`              | Output as JSON instead of human-readable text                      | `false`         |
+| `--strict`            | Treat warnings (missing descriptions, naming violations) as errors | `false`         |
+
+### `toki schema`
+
+Publish a JSON Schema (draft-07) per platform output format, describing the JSON view of the generated artifacts for your resolved token set. Associate the schemas with JSON files in your editor (VS Code `json.schemas`) for autocomplete and validation.
+
+```bash
+toki schema --input tokens.json --output ./schema/output --format css,js,react
+toki schema                        # uses config file; publishes all formats
+```
+
+| Flag                        | Description                                                          | Default           |
+| --------------------------- | -------------------------------------------------------------------- | ----------------- |
+| `-i, --input <path>`        | Path to input token file (W3C DTCG JSON)                             | —                 |
+| `-o, --output <path>`       | Output directory for schema files                                    | `./schema/output` |
+| `-f, --format <formats...>` | Output formats (comma- or space-separated; `all` for every platform) | `all`             |
+| `-c, --config <path>`       | Path to toki config file                                             | auto-discovered   |
+| `-t, --theme <name>`        | Build a single theme from multi-theme config                         | all themes        |
+| `--verbose`                 | Print the published schema file paths                                | `false`           |
+
+Each `properties` entry lists the exact identifier or custom property the generator emits (e.g. `--color-primary`, `colorPrimary`, `COLOR_PRIMARY`, `colors.brand.primary`), typed by the resolved value (numbers stay numbers for React Native's dp/sp transforms), with `additionalProperties: false` and per-token descriptions.
+
+**VS Code example** — validate any JSON document containing the token object for a platform:
+
+```jsonc
+// .vscode/settings.json
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["**/tokens.*.css.json"],
+      "url": "./schema/output/css.json",
+    },
+  ],
+}
+```
+
+### `toki completions`
+
+Generate editor completion specs from resolved tokens for design-system DX: an editor-agnostic spec plus adapters for VS Code snippets and LSP `CompletionItem`s. Each entry carries the dotted token id, type, resolved value, description, the `--kebab-case` CSS variable, and the camelCase identifier; insertions use the canonical `var(--color-primary)` reference.
+
+```bash
+toki completions --input tokens.json --output ./completions
+toki completions --editor vscode --editor lsp        # skip the raw spec
+```
+
+| Flag                    | Description                                                                   | Default           |
+| ----------------------- | ----------------------------------------------------------------------------- | ----------------- |
+| `-i, --input <path>`    | Path to input token file (W3C DTCG JSON)                                      | —                 |
+| `-o, --output <path>`   | Output directory for completion files                                         | `./completions`   |
+| `--editor <editors...>` | Editor targets: `spec`, `vscode`, `lsp`, or `all` (comma- or space-separated) | `spec vscode lsp` |
+| `-c, --config <path>`   | Path to toki config file                                                      | auto-discovered   |
+| `-t, --theme <name>`    | Build a single theme from multi-theme config                                  | all themes        |
+| `--verbose`             | Print the written file paths                                                  | `false`           |
+
+Output files (theme-suffixed when building themes, e.g. `tokens.dark.code-snippets`):
+
+| File                   | Content                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------ |
+| `spec.json`            | Editor-agnostic completion spec (`$schema`, `version`, `tokens[]`)                               |
+| `tokens.code-snippets` | VS Code snippet file — drop it into a `.vscode/` directory to complete `var(--...)` references   |
+| `tokens.lsp.json`      | LSP `CompletionItem[]` document — feed to custom clients or convert with any LSP-compatible tool |
 
 ### `toki watch`
 
@@ -186,12 +246,12 @@ toki build --theme dark
 
 ## Naming conventions
 
-| Convention             | Example         | Default for                     |
-| ---------------------- | --------------- | ------------------------------- |
+| Convention             | Example         | Default for                                |
+| ---------------------- | --------------- | ------------------------------------------ |
 | `camelCase`            | `colorPrimary`  | JS, React Native, React, Svelte, StencilJS |
-| `kebab-case`           | `color-primary` | CSS, Svelte CSS, StencilJS CSS, Tailwind        |
-| `CONSTANT_CASE`        | `COLOR_PRIMARY` | Angular, Angular 11             |
-| `SCREAMING_SNAKE_CASE` | `COLOR_PRIMARY` | alias for CONSTANT_CASE         |
+| `kebab-case`           | `color-primary` | CSS, Svelte CSS, StencilJS CSS, Tailwind   |
+| `CONSTANT_CASE`        | `COLOR_PRIMARY` | Angular, Angular 11                        |
+| `SCREAMING_SNAKE_CASE` | `COLOR_PRIMARY` | alias for CONSTANT_CASE                    |
 
 Override per platform in config:
 
