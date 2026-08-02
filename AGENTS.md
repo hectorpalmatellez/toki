@@ -2,22 +2,24 @@
 
 ## Project Overview
 
-Toki is a design token pipeline CLI that ingests W3C DTCG-format JSON tokens and generates framework-specific code artifacts for nine target platforms: CSS, JavaScript, React Native, Angular (latest + v11), Svelte, React/Next.js, StencilJS, and Vue.
+Toki is a design token pipeline CLI that ingests W3C DTCG-format JSON tokens and generates framework-specific code artifacts for ten target platforms: CSS, JavaScript, React Native, Angular (latest + v11), Svelte, React/Next.js, StencilJS, Vue, and Tailwind CSS v4.
 
-**Status:** All development phases complete. Production-ready.
+**Status:** All development phases complete. Production-ready (current release: v1.9.0).
 
 ## Tech Stack
 
-| Layer           | Technology   | Version                                    |
-| --------------- | ------------ | ------------------------------------------ |
-| Runtime         | Node.js      | 24 LTS (enforced via `engines` + `.nvmrc`) |
-| Language        | TypeScript   | 7.0+ (native Go compiler, strict mode)     |
-| CLI Framework   | Commander.js | Latest                                     |
-| Bundler         | tsup         | Latest                                     |
-| Testing         | Vitest       | Latest                                     |
-| Linting         | oxlint       | Latest                                     |
-| Formatting      | Prettier     | Latest                                     |
-| Package Manager | pnpm         | 10.32.1                                    |
+| Layer           | Technology                | Version                                    |
+| --------------- | ------------------------- | ------------------------------------------ |
+| Runtime         | Node.js                   | 24 LTS (enforced via `engines` + `.nvmrc`) |
+| Language        | TypeScript                | 7.0.2 (native Go compiler, strict mode)    |
+| CLI Framework   | Commander.js              | 15.0.0                                     |
+| Bundler         | tsup                      | 8.5.1                                      |
+| Testing         | Vitest                    | 4.1.10 (bench: `pnpm bench`)               |
+| Linting         | oxlint                    | 1.76.0                                     |
+| Formatting      | Prettier                  | 3.9.6                                      |
+| MCP             | @modelcontextprotocol/sdk | 1.30.0                                     |
+| Config Loading  | jiti                      | 2.7.0                                      |
+| Package Manager | pnpm                      | 10.32.1                                    |
 
 ## Commands
 
@@ -29,6 +31,9 @@ pnpm lint         # oxlint src/ — must pass with zero warnings
 pnpm test         # vitest run — must pass all tests
 pnpm build        # tsup + build:types — must build successfully (bundling + .d.ts generation)
 ```
+
+Run `pnpm bench` (timing assertions on 500/1000/5000-token sets) when touching
+parser/resolver/generator hot paths. Run `pnpm format:check` before committing.
 
 ## Coding Conventions
 
@@ -52,16 +57,16 @@ Parse → Resolve → Transform → Generate → Write
 - **Parser:** Reads W3C DTCG JSON, validates structure, produces `TokenTree`
 - **Resolver:** Expands `{group.token}` references, detects circular dependencies, applies `$type` inheritance
 - **Transform:** Converts raw values to platform-specific formats (hex → rgb, px → rem/sp/dp)
-- **Generator Registry:** Each platform is an isolated module implementing `(tokens, config) => OutputArtifact[]`
-- **Writer:** Writes artifacts to disk, generates checksum manifest
+- **Generator Registry:** Each platform is an isolated module implementing the async `Generator` interface (`(tokens, config) => Promise<OutputArtifact[]>`); selected formats run in parallel via `Promise.all`
+- **Writer:** Writes artifacts to disk, deterministic and byte-identical
 
 **When adding a new generator:**
 
 1. Create `src/generators/<platform>.ts`
 2. Implement the `Generator` interface from `src/core/types.ts`
-3. Register it in `src/generators/index.ts`
-4. Add tests in `src/generators/__tests__/<platform>.test.ts`
-5. Update README with output examples
+3. Register it: `OutputFormat` + `ALL_FORMATS` in `src/core/types.ts`, the registry in `src/generators/index.ts`, `DEFAULT_NAMING` in `src/core/config.ts`
+4. Add tests in `src/generators/<platform>.test.ts` (co-located with source)
+5. Update README and `src/mcp/resources.ts` (`FORMAT_DESCRIPTIONS` / `FORMAT_ARTIFACTS` / `DEFAULT_NAMING_MAP`)
 
 ### Naming Conventions
 
@@ -69,7 +74,7 @@ Parse → Resolve → Transform → Generate → Write
 - **Types/Interfaces:** PascalCase (`TokenGroup`, `ResolvedToken`)
 - **Functions/Variables:** camelCase (`resolveReferences`, `tokenTree`)
 - **Constants:** SCREAMING_SNAKE_CASE (`DEFAULT_OUTPUT_FORMATS`)
-- **CLI commands:** kebab-case (`toki build`, `toki init`)
+- **CLI commands:** kebab-case (`toki build`, `toki init`, `toki validate`, `toki schema`, `toki completions`, `toki watch`, `toki diff`, `toki import`, `toki mcp`, `toki ui`); running with no arguments opens the interactive menu
 - **Version tags/releases:** plain semver without `v` prefix (`1.2.1`, not `v1.2.1`)
 
 ### Testing
@@ -101,6 +106,7 @@ Generated files must:
 - **React/Next.js:** Nested theme object + companion CSS for `next-themes`
 - **StencilJS:** `:root` CSS custom properties + `camelCase` ES module with grouped `tokens` object + per-category union types (`XToken`) and full `TokenName` union for type-safe `@Prop()` decorators
 - **Vue:** CSS custom properties + ES module, compatible with scoped `<style>` blocks
+- **Tailwind CSS v4:** `@theme` block with namespace-mapped custom properties (no separate config file)
 
 ## What NOT To Do
 
@@ -117,12 +123,19 @@ Generated files must:
 src/
 ├── cli.ts                 # Commander.js entry point
 ├── index.ts               # Barrel export
+├── tui.ts                 # Interactive menu (runs when no command is given)
+├── version.ts             # Runtime version read from package.json
 ├── core/
 │   ├── types.ts           # Core type definitions
 │   ├── parser.ts          # JSON → TokenTree
 │   ├── resolver.ts        # Reference expansion + cycle detection
 │   ├── transformer.ts     # Value transformation registry (per-platform)
-│   └── pipeline.ts        # Orchestrates parse → resolve → transform → generate
+│   ├── pipeline.ts        # Orchestrates parse → resolve → transform → generate
+│   ├── config.ts          # toki.config.ts loading, merging, validation
+│   ├── cache.ts           # Incremental build cache (two-tier SHA-256 keys)
+│   ├── diff.ts            # Token set diffing (added/removed/changed)
+│   ├── validate.ts        # Token linting rules
+│   └── watch.ts           # chokidar watch mode with debounce
 ├── generators/
 │   ├── css.ts
 │   ├── js.ts
@@ -133,6 +146,7 @@ src/
 │   ├── react.ts
 │   ├── stencil.ts
 │   ├── vue.ts
+│   ├── tailwind.ts
 │   ├── readme.ts          # Per-platform README artifacts
 │   └── index.ts           # Generator registry
 ├── extractors/
@@ -140,14 +154,34 @@ src/
 │   ├── css-properties.ts  # CSS custom property extraction (--var: value)
 │   ├── scss-variables.ts  # SCSS variable extraction ($var: value)
 │   ├── scanner.ts         # Recursive directory walk + file filtering
+│   ├── __tests__/         # Extractor tests
 │   └── index.ts           # Barrel export
+├── importers/
+│   ├── style-dictionary.ts # Style Dictionary v3 → W3C DTCG
+│   └── figma-tokens.ts     # Figma Tokens Studio export → W3C DTCG
+├── schemas/
+│   └── output.ts          # Per-platform output JSON Schema generation
+├── intellisense/
+│   ├── spec.ts            # Editor-agnostic completion spec
+│   ├── vscode.ts          # .code-snippets document
+│   ├── lsp.ts             # LSP CompletionItem[]
+│   └── generate.ts        # Completion file I/O
 ├── mcp/
 │   ├── server.ts          # MCP server — 7 tools over stdio transport
+│   ├── resources.ts       # Static + dynamic resource handlers
+│   ├── prompts.ts         # Prompt templates
 │   └── __tests__/         # MCP tool tests
+├── ui/
+│   ├── server.ts          # toki ui HTTP server + API handlers
+│   ├── api.ts             # Editor API helpers
+│   ├── model.ts           # Client-side token model
+│   ├── app.ts             # Web editor client entry
+│   └── public/            # Bundled editor assets
 └── utils/
     ├── naming.ts          # camelCase, kebab-case, etc.
     ├── grouping.ts        # Category grouping + JS object-literal serialization
     ├── format.ts          # Value formatting helpers
+    ├── hashing.ts         # sha256 + canonical JSON (cache keys)
     └── errors.ts          # Custom error classes
 ```
 
@@ -183,7 +217,7 @@ Example input:
 ## Debugging
 
 - Use `--verbose` flag to see resolution trace and generator output paths
-- Check `dist/manifest.json` for checksums of all generated files
+- Check `.toki/cache.json` for cached build entries (SHA-256 keys of input bytes and resolved token trees)
 - Run `toki build --format css --verbose` to isolate issues to a single generator
 
 ## Resources
