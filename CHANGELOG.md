@@ -5,6 +5,15 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Dependency upgrade pass** — `vitest`/`@vitest/coverage-v8` 3.2 → 4.1, `commander` 13 → 15, `oxlint` 1.6 → 1.76, `jiti` 2.4 → 2.7, `prettier` 3.5 → 3.9, `@modelcontextprotocol/sdk` 1.29 → 1.30, `tsup` → 8.5.1. `build:types` now uses `typescript@7.0.2` (was pinned to 6.0.3), matching the devDependency.
+- **Vitest 4 coverage config** — `coverage` moved to the top level of `vitest.config.ts`; the v8 provider counts more branch points (83.31% → 78.08% on identical code), so the branch threshold was recalibrated from 80 to 75.
+- **`pnpm bench`** — Vitest 4's bench mode only matches `*.bench.*` globs, so the script now runs the timing suite directly (`vitest run src/core/benchmark.test.ts`).
+- **Prettier 3.6+ formatting** — 25 files re-formatted to the current defaults.
+
 ## [1.8.3] — 2026-08-02
 
 ### Fixed
