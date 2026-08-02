@@ -110,7 +110,12 @@ describe('startUi', () => {
     try {
       const server = await startUi({ port: 0, open: true });
       occupied.push(server);
-      expect(spawn).toHaveBeenCalledWith('cmd', ['/c', 'start', '', expect.stringContaining('http://127.0.0.1:') as unknown as string]);
+      expect(spawn).toHaveBeenCalledWith('cmd', [
+        '/c',
+        'start',
+        '',
+        expect.stringContaining('http://127.0.0.1:') as unknown as string,
+      ]);
     } finally {
       Object.defineProperty(process, 'platform', { value: original, configurable: true });
     }
@@ -122,7 +127,9 @@ describe('startUi', () => {
     try {
       const server = await startUi({ port: 0, open: true });
       occupied.push(server);
-      expect(spawn).toHaveBeenCalledWith('xdg-open', [expect.stringContaining('http://127.0.0.1:') as unknown as string]);
+      expect(spawn).toHaveBeenCalledWith('xdg-open', [
+        expect.stringContaining('http://127.0.0.1:') as unknown as string,
+      ]);
     } finally {
       Object.defineProperty(process, 'platform', { value: original, configurable: true });
     }
@@ -154,12 +161,10 @@ describe('startUi', () => {
       await new Promise((r) => setTimeout(r, 10));
       expect(custom).toHaveBeenCalled();
     } finally {
-      mock.mockImplementation(
-        (() => {
-          const emitter = new EventEmitter();
-          return { on: emitter.on.bind(emitter), unref: vi.fn() };
-        }) as unknown as typeof spawn,
-      );
+      mock.mockImplementation((() => {
+        const emitter = new EventEmitter();
+        return { on: emitter.on.bind(emitter), unref: vi.fn() };
+      }) as unknown as typeof spawn);
       Object.defineProperty(process, 'platform', { value: original, configurable: true });
     }
   });

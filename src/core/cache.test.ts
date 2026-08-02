@@ -3,13 +3,7 @@ import { runPipeline } from './pipeline.js';
 import { writeArtifacts } from '../utils/writer.js';
 import { parseTokenDocument } from './parser.js';
 import { resolveDocument } from './resolver.js';
-import {
-  CacheStore,
-  tier1Key,
-  tier2Key,
-  serializeResolvedTokens,
-  type CacheEntry,
-} from './cache.js';
+import { CacheStore, tier1Key, tier2Key, serializeResolvedTokens, type CacheEntry } from './cache.js';
 import { sha256 } from '../utils/hashing.js';
 import { mkdir, rm, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -164,11 +158,7 @@ describe('pipeline incremental cache', () => {
     const cacheDir = await uniqueDir();
 
     await build(inputPath, outputDir, cacheDir);
-    await writeFile(
-      inputPath,
-      JSON.stringify({ color: { $type: 'color', primary: { $value: '#ff0000' } } }),
-      'utf8',
-    );
+    await writeFile(inputPath, JSON.stringify({ color: { $type: 'color', primary: { $value: '#ff0000' } } }), 'utf8');
     const result = await build(inputPath, outputDir, cacheDir);
     expect(result.cached).toBe(false);
   });

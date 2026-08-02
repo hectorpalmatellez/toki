@@ -137,9 +137,9 @@ describe('validateConfig', () => {
   });
 
   it('rejects invalid naming format key', () => {
-    expect(() => validateConfig({ input: './tokens.json', output: './dist', naming: { flutter: 'camelCase' } })).toThrow(
-      /not a valid format/,
-    );
+    expect(() =>
+      validateConfig({ input: './tokens.json', output: './dist', naming: { flutter: 'camelCase' } }),
+    ).toThrow(/not a valid format/);
   });
 
   it('rejects non-function transforms', () => {

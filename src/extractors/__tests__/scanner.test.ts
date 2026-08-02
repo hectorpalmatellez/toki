@@ -30,11 +30,7 @@ beforeAll(async () => {
     'utf8',
   );
 
-  await writeFile(
-    join(testDir, 'components', 'button.css'),
-    `.btn { --btn-color: coral; }\n`,
-    'utf8',
-  );
+  await writeFile(join(testDir, 'components', 'button.css'), `.btn { --btn-color: coral; }\n`, 'utf8');
 
   await writeFile(join(testDir, 'readme.txt'), 'not a style file\n', 'utf8');
 });

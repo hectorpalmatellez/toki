@@ -141,9 +141,7 @@ describe('stencil generator', () => {
   });
 
   it('reuses themePath for multi-theme naming', async () => {
-    const tokens = resolveDocument(
-      parseTokenDocument({ color: { $type: 'color', primary: { $value: '#1a73e8' } } }),
-    );
+    const tokens = resolveDocument(parseTokenDocument({ color: { $type: 'color', primary: { $value: '#1a73e8' } } }));
     const artifacts = await stencilGenerator.generate(tokens, { version: '0.1.0', theme: 'dark' });
     const paths = artifacts.map((a) => a.relativePath);
     expect(paths).toContain('stencil/tokens.dark.css');

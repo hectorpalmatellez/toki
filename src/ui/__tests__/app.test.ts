@@ -32,7 +32,9 @@ const RICH = {
   border: { $type: 'border', card: { $value: { color: '#000000', width: '1px', style: 'solid' } } },
   shadow: {
     $type: 'shadow',
-    card: { $value: { color: '#000000', offsetX: '0px', offsetY: '2px', blur: '4px', spread: '0px', type: 'dropShadow' } },
+    card: {
+      $value: { color: '#000000', offsetX: '0px', offsetY: '2px', blur: '4px', spread: '0px', type: 'dropShadow' },
+    },
   },
   transition: { $type: 'transition', hover: { $value: { duration: '200ms', delay: '0ms', timingFunction: 'ease' } } },
 };
@@ -87,7 +89,11 @@ const mountApp = async (routes?: Routes): Promise<void> => {
     const result = handler !== undefined ? await handler(init) : defaultRoute(path);
     const status = result.status ?? 200;
     if (result.raw !== undefined) {
-      return { ok: status < 400, status, json: async () => Promise.reject(new Error('not json')) } as unknown as Response;
+      return {
+        ok: status < 400,
+        status,
+        json: async () => Promise.reject(new Error('not json')),
+      } as unknown as Response;
     }
     return { ok: status < 400, status, json: async () => result.body } as unknown as Response;
   });
@@ -171,7 +177,13 @@ describe('ui app boot', () => {
   it('surfaces token read errors through the status bar', async () => {
     await mountApp({
       '/api/tokens': () =>
-        route(200, { path: '/tmp/fake-project/tokens.json', exists: true, tokens: null, sample: null, error: 'Broken reference' }),
+        route(200, {
+          path: '/tmp/fake-project/tokens.json',
+          exists: true,
+          tokens: null,
+          sample: null,
+          error: 'Broken reference',
+        }),
     });
     expect(statusEl().className).toContain('error');
     expect(statusEl().textContent).toContain('Broken reference');
@@ -206,7 +218,8 @@ describe('ui app boot', () => {
   it('runs validation on boot when tokens exist', async () => {
     await mountApp({
       '/api/tokens': () => route(200, { path: 'tokens.json', exists: true, tokens: SAMPLE }),
-      '/api/validate': () => route(200, { issues: [{ severity: 'error', code: 'E1', message: 'Bad token', tokenId: 'color.primary' }] }),
+      '/api/validate': () =>
+        route(200, { issues: [{ severity: 'error', code: 'E1', message: 'Bad token', tokenId: 'color.primary' }] }),
     });
     expect(fetchCalls.some((c) => c.path === '/api/validate')).toBe(true);
     const panel = document.getElementById('validation') as HTMLElement;
@@ -602,7 +615,10 @@ describe('ui app reset', () => {
   });
 
   it('does nothing when the user cancels the confirmation', async () => {
-    vi.stubGlobal('confirm', vi.fn(() => false));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => false),
+    );
     await mountApp();
     click('btn-reset');
     await flush();
@@ -610,7 +626,10 @@ describe('ui app reset', () => {
   });
 
   it('replaces the editor with sample tokens after confirmation', async () => {
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true),
+    );
     await mountApp({
       '/api/reset': () => route(200, { ok: true, tokens: SAMPLE, issues: [], build: BUILD }),
     });
@@ -623,7 +642,10 @@ describe('ui app reset', () => {
   });
 
   it('shows reset failures in the toast', async () => {
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true),
+    );
     await mountApp({
       '/api/reset': () => route(200, { ok: false, error: 'read-only' }),
     });

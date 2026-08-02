@@ -6,7 +6,10 @@ import type { ResolvedToken } from '../core/types.js';
 
 const generate = async (raw: unknown, theme?: string) => {
   const tokens = resolveDocument(parseTokenDocument(raw));
-  const artifacts = await tailwindGenerator.generate(tokens, { version: '0.1.0', ...(theme !== undefined ? { theme } : {}) });
+  const artifacts = await tailwindGenerator.generate(tokens, {
+    version: '0.1.0',
+    ...(theme !== undefined ? { theme } : {}),
+  });
   const cssArtifact = artifacts.find((a) => a.relativePath.endsWith('.css'));
   if (cssArtifact === undefined) throw new Error('missing CSS artifact');
   return { artifacts, css: cssArtifact.content };
@@ -84,10 +87,7 @@ describe('tailwind generator', () => {
   });
 
   it('produces themed output paths', async () => {
-    const { artifacts } = await generate(
-      { color: { $type: 'color', primary: { $value: '#fff' } } },
-      'light',
-    );
+    const { artifacts } = await generate({ color: { $type: 'color', primary: { $value: '#fff' } } }, 'light');
     const paths = artifacts.map((a) => a.relativePath).sort();
     expect(paths).toEqual(['tailwind/README.md', 'tailwind/tokens.light.css']);
   });
@@ -141,10 +141,7 @@ describe('tailwind generator', () => {
     const { artifacts } = await generate({
       color: { $type: 'color', primary: { $value: '#1a73e8' } },
     });
-    expect(artifacts.map((a) => a.relativePath).sort()).toEqual([
-      'tailwind/README.md',
-      'tailwind/tokens.css',
-    ]);
+    expect(artifacts.map((a) => a.relativePath).sort()).toEqual(['tailwind/README.md', 'tailwind/tokens.css']);
     expect(artifacts.every((a) => a.format === 'tailwind')).toBe(true);
   });
 

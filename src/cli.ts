@@ -275,18 +275,10 @@ const resolveInput = (config: TokiConfig | undefined, cliInput: string | undefin
   return input;
 };
 
-const uiCommand = async (options: {
-  port: string;
-  host: string;
-  open: boolean;
-  verbose: boolean;
-}): Promise<void> => {
+const uiCommand = async (options: { port: string; host: string; open: boolean; verbose: boolean }): Promise<void> => {
   const port = Number.parseInt(options.port, 10);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new TokiError(
-      `Invalid port "${options.port}". Use a number between 1 and 65535.`,
-      'CONFIG_ERROR',
-    );
+    throw new TokiError(`Invalid port "${options.port}". Use a number between 1 and 65535.`, 'CONFIG_ERROR');
   }
   const { startUi } = await import('./ui/server.js');
   await startUi({ port, host: options.host, open: options.open, verbose: options.verbose });

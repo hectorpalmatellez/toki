@@ -63,15 +63,15 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 Toki exposes 7 tools, 3 resources, 1 dynamic resource, and 3 prompts to AI agents:
 
-| Tool | Description |
-|---|---|
-| [`parse_tokens`](#parse_tokens) | Parse and validate a W3C DTCG token file |
-| [`resolve_tokens`](#resolve_tokens) | Expand references, show resolved values |
-| [`preview_format`](#preview_format) | Generate output for one platform without writing to disk |
-| [`build_tokens`](#build_tokens) | Full pipeline — parse, resolve, transform, generate, write |
-| [`diff_tokens`](#diff_tokens) | Compare two token files |
-| [`list_formats`](#list_formats) | List all supported output formats |
-| [`extract_tokens`](#extract_tokens) | Scan CSS/SCSS files to extract token candidates |
+| Tool                                | Description                                                |
+| ----------------------------------- | ---------------------------------------------------------- |
+| [`parse_tokens`](#parse_tokens)     | Parse and validate a W3C DTCG token file                   |
+| [`resolve_tokens`](#resolve_tokens) | Expand references, show resolved values                    |
+| [`preview_format`](#preview_format) | Generate output for one platform without writing to disk   |
+| [`build_tokens`](#build_tokens)     | Full pipeline — parse, resolve, transform, generate, write |
+| [`diff_tokens`](#diff_tokens)       | Compare two token files                                    |
+| [`list_formats`](#list_formats)     | List all supported output formats                          |
+| [`extract_tokens`](#extract_tokens) | Scan CSS/SCSS files to extract token candidates            |
 
 Resources and prompts are auto-discovered by MCP clients — no configuration changes needed.
 
@@ -83,9 +83,9 @@ Parse and validate a W3C DTCG token file. Returns the token tree or validation e
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|---|---|---|---|
-| `input` | `string` | yes | Path to the token file (W3C DTCG JSON) |
+| Name    | Type     | Required | Description                            |
+| ------- | -------- | -------- | -------------------------------------- |
+| `input` | `string` | yes      | Path to the token file (W3C DTCG JSON) |
 
 **Example — AI validates a token file:**
 
@@ -104,9 +104,9 @@ Expand `{group.token}` references, apply `$type` inheritance, and return the ful
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|---|---|---|---|
-| `input` | `string` | yes | Path to the token file |
+| Name    | Type     | Required | Description            |
+| ------- | -------- | -------- | ---------------------- |
+| `input` | `string` | yes      | Path to the token file |
 
 **Example — AI debugs a reference chain:**
 
@@ -125,11 +125,11 @@ Generate output for a specific platform format and return the artifact content �
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|---|---|---|---|
-| `input` | `string` | yes | Path to the token file |
-| `format` | `OutputFormat` | yes | Target format: `css`, `js`, `react-native`, `angular`, `angular-11`, `svelte`, `react`, `stencil`, `vue`, `tailwind` |
-| `naming` | `NamingConvention` | no | Override naming convention |
+| Name     | Type               | Required | Description                                                                                                          |
+| -------- | ------------------ | -------- | -------------------------------------------------------------------------------------------------------------------- |
+| `input`  | `string`           | yes      | Path to the token file                                                                                               |
+| `format` | `OutputFormat`     | yes      | Target format: `css`, `js`, `react-native`, `angular`, `angular-11`, `svelte`, `react`, `stencil`, `vue`, `tailwind` |
+| `naming` | `NamingConvention` | no       | Override naming convention                                                                                           |
 
 **Example — AI previews CSS output:**
 
@@ -147,13 +147,13 @@ Run the full pipeline: parse, resolve, transform, generate, and write artifacts 
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `input` | `string` | yes | — | Path to the token file |
-| `output` | `string` | yes | — | Output directory |
-| `formats` | `OutputFormat[]` | yes | — | Formats to generate |
-| `clean` | `boolean` | no | `true` | Clean output directories first |
-| `verbose` | `boolean` | no | `false` | Enable verbose logging |
+| Name      | Type             | Required | Default | Description                    |
+| --------- | ---------------- | -------- | ------- | ------------------------------ |
+| `input`   | `string`         | yes      | —       | Path to the token file         |
+| `output`  | `string`         | yes      | —       | Output directory               |
+| `formats` | `OutputFormat[]` | yes      | —       | Formats to generate            |
+| `clean`   | `boolean`        | no       | `true`  | Clean output directories first |
+| `verbose` | `boolean`        | no       | `false` | Enable verbose logging         |
 
 **Example — AI triggers a build:**
 
@@ -173,11 +173,11 @@ Compare two token files and report added, removed, and changed tokens.
 
 **Parameters:**
 
-| Name     | Type                        | Required | Description                                            |
-| -------- | --------------------------- | -------- | ------------------------------------------------------ |
-| `old`    | `string`                    | yes      | Path to the old token file                             |
-| `new`    | `string`                    | yes      | Path to the new token file                             |
-| `output` | `"json" \| "markdown"`      | no       | Output format: `json` for structured data, `markdown` for GitHub-compatible tables |
+| Name     | Type                   | Required | Description                                                                        |
+| -------- | ---------------------- | -------- | ---------------------------------------------------------------------------------- |
+| `old`    | `string`               | yes      | Path to the old token file                                                         |
+| `new`    | `string`               | yes      | Path to the new token file                                                         |
+| `output` | `"json" \| "markdown"` | no       | Output format: `json` for structured data, `markdown` for GitHub-compatible tables |
 
 **Example — AI explains token changes:**
 
@@ -224,11 +224,11 @@ This is the **reverse pipeline** — going from existing code to tokens.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `path` | `string` | yes | — | File or directory to scan |
-| `extensions` | `string[]` | no | `[".css", ".scss"]` | File extensions to scan |
-| `output` | `string` | no | `"raw"` | Output mode (see below) |
+| Name         | Type       | Required | Default             | Description               |
+| ------------ | ---------- | -------- | ------------------- | ------------------------- |
+| `path`       | `string`   | yes      | —                   | File or directory to scan |
+| `extensions` | `string[]` | no       | `[".css", ".scss"]` | File extensions to scan   |
+| `output`     | `string`   | no       | `"raw"`             | Output mode (see below)   |
 
 #### Output modes
 
@@ -240,10 +240,26 @@ This is the **reverse pipeline** — going from existing code to tokens.
     { "id": "color-primary", "value": "#1a73e8", "inferredType": "color", "source": "styles/vars.css", "line": 12 },
     { "id": "spacing-md", "value": "16px", "inferredType": "dimension", "source": "styles/vars.css", "line": 13 }
   ],
-  "summary": { "totalExtracted": 42, "byType": { "color": 15, "dimension": 20 }, "untyped": 7, "sources": ["styles/vars.css"] },
+  "summary": {
+    "totalExtracted": 42,
+    "byType": { "color": 15, "dimension": 20 },
+    "untyped": 7,
+    "sources": ["styles/vars.css"]
+  },
   "tokiReference": {
     "tokenTypes": [{ "type": "color", "patterns": ["#hex", "rgb()", "hsl()"], "examples": ["#1a73e8"] }],
-    "outputFormats": ["css", "js", "react-native", "angular", "angular-11", "svelte", "react", "stencil", "vue", "tailwind"],
+    "outputFormats": [
+      "css",
+      "js",
+      "react-native",
+      "angular",
+      "angular-11",
+      "svelte",
+      "react",
+      "stencil",
+      "vue",
+      "tailwind"
+    ],
     "hint": "Use the extracted tokens and type reference to organize tokens into a W3C DTCG structure."
   }
 }
@@ -278,14 +294,14 @@ This is the **reverse pipeline** — going from existing code to tokens.
 
 The extractor recognizes these value patterns:
 
-| Inferred type | Patterns |
-|---|---|
-| `color` | `#hex`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, named CSS colors |
-| `dimension` | `Npx`, `Nrem`, `Nem` |
-| `duration` | `Nms`, `Ns` |
-| `fontWeight` | `100`–`900`, `normal`, `bold`, `lighter`, `bolder` |
-| `fontFamily` | Comma-separated font lists, quoted font names |
-| `number` | Unitless integers or decimals |
+| Inferred type | Patterns                                                       |
+| ------------- | -------------------------------------------------------------- |
+| `color`       | `#hex`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, named CSS colors |
+| `dimension`   | `Npx`, `Nrem`, `Nem`                                           |
+| `duration`    | `Nms`, `Ns`                                                    |
+| `fontWeight`  | `100`–`900`, `normal`, `bold`, `lighter`, `bolder`             |
+| `fontFamily`  | Comma-separated font lists, quoted font names                  |
+| `number`      | Unitless integers or decimals                                  |
 
 Values that don't match any pattern get `inferredType: undefined` — the AI agent decides what to do with them.
 
@@ -348,11 +364,11 @@ AI:
 
 Resources are read-only data endpoints that AI agents can query for context.
 
-| Resource URI | Title | Mime type |
-|---|---|---|
-| `toki://formats` | Supported Output Formats | `application/json` |
-| `toki://token-types` | Token Type Reference | `application/json` |
-| `toki://w3c-dtcg-spec` | W3C DTCG Format Reference | `text/markdown` |
+| Resource URI           | Title                     | Mime type          |
+| ---------------------- | ------------------------- | ------------------ |
+| `toki://formats`       | Supported Output Formats  | `application/json` |
+| `toki://token-types`   | Token Type Reference      | `application/json` |
+| `toki://w3c-dtcg-spec` | W3C DTCG Format Reference | `text/markdown`    |
 
 ### `toki://formats`
 
@@ -403,9 +419,9 @@ Returns the fully resolved token list for a W3C DTCG token file. References are 
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `input` | `string` | Path to the token file (W3C DTCG JSON) |
+| Parameter | Type     | Description                            |
+| --------- | -------- | -------------------------------------- |
+| `input`   | `string` | Path to the token file (W3C DTCG JSON) |
 
 **Example:**
 
@@ -424,10 +440,10 @@ Errors are returned as JSON content (not thrown), so the client always gets a re
 
 Prompts are reusable message templates that AI agents can invoke with arguments.
 
-| Prompt | Title | Arguments |
-|---|---|---|
-| `migrate-css-tokens` | Migrate CSS Variables to Toki | `path` (required), `formats` (optional, default: `css,js`) |
-| `validate-tokens` | Validate & Audit Token File | `input` (required) |
+| Prompt                | Title                                  | Arguments                                                         |
+| --------------------- | -------------------------------------- | ----------------------------------------------------------------- |
+| `migrate-css-tokens`  | Migrate CSS Variables to Toki          | `path` (required), `formats` (optional, default: `css,js`)        |
+| `validate-tokens`     | Validate & Audit Token File            | `input` (required)                                                |
 | `preview-all-formats` | Preview Token Output for All Platforms | `input` (required), `formats` (optional, default: `css,js,react`) |
 
 ### `migrate-css-tokens`

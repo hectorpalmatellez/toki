@@ -169,7 +169,9 @@ export const startWatch = async (options: WatchOptions): Promise<() => void> => 
   const initial = await executeBuild(resolved, formats, options, cache);
   const elapsed = performance.now() - start;
   if (initial.cached > 0) {
-    console.log(`${timestamp()} Initial build: up to date — ${initial.tokens} token${initial.tokens === 1 ? '' : 's'} cached, no changes`);
+    console.log(
+      `${timestamp()} Initial build: up to date — ${initial.tokens} token${initial.tokens === 1 ? '' : 's'} cached, no changes`,
+    );
   } else {
     console.log(
       `${timestamp()} Initial build: ${initial.artifacts} artifact${initial.artifacts === 1 ? '' : 's'}` +

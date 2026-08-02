@@ -13,7 +13,14 @@
  *   work and skipped here to keep output valid CSS.
  */
 
-import type { Generator, GeneratorOptions, OutputArtifact, ResolvedToken, TokenType, TokenValue } from '../core/types.js';
+import type {
+  Generator,
+  GeneratorOptions,
+  OutputArtifact,
+  ResolvedToken,
+  TokenType,
+  TokenValue,
+} from '../core/types.js';
 import { getNamingFunction, toKebabCase } from '../utils/naming.js';
 import { headerComment, themePath } from '../utils/format.js';
 import { platformReadme } from './readme.js';
@@ -146,7 +153,10 @@ export const expandCompositeToken = (
 
 export const cssGenerator: Generator = {
   format: 'css',
-  generate: async (_tokens: readonly ResolvedToken[], _options: GeneratorOptions): Promise<readonly OutputArtifact[]> => {
+  generate: async (
+    _tokens: readonly ResolvedToken[],
+    _options: GeneratorOptions,
+  ): Promise<readonly OutputArtifact[]> => {
     // Unused parameter names prefixed with `_` to satisfy no-unused-vars.
     const cssPath = _options.theme ? themePath('css/tokens.css', _options.theme) : 'css/tokens.css';
     return [

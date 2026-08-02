@@ -109,11 +109,7 @@ describe('tui — runTui', () => {
 
     await runTui();
 
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expect.stringContaining('tokens.json'),
-      expect.any(String),
-      'utf8',
-    );
+    expect(mockWriteFileSync).toHaveBeenCalledWith(expect.stringContaining('tokens.json'), expect.any(String), 'utf8');
   });
 
   it('diff: outputs terminal format by default', async () => {

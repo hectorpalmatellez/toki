@@ -11,13 +11,7 @@
  *   - `stencil/README.md` — platform quick start.
  */
 
-import type {
-  Generator,
-  GeneratorOptions,
-  NamingConvention,
-  OutputArtifact,
-  ResolvedToken,
-} from '../core/types.js';
+import type { Generator, GeneratorOptions, NamingConvention, OutputArtifact, ResolvedToken } from '../core/types.js';
 import { GeneratorError } from '../utils/errors.js';
 import { headerComment, themePath } from '../utils/format.js';
 import { jsKey, serializeTokenTree } from '../utils/grouping.js';

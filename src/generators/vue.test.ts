@@ -61,11 +61,7 @@ describe('vue generator', () => {
 
   it('writes tokens.css, tokens.ts and README.md under vue/', async () => {
     const { artifacts } = await generate(FIXTURE);
-    expect(artifacts.map((a) => a.relativePath).sort()).toEqual([
-      'vue/README.md',
-      'vue/tokens.css',
-      'vue/tokens.ts',
-    ]);
+    expect(artifacts.map((a) => a.relativePath).sort()).toEqual(['vue/README.md', 'vue/tokens.css', 'vue/tokens.ts']);
     expect(artifacts.every((a) => a.format === 'vue')).toBe(true);
   });
 

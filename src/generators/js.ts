@@ -126,7 +126,10 @@ const sortKeys = (value: unknown): unknown => {
 
 export const jsGenerator: Generator = {
   format: 'js',
-  generate: async (_tokens: readonly ResolvedToken[], _options: GeneratorOptions): Promise<readonly OutputArtifact[]> => {
+  generate: async (
+    _tokens: readonly ResolvedToken[],
+    _options: GeneratorOptions,
+  ): Promise<readonly OutputArtifact[]> => {
     return generateJs(_tokens, _options);
   },
 };

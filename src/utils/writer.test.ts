@@ -48,10 +48,7 @@ describe('writeArtifacts', () => {
     expect(result.written.length).toBe(count);
 
     for (let i = 0; i < count; i++) {
-      const content = await readFile(
-        join(outputDir, 'css', `token-${String(i).padStart(3, '0')}.css`),
-        'utf8',
-      );
+      const content = await readFile(join(outputDir, 'css', `token-${String(i).padStart(3, '0')}.css`), 'utf8');
       expect(content).toBe(`--token-${i}: ${i}px;\n`);
     }
   });

@@ -39,9 +39,7 @@ const FORMATS_ENUM = implementedFormats() as readonly [string, ...string[]];
 
 const formatEnumSchema = z.enum(FORMATS_ENUM);
 
-const namingConventionSchema = z
-  .enum(['camelCase', 'kebab-case', 'CONSTANT_CASE', 'SCREAMING_SNAKE_CASE'])
-  .optional();
+const namingConventionSchema = z.enum(['camelCase', 'kebab-case', 'CONSTANT_CASE', 'SCREAMING_SNAKE_CASE']).optional();
 
 const extractedToResolved = (token: ExtractedToken): ResolvedToken => ({
   id: token.id,
@@ -131,9 +129,7 @@ export const createMcpServer = (): McpServer => {
         const tokens = resolveDocument(doc);
         const formats: readonly OutputFormat[] = [format as OutputFormat];
         const namingOverride =
-          naming !== undefined
-            ? { [format as OutputFormat]: naming as NamingConvention }
-            : undefined;
+          naming !== undefined ? { [format as OutputFormat]: naming as NamingConvention } : undefined;
         const result = await generate(tokens, {
           formats,
           ...(namingOverride !== undefined ? { naming: namingOverride } : {}),
@@ -163,9 +159,7 @@ export const createMcpServer = (): McpServer => {
     {
       input: z.string().describe('Path to the token file (W3C DTCG JSON)'),
       output: z.string().describe('Output directory for generated artifacts'),
-      formats: z
-        .array(formatEnumSchema)
-        .describe('Output formats to generate'),
+      formats: z.array(formatEnumSchema).describe('Output formats to generate'),
       clean: z.boolean().optional().default(true).describe('Clean output directories before writing'),
       verbose: z.boolean().optional().default(false).describe('Enable verbose logging'),
     },
@@ -217,7 +211,11 @@ export const createMcpServer = (): McpServer => {
     {
       old: z.string().describe('Path to the old token file'),
       new: z.string().describe('Path to the new token file'),
-      output: z.enum(['json', 'markdown']).optional().default('json').describe('Output format: "json" (default) or "markdown" for GitHub-compatible tables'),
+      output: z
+        .enum(['json', 'markdown'])
+        .optional()
+        .default('json')
+        .describe('Output format: "json" (default) or "markdown" for GitHub-compatible tables'),
     },
     async ({ old: oldPath, new: newPath, output }) => {
       try {
@@ -242,16 +240,9 @@ export const createMcpServer = (): McpServer => {
     },
   );
 
-  server.tool(
-    'list_formats',
-    'List all available output formats supported by Toki.',
-    {},
-    async () => {
-      return textContent(
-        JSON.stringify({ formats: implementedFormats() }, null, 2),
-      );
-    },
-  );
+  server.tool('list_formats', 'List all available output formats supported by Toki.', {}, async () => {
+    return textContent(JSON.stringify({ formats: implementedFormats() }, null, 2));
+  });
 
   const outputModeSchema = z
     .union([z.literal('raw'), z.literal('json'), formatEnumSchema])
@@ -263,11 +254,7 @@ export const createMcpServer = (): McpServer => {
     'Scan CSS/SCSS files in a project directory, extract design token candidates (custom properties and variables), infer their types, and return the raw data for the AI agent to organize. Optionally outputs flat JSON or pipes through Toki pipeline to generate a specific format.',
     {
       path: z.string().describe('File or directory path to scan for CSS/SCSS tokens'),
-      extensions: z
-        .array(z.string())
-        .optional()
-        .default(['.css', '.scss'])
-        .describe('File extensions to scan'),
+      extensions: z.array(z.string()).optional().default(['.css', '.scss']).describe('File extensions to scan'),
       output: outputModeSchema.describe(
         'Output mode: "raw" returns extracted data + Toki type reference for AI organization; "json" returns flat token map; or any output format name (css, js, etc.) to generate artifacts',
       ),
@@ -277,9 +264,7 @@ export const createMcpServer = (): McpServer => {
         const result: ScanResult = await scanFiles({ path: scanPath, extensions });
 
         if (result.errors.length > 0 && result.tokens.length === 0) {
-          return errorContent(
-            `Scan failed:\n${result.errors.map((e) => `  ${e.file}: ${e.message}`).join('\n')}`,
-          );
+          return errorContent(`Scan failed:\n${result.errors.map((e) => `  ${e.file}: ${e.message}`).join('\n')}`);
         }
 
         if (output === 'raw') {
@@ -345,9 +330,7 @@ export const createMcpServer = (): McpServer => {
         }
 
         const format = output as OutputFormat;
-        const resolvedTokens = result.tokens
-          .filter((t) => t.inferredType !== undefined)
-          .map(extractedToResolved);
+        const resolvedTokens = result.tokens.filter((t) => t.inferredType !== undefined).map(extractedToResolved);
         const genResult = await generate(resolvedTokens, { formats: [format] });
         return textContent(
           JSON.stringify(
