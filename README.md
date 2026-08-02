@@ -19,6 +19,8 @@ Toki ingests W3C Design Tokens Community Group (DTCG) format JSON and generates 
 - **Naming transforms** — `camelCase`, `kebab-case`, `CONSTANT_CASE`, `SCREAMING_SNAKE_CASE`
 - **Custom transform plugins** — register functions in config that modify token values before generation
 - **Watch mode** — `toki watch` rebuilds on file change with 200ms debounce
+- **Incremental build cache** — two-tier SHA-256 cache skips parse/resolve/generate for unchanged inputs (`--no-cache` to disable)
+- **Parallel generator execution** — selected platforms generate concurrently, with deterministic output ordering
 - **Composite type expansion** — typography, border, and transition tokens expand into individual CSS longhand custom properties across all CSS-based generators
 - **Diff tooling** — `toki diff` reports added, removed, and changed tokens (terminal, JSON, or Markdown output)
 - **Token linting** — `toki validate` checks structural validity, broken references, circular dependencies, naming violations, and more
@@ -115,7 +117,7 @@ toki ui
 | Language        | TypeScript 7.0+ (native Go compiler, strict mode) |
 | CLI             | Commander.js                                      |
 | Bundler         | tsup                                              |
-| Testing         | Vitest (632 tests, 90%+ coverage) |
+| Testing         | Vitest (632 tests, 90%+ coverage)                 |
 | Linting         | oxlint                                            |
 | Formatting      | Prettier                                          |
 | Package manager | pnpm 10.32.1                                      |
