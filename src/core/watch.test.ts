@@ -73,12 +73,25 @@ const getSignalHandler = (onCalls: Array<[string, () => void]>, signal: string):
 };
 
 afterEach(async () => {
+  vi.useRealTimers();
   for (const f of cleanup) {
-    await rmAsync(f, { recursive: true, force: true });
+    // Rebuilds can still be writing to the output tree when a watcher test
+    // tears down (fs I/O races with debounced rebuilds), which makes recursive
+    // removal flaky on macOS. Retry with real-timer backoff so teardown is
+    // reliable.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await rmAsync(f, { recursive: true, force: true });
+        break;
+      } catch (error) {
+        const err = error as NodeJS.ErrnoException;
+        if (err.code !== 'ENOTEMPTY' || attempt === 2) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+    }
   }
   cleanup.length = 0;
   mocks.handlers.clear();
-  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -122,6 +135,7 @@ describe('watch module', () => {
 
     const outputDir = join(dir, 'output');
     const onSpy = vi.spyOn(process, 'on').mockImplementation(() => process);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const { startWatch } = await import('./watch.js');
     const cleanupFn = await startWatch({
@@ -138,6 +152,9 @@ describe('watch module', () => {
     expect(existsSync(cssDir)).toBe(true);
     const files = readdirSync(cssDir);
     expect(files.some((f) => String(f).endsWith('.css'))).toBe(true);
+
+    // The missing output directory was created and the user was informed.
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('Created output directory'));
 
     cleanupFn();
     onSpy.mockRestore();
@@ -556,9 +573,15 @@ describe('watch module — watcher events', () => {
       vi.advanceTimersByTime(200);
       expect(spy).toHaveBeenCalledTimes(3); // initial + first rebuild + post-skip rebuild
     });
+    // Wait for the post-skip rebuild to fully finish (logged after writes land) so
+    // nothing is in flight when the test tears down the output directory.
     await vi.waitFor(() => {
-      expect(logSpy).toHaveBeenCalledTimes(4); // initial + watching + both rebuilds completed
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('— /tmp/c.json'));
     });
+    // The in-flight rebuild for /tmp/b.json was skipped — no rebuild log for it.
+    const rebuildLogs = logSpy.mock.calls.map((c) => String(c[0])).filter((m) => m.includes('Rebuilt'));
+    expect(rebuildLogs.some((m) => m.includes('/tmp/b.json'))).toBe(false);
+    expect(rebuildLogs.filter((m) => m.includes('/tmp/c.json'))).toHaveLength(1);
 
     cleanupFn();
     onSpy.mockRestore();

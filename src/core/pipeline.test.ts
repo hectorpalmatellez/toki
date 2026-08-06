@@ -5,6 +5,7 @@ import { resolveDocument } from './resolver.js';
 import { writeArtifacts } from '../utils/writer.js';
 import { resolveFormats } from '../generators/index.js';
 import { rm, mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
@@ -51,6 +52,19 @@ describe('pipeline', () => {
   it('generateFromDocument resolves and generates without disk I/O', async () => {
     const result = await generateFromDocument(parseTokenDocument(sampleDoc), ['css']);
     expect(result.artifacts.map((a) => a.relativePath)).toEqual(['css/README.md', 'css/tokens.css']);
+  });
+
+  it('auto-creates a missing output directory during a build', async () => {
+    const inputDir = await uniqueDir();
+    const inputPath = join(inputDir, 'tokens.json');
+    await writeFile(inputPath, JSON.stringify(sampleDoc), 'utf8');
+    const parent = await uniqueDir();
+    const outputDir = join(parent, 'does-not-exist');
+
+    const result = await runPipeline({ input: inputPath, formats: ['css'] });
+    await writeArtifacts(outputDir, result.artifacts);
+
+    expect(existsSync(join(outputDir, 'css', 'tokens.css'))).toBe(true);
   });
 
   it('walks the full end-to-end flow via the writer (clean default)', async () => {

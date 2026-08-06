@@ -7,6 +7,7 @@
  * newline for cross-platform determinism.
  */
 
+import { existsSync } from 'node:fs';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, normalize } from 'node:path';
 import type { OutputArtifact } from '../core/types.js';
@@ -15,6 +16,13 @@ import { IoError } from './errors.js';
 export interface WriteResult {
   readonly written: readonly string[];
 }
+
+/** Ensure the output directory exists, creating it if missing. Returns true if it was created. */
+export const ensureOutputDir = async (outputDir: string): Promise<boolean> => {
+  if (existsSync(outputDir)) return false;
+  await mkdir(outputDir, { recursive: true });
+  return true;
+};
 
 const firstSegment = (relativePath: string): string => {
   const [head] = normalize(relativePath).split('/');

@@ -187,11 +187,38 @@ describe('build_tokens', () => {
     const payload = JSON.parse(result.content[0].text) as {
       written: string[];
       tokenCount: number;
+      createdOutput: boolean;
     };
     expect(payload.tokenCount).toBe(4);
     expect(payload.written.length).toBeGreaterThan(0);
     expect(payload.written.some((p) => p.endsWith('.css'))).toBe(true);
     expect(payload.written.some((p) => p.endsWith('.js'))).toBe(true);
+    expect(payload.createdOutput).toBe(false);
+  });
+
+  it('creates a missing output directory and reports createdOutput', async () => {
+    const inputDir = await uniqueDir();
+    const inputPath = join(inputDir, 'tokens.json');
+    await writeFile(inputPath, JSON.stringify(sampleTokens), 'utf8');
+    const parent = await uniqueDir();
+    const outputDir = join(parent, 'does-not-exist');
+
+    const result = await client.callTool({
+      name: 'build_tokens',
+      arguments: {
+        input: inputPath,
+        output: outputDir,
+        formats: ['css'],
+      },
+    });
+
+    expect(result.isError).toBeFalsy();
+    const payload = JSON.parse(result.content[0].text) as {
+      written: string[];
+      createdOutput: boolean;
+    };
+    expect(payload.written.length).toBeGreaterThan(0);
+    expect(payload.createdOutput).toBe(true);
   });
 });
 

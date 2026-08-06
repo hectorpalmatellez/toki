@@ -13,7 +13,7 @@ import { join, resolve } from 'node:path';
 import type { OutputFormat, TokiConfig } from '../core/types.js';
 import { parseTokenDocument, parseTokenJson } from '../core/parser.js';
 import { runPipeline } from '../core/pipeline.js';
-import { writeArtifacts } from '../utils/writer.js';
+import { writeArtifacts, ensureOutputDir } from '../utils/writer.js';
 import { loadConfig, discoverConfig } from '../core/config.js';
 import { implementedFormats, parseFormats } from '../generators/index.js';
 import { validateTokens } from '../core/validate.js';
@@ -174,6 +174,9 @@ export const runBuild = async (
     ...(config?.transforms !== undefined && config.transforms.length > 0 ? { transforms: config.transforms } : {}),
   });
   const outputDir = resolve(join(ctx.cwd, output));
+  if (await ensureOutputDir(outputDir)) {
+    ctx.log?.(`created output directory: ${outputDir}`);
+  }
   const writeResult = await writeArtifacts(outputDir, result.artifacts, {
     clean: config?.clean ?? true,
   });

@@ -5,7 +5,7 @@ import { readTokenFile, parseTokenDocument } from '../core/parser.js';
 import { resolveDocument } from '../core/resolver.js';
 import { generate, runPipeline } from '../core/pipeline.js';
 import { runDiff, formatDiffMarkdown } from '../core/diff.js';
-import { writeArtifacts } from '../utils/writer.js';
+import { writeArtifacts, ensureOutputDir } from '../utils/writer.js';
 import { parseFormats, implementedFormats } from '../generators/index.js';
 import { scanFiles, TOKEN_TYPE_PATTERNS } from '../extractors/index.js';
 import type { ExtractedToken, ScanResult } from '../extractors/index.js';
@@ -167,6 +167,7 @@ export const createMcpServer = (): McpServer => {
       try {
         const formats = parseFormats(rawFormats as string[]);
         const start = performance.now();
+        const createdOutput = await ensureOutputDir(output);
         const result = await runPipeline({
           input,
           formats,
@@ -183,7 +184,8 @@ export const createMcpServer = (): McpServer => {
 
         if (verbose) {
           console.error(
-            `toki mcp: ${result.cached ? 'cached' : `built ${writeResult.written.length} artifacts`} in ${elapsed.toFixed(1)}ms`,
+            `toki mcp: ${result.cached ? 'cached' : `built ${writeResult.written.length} artifacts`} in ${elapsed.toFixed(1)}ms` +
+              (createdOutput ? ` (created output directory: ${output})` : ''),
           );
         }
 
@@ -193,6 +195,7 @@ export const createMcpServer = (): McpServer => {
               written: writeResult.written,
               tokenCount: result.tokenCount,
               cached: result.cached,
+              createdOutput,
               elapsed: Math.round(elapsed),
             },
             null,

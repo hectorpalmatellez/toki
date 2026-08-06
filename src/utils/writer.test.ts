@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { writeArtifacts } from './writer.js';
+import { ensureOutputDir, writeArtifacts } from './writer.js';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
@@ -18,7 +19,40 @@ const makeArtifact = (relativePath: string, content = 'content'): OutputArtifact
   content,
 });
 
+describe('ensureOutputDir', () => {
+  it('returns false when the directory already exists', async () => {
+    const dir = await uniqueDir();
+    expect(await ensureOutputDir(dir)).toBe(false);
+  });
+
+  it('creates a missing output directory and returns true', async () => {
+    const parent = await uniqueDir();
+    const outputDir = join(parent, 'nested', 'output');
+    expect(existsSync(outputDir)).toBe(false);
+
+    expect(await ensureOutputDir(outputDir)).toBe(true);
+    expect(existsSync(outputDir)).toBe(true);
+  });
+
+  it('creates once and reports false on subsequent calls', async () => {
+    const parent = await uniqueDir();
+    const outputDir = join(parent, 'output');
+    expect(await ensureOutputDir(outputDir)).toBe(true);
+    expect(await ensureOutputDir(outputDir)).toBe(false);
+  });
+});
+
 describe('writeArtifacts', () => {
+  it('creates a missing output directory and writes artifacts into it', async () => {
+    const parent = await uniqueDir();
+    const outputDir = join(parent, 'not-created-yet', 'deep');
+    expect(existsSync(outputDir)).toBe(false);
+
+    const result = await writeArtifacts(outputDir, [makeArtifact('css/tokens.css', 'x')]);
+    expect(result.written.length).toBe(1);
+    expect(existsSync(join(outputDir, 'css', 'tokens.css'))).toBe(true);
+  });
+
   it('writes all artifacts and returns absolute paths', async () => {
     const outputDir = await uniqueDir();
     const artifacts = [

@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { OutputFormat } from './types.js';
 import { runPipeline, type BuildCacheOptions } from './pipeline.js';
-import { writeArtifacts } from '../utils/writer.js';
+import { writeArtifacts, ensureOutputDir } from '../utils/writer.js';
 import { TokiError } from '../utils/errors.js';
 import { loadConfig, mergeConfig, discoverConfig } from './config.js';
 import { parseFormats } from '../generators/index.js';
@@ -67,6 +67,10 @@ const executeBuild = async (
   let totalArtifacts = 0;
   let totalTokens = 0;
   let totalCached = 0;
+
+  if (await ensureOutputDir(resolved.output)) {
+    console.log(`${timestamp()} Created output directory: ${resolved.output}`);
+  }
 
   if (themes !== undefined && Object.keys(themes).length > 0) {
     const themeNames = options.theme ? [options.theme] : Object.keys(themes);

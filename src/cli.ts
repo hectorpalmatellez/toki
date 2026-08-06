@@ -12,7 +12,7 @@
 
 import { Command } from 'commander';
 import { runPipeline, type BuildCacheOptions } from './core/pipeline.js';
-import { writeArtifacts } from './utils/writer.js';
+import { ensureOutputDir, writeArtifacts } from './utils/writer.js';
 import { parseFormats } from './generators/index.js';
 import { TOKI_VERSION } from './version.js';
 import { TokiError, ConfigError } from './utils/errors.js';
@@ -53,6 +53,10 @@ const buildCommand = async (options: {
   cliOpts.clean = options.clean;
   if (options.cache === false) cliOpts.cache = false;
   const resolved = mergeConfig(config, cliOpts);
+
+  if (await ensureOutputDir(resolved.output)) {
+    console.log(`Created output directory: ${resolved.output}`);
+  }
 
   const formats = parseFormats(resolved.formats as string[]);
 
