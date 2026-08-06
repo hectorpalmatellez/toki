@@ -5,6 +5,12 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] — 2026-08-05
+
+### Fixed
+
+- **Confusing `/folder` output path failures** — an output directory like `/folder` (a leading slash pointing at the filesystem root) previously failed with a bare `EACCES` error. Creation failures are now wrapped in `IoError` with a hint suggesting the relative spelling (`Failed to create output directory /folder — did you mean ./folder (relative to the current directory)?`). The interactive menu's output prompt, the `-o` help text, and the docs now clarify that bare names (e.g. `dist`) resolve relative to the current directory, while absolute paths still work.
+
 ## [1.10.0] — 2026-08-05
 
 ### Added
