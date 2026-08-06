@@ -5,6 +5,12 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] — 2026-08-05
+
+### Added
+
+- **Auto-create missing output directory** — when the output directory does not exist, the CLI now creates it and informs the user (`Created output directory: <path>`) instead of silently succeeding. Applies to `toki build`, the interactive menu, `toki watch`, `toki ui`, and the MCP `build_tokens` tool (which reports a new `createdOutput` field in its JSON response).
+
 ## [1.9.0] — 2026-08-02
 
 ### Changed
