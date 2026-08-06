@@ -13,7 +13,7 @@ toki build --input tokens.json --output ./dist --format css,js,react
 | Flag                        | Description                                                                                                                              | Default         |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
 | `-i, --input <path>`        | Path to input token file (W3C DTCG JSON)                                                                                                 | —               |
-| `-o, --output <path>`       | Output directory for generated artifacts                                                                                                 | —               |
+| `-o, --output <path>`       | Output directory for generated artifacts (relative to the current directory, or an absolute path)                                        | —               |
 | `-f, --format <formats...>` | Output formats: `css`, `js`, `react-native`, `angular`, `angular-11`, `svelte`, `react`, `stencil`, `vue`, `tailwind` (or `all` for all) | `css, js`       |
 | `-c, --config <path>`       | Path to toki config file                                                                                                                 | auto-discovered |
 | `-t, --theme <name>`        | Build a single theme from multi-theme config                                                                                             | all themes      |

@@ -250,7 +250,7 @@ export const runTui = async (): Promise<void> => {
         cancel('Cancelled.');
         process.exit(0);
       }
-      const output = await text({ message: 'Output directory', placeholder: './dist' });
+      const output = await text({ message: 'Output directory', placeholder: 'dist' });
       if (isCancel(output)) {
         cancel('Cancelled.');
         process.exit(0);

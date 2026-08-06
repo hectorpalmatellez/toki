@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { ensureOutputDir, writeArtifacts } from './writer.js';
+import { ensureOutputDir, relativePathHint, writeArtifacts } from './writer.js';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import type { OutputArtifact } from '../core/types.js';
+import { IoError } from './errors.js';
 
 const uniqueDir = async (): Promise<string> => {
   const dir = join(tmpdir(), `toki-writer-test-${randomUUID()}`);
@@ -39,6 +40,29 @@ describe('ensureOutputDir', () => {
     const outputDir = join(parent, 'output');
     expect(await ensureOutputDir(outputDir)).toBe(true);
     expect(await ensureOutputDir(outputDir)).toBe(false);
+  });
+
+  it('rejects with IoError when the output directory cannot be created', async () => {
+    const dir = await uniqueDir();
+    const blocker = join(dir, 'blocker.txt');
+    await writeFile(blocker, 'x', 'utf8');
+    const outputDir = join(blocker, 'sub');
+
+    await expect(ensureOutputDir(outputDir)).rejects.toThrow(IoError);
+    await expect(ensureOutputDir(outputDir)).rejects.toThrow(/Failed to create output directory/);
+  });
+});
+
+describe('relativePathHint', () => {
+  it('suggests a relative path for filesystem-root outputs', () => {
+    expect(relativePathHint('/folder')).toBe(' — did you mean ./folder (relative to the current directory)?');
+    expect(relativePathHint('/dist/tokens')).toBe(' — did you mean ./dist/tokens (relative to the current directory)?');
+  });
+
+  it('returns an empty hint for relative paths', () => {
+    expect(relativePathHint('dist')).toBe('');
+    expect(relativePathHint('./dist')).toBe('');
+    expect(relativePathHint('dist/css')).toBe('');
   });
 });
 

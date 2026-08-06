@@ -20,9 +20,17 @@ export interface WriteResult {
 /** Ensure the output directory exists, creating it if missing. Returns true if it was created. */
 export const ensureOutputDir = async (outputDir: string): Promise<boolean> => {
   if (existsSync(outputDir)) return false;
-  await mkdir(outputDir, { recursive: true });
+  try {
+    await mkdir(outputDir, { recursive: true });
+  } catch (cause) {
+    throw new IoError(`Failed to create output directory ${outputDir}${relativePathHint(outputDir)}`, cause);
+  }
   return true;
 };
+
+/** Suggest the relative spelling when an output path is rooted at the filesystem root. */
+export const relativePathHint = (outputDir: string): string =>
+  outputDir.startsWith('/') ? ` — did you mean .${outputDir} (relative to the current directory)?` : '';
 
 const firstSegment = (relativePath: string): string => {
   const [head] = normalize(relativePath).split('/');

@@ -442,7 +442,10 @@ program
   .command('build')
   .description('Parse tokens and generate output artifacts')
   .option('-i, --input <path>', 'Path to input token file (W3C DTCG JSON)')
-  .option('-o, --output <path>', 'Output directory for generated artifacts')
+  .option(
+    '-o, --output <path>',
+    'Output directory for generated artifacts (relative to the current directory, or an absolute path)',
+  )
   .option(
     '-f, --format <formats...>',
     'Output formats: css, js, react-native, angular, angular-11, svelte, react (use "all" for every platform; comma- or space-separated)',
@@ -630,7 +633,10 @@ program
   .command('watch')
   .description('Watch token files for changes and rebuild automatically')
   .option('-i, --input <path>', 'Path to input token file (W3C DTCG JSON)')
-  .option('-o, --output <path>', 'Output directory for generated artifacts')
+  .option(
+    '-o, --output <path>',
+    'Output directory for generated artifacts (relative to the current directory, or an absolute path)',
+  )
   .option(
     '-f, --format <formats...>',
     'Output formats: css, js, react-native, angular, angular-11, svelte, react (use "all" for every platform; comma- or space-separated)',

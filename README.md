@@ -87,16 +87,16 @@ toki ui
 
 ## CLI flags
 
-| Flag                        | Description                                                         | Default         |
-| --------------------------- | ------------------------------------------------------------------- | --------------- |
-| `-i, --input <path>`        | Path to input token file (W3C DTCG JSON)                            | —               |
-| `-o, --output <path>`       | Output directory for generated artifacts                            | —               |
-| `-f, --format <formats...>` | Output formats (comma- or space-separated; `all` for all platforms) | `css, js`       |
-| `-c, --config <path>`       | Path to toki config file                                            | auto-discovered |
-| `-t, --theme <name>`        | Build a single theme from multi-theme config                        | all themes      |
-| `--clean` / `--no-clean`    | Clean subdirectories before writing                                 | `true`          |
-| `--no-cache`                | Disable the incremental build cache                                 | enabled         |
-| `--verbose`                 | Print resolution trace, values, and timing                          | `false`         |
+| Flag                        | Description                                                                                       | Default         |
+| --------------------------- | ------------------------------------------------------------------------------------------------- | --------------- |
+| `-i, --input <path>`        | Path to input token file (W3C DTCG JSON)                                                          | —               |
+| `-o, --output <path>`       | Output directory for generated artifacts (relative to the current directory, or an absolute path) | —               |
+| `-f, --format <formats...>` | Output formats (comma- or space-separated; `all` for all platforms)                               | `css, js`       |
+| `-c, --config <path>`       | Path to toki config file                                                                          | auto-discovered |
+| `-t, --theme <name>`        | Build a single theme from multi-theme config                                                      | all themes      |
+| `--clean` / `--no-clean`    | Clean subdirectories before writing                                                               | `true`          |
+| `--no-cache`                | Disable the incremental build cache                                                               | enabled         |
+| `--verbose`                 | Print resolution trace, values, and timing                                                        | `false`         |
 
 ## Documentation
 
