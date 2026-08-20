@@ -276,6 +276,7 @@ export const runTui = async (): Promise<void> => {
           input: input as string,
           output: output as string,
           format: formats as string[],
+          formatProvided: true,
           clean: true,
           cache: true,
           verbose: verbose as boolean,

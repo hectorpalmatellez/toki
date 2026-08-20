@@ -33,6 +33,7 @@ const buildCommand = async (options: {
   input?: string;
   output?: string;
   format: string[];
+  formatProvided: boolean;
   clean: boolean;
   cache: boolean;
   verbose: boolean;
@@ -49,7 +50,7 @@ const buildCommand = async (options: {
   } = {};
   if (options.input !== undefined) cliOpts.input = options.input;
   if (options.output !== undefined) cliOpts.output = options.output;
-  cliOpts.format = options.format;
+  if (options.formatProvided) cliOpts.format = options.format;
   cliOpts.clean = options.clean;
   if (options.cache === false) cliOpts.cache = false;
   const resolved = mergeConfig(config, cliOpts);
@@ -456,12 +457,13 @@ program
   .option('--verbose', 'Enable verbose output with resolution trace and timing', false)
   .option('-c, --config <path>', 'Path to toki config file')
   .option('-t, --theme <name>', 'Build a single theme from multi-theme config')
-  .action(async (options) => {
+  .action(async (options, command) => {
     try {
       await buildCommand({
         input: options.input,
         output: options.output,
         format: options.format as string[],
+        formatProvided: command.getOptionValueSource('format') === 'cli',
         clean: options.clean,
         cache: options.cache !== false,
         verbose: options.verbose,
