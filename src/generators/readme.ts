@@ -10,9 +10,9 @@ import type { OutputFormat } from '../core/types.js';
 import { headerCommentHtml } from '../utils/format.js';
 
 const MULTI_THEME_NOTE =
-  'Toki currently emits a single theme per run. To produce multiple themes, run ' +
-  '`toki build` once per theme token file into separate output directories. ' +
-  'First-class multi-theme output is planned (see `docs/backlog.md`, Phase 3).';
+  'Define a `themes` map in `toki.config.ts` (theme name → token file) and ' +
+  '`toki build` emits separate, theme-suffixed output files per theme. Use ' +
+  '`toki build --theme <name>` to build a single theme.';
 
 /** Render the README for one output platform subdirectory. */
 export const platformReadme = (format: OutputFormat, version: string): string => {

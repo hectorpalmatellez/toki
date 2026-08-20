@@ -5,6 +5,17 @@ All notable changes to Toki will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] — 2026-08-20
+
+### Fixed
+
+- **Stale multi-theme README text** — generated per-platform `README.md` files
+  no longer claim multi-theme output is "planned" or reference the removed
+  `docs/backlog.md, Phase 3`. They now document the shipped config-driven
+  multi-theme support: a `themes` map in `toki.config.ts` produces
+  theme-suffixed output files per theme, and `toki build --theme <name>` builds
+  a single theme (see `src/generators/readme.ts`, `MULTI_THEME_NOTE`).
+
 ## [1.11.0] — 2026-08-05
 
 ### Fixed
